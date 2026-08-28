@@ -1,0 +1,456 @@
+/* page.module.css для страницы клана */
+
+.page {
+  min-height: 100dvh;
+  background: #080808;
+  color: #f2f2f2;
+}
+
+.container {
+  width: min(100% - 24px, 900px);
+  margin: 0 auto;
+  padding: 20px 0 24px;
+}
+
+/* BACK LINK */
+
+.back {
+  display: inline-block;
+  margin-bottom: 28px;
+  color: #555;
+  text-decoration: none;
+  font-family: monospace;
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  transition: color 150ms ease;
+}
+
+.back:hover {
+  color: #d97706;
+}
+
+/* HEADER */
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding-bottom: 28px;
+  border-bottom: 1px solid #202020;
+  gap: 16px;
+}
+
+.clanMainInfo {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.clanIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
+  background: #171717;
+  border: 1px solid #2a2a2a;
+  color: #d97706;
+  font-family: monospace;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.clanTitle {
+  min-width: 0;
+}
+
+.clanTag {
+  display: block;
+  margin-bottom: 4px;
+  color: #d97706;
+  font-family: monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: clamp(28px, 6vw, 40px);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+}
+
+.clanMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  color: #666;
+  font-family: monospace;
+  font-size: 10px;
+}
+
+.dot {
+  color: #333;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 9px;
+  border: 1px solid #292929;
+  color: #777;
+  font-family: monospace;
+  font-size: 9px;
+  flex-shrink: 0;
+}
+
+.status span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #d97706;
+  box-shadow: 0 0 8px rgba(217, 119, 6, 0.5);
+}
+
+/* STATS GRID */
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.statCard {
+  padding: 16px 18px;
+  background: #101010;
+  border: 1px solid #202020;
+}
+
+.statLabel {
+  display: block;
+  margin-bottom: 6px;
+  color: #555;
+  font-family: monospace;
+  font-size: 8px;
+  letter-spacing: 0.1em;
+}
+
+.statValue {
+  color: #ddd;
+  font-family: monospace;
+  font-size: 20px;
+  font-weight: 500;
+}
+
+/* DESCRIPTION */
+
+.descriptionSection {
+  position: relative;
+  margin-top: 28px;
+  padding: 20px 231px;
+  background: #101010;
+  border: 1px solid #202020;
+}
+
+.descriptionSection h3 {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  margin: 0 0 8px;
+  color: #555;
+  font-family: monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+}
+
+.descriptionSection p {
+  margin: 0;
+  color: #aaa;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+/* ALLIANCE */
+
+.allianceSection {
+  margin-top: 16px;
+  padding: 20px;
+  background: #101010;
+  border: 1px solid #202020;
+}
+
+.allianceSection h3 {
+  margin: 0 0 8px;
+  color: #555;
+  font-family: monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+}
+
+.allianceCard {
+  padding: 10px 14px;
+  background: #151515;
+  border: 1px solid #292929;
+  color: #d97706;
+  font-family: monospace;
+  font-size: 13px;
+}
+
+/* META */
+
+.metaSection {
+  margin-top: 16px;
+  padding: 20px;
+  background: #101010;
+  border: 1px solid #202020;
+}
+
+.metaItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.metaItem span {
+  color: #555;
+  font-family: monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+}
+
+.metaItem strong {
+  color: #aaa;
+  font-family: monospace;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+/* ACTIONS */
+
+.actions {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid #1c1c1c;
+  flex: 1;
+}
+
+.backButton {
+  display: inline-block;
+  padding: 10px 20px;
+  border: 1px solid #292929;
+  background: #101010;
+  color: #aaa;
+  text-decoration: none;
+  font-family: monospace;
+  font-size: 10px;
+  transition: all 150ms ease;
+}
+
+.backButton:hover {
+  border-color: #d97706;
+  color: #d97706;
+  background: #151515;
+}
+
+/* FOOTER */
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 15px;
+  border-top: 1px solid #1c1c1c;
+  color: #3f3f3f;
+  font-family: monospace;
+  font-size: 9px;
+}
+
+/* NOT FOUND */
+
+.notFound {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  text-align: center;
+}
+
+.notFoundIcon {
+  font-size: 48px;
+  color: #333;
+  margin-bottom: 16px;
+}
+
+.notFound h2 {
+  margin: 0;
+  color: #888;
+  font-size: 24px;
+  font-weight: 500;
+}
+
+.notFound p {
+  margin: 8px 0 20px;
+  color: #555;
+  font-size: 13px;
+}
+
+.backLink {
+  color: #d97706;
+  text-decoration: none;
+  font-family: monospace;
+  font-size: 11px;
+  transition: color 150ms ease;
+}
+
+.backLink:hover {
+  color: #f59e0b;
+}
+
+/* SKELETON */
+
+.skeletonWrapper {
+  padding: 20px 0;
+}
+
+.skeletonHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.skeletonLine {
+  height: 20px;
+  background: #1a1a1a;
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeletonLine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.03) 20%,
+    rgba(255, 255, 255, 0.06) 40%,
+    rgba(255, 255, 255, 0.03) 60%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+.skeletonGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.skeletonCard {
+  height: 80px;
+  background: #1a1a1a;
+  border: 1px solid #202020;
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeletonCard::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.03) 20%,
+    rgba(255, 255, 255, 0.06) 40%,
+    rgba(255, 255, 255, 0.03) 60%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* MOBILE */
+
+@media (max-width: 600px) {
+  .header {
+    flex-direction: column;
+  }
+
+  .clanMainInfo {
+    width: 100%;
+  }
+
+  .clanIcon {
+    width: 56px;
+    height: 56px;
+    font-size: 16px;
+  }
+
+  .status {
+    align-self: flex-start;
+  }
+
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .statValue {
+    font-size: 17px;
+  }
+
+  .metaItem {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  .clanIcon {
+    width: 48px;
+    height: 48px;
+    font-size: 14px;
+  }
+
+  .header h1 {
+    font-size: clamp(22px, 5vw, 28px);
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .statCard {
+    padding: 12px 14px;
+  }
+
+  .statValue {
+    font-size: 15px;
+  }
+
+  .descriptionSection,
+  .allianceSection,
+  .metaSection {
+    padding: 14px;
+  }
+}
