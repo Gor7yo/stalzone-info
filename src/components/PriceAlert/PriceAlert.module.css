@@ -1,0 +1,119 @@
+.panel {
+  display: grid;
+  /* minmax(0, …) — иначе прокручиваемые чипы раздувают колонку шире экрана */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  margin-top: 12px;
+  padding: 14px;
+  animation: rise 300ms var(--ease);
+}
+
+.panel :global(.chips) {
+  margin: 0 -14px;
+  padding: 2px 14px;
+  scroll-padding: 14px;
+}
+
+.head {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.head svg,
+.note svg {
+  flex: none;
+  color: var(--acc);
+  margin-top: 1px;
+}
+
+.note {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text-2);
+}
+
+.form {
+  display: flex;
+  gap: 8px;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  height: 46px;
+  padding: 0 14px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  font-size: 16px; /* меньше 16px — iOS зумит страницу при фокусе */
+  transition: border-color 200ms;
+}
+
+.input:focus {
+  border-color: rgb(var(--acc-rgb) / 0.6);
+}
+
+.input[data-invalid] {
+  border-color: rgb(var(--red-rgb) / 0.6);
+}
+
+.hint {
+  display: block;
+  font-size: 12px;
+  color: var(--text-3);
+  line-height: 1.4;
+}
+
+.error {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgb(var(--red-rgb));
+}
+
+.list {
+  display: grid;
+  gap: 6px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 6px 6px 10px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.rowText {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.del {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  color: var(--text-3);
+}
+
+.link {
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  color: var(--text-2);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

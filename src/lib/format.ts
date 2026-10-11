@@ -75,3 +75,16 @@ export const plural = (n: number, forms: [string, string, string]) => {
 
 export const cx = (...classes: (string | false | null | undefined)[]) =>
   classes.filter(Boolean).join(" ");
+
+/** Ввод цены в игровом формате: «4,5кк», «300к», «1 200 000», «2kk» → число (или null). */
+export function parseGamePrice(input: string): number | null {
+  const m = input
+    .toLowerCase()
+    .replace(/[\s ₽]/g, "")
+    .replace(",", ".")
+    .match(/^(\d+(?:\.\d+)?)(кк|kk|к|k|м|m)?$/);
+  if (!m) return null;
+  const mult = m[2] === "к" || m[2] === "k" ? 1_000 : m[2] ? 1_000_000 : 1;
+  const value = Math.round(Number(m[1]) * mult);
+  return value > 0 && value <= 2_000_000_000 ? value : null;
+}

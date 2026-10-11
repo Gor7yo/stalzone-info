@@ -8,6 +8,8 @@
  * поэтому компоненты могут вызывать их без проверок.
  */
 
+import { useEffect, useState } from "react";
+
 type Sdk = typeof import("@telegram-apps/sdk-react");
 
 let sdk: Sdk | null = null;
@@ -64,6 +66,19 @@ export function initTelegram(): Promise<void> {
 }
 
 export const isTelegram = () => sdk !== null;
+
+/** true, когда приложение открыто в Telegram и SDK готов (в браузере — всегда false). */
+export function useIsTelegram() {
+  const [ready, setReady] = useState(isTelegram);
+  useEffect(() => {
+    let alive = true;
+    initTelegram().then(() => alive && setReady(isTelegram()));
+    return () => {
+      alive = false;
+    };
+  }, []);
+  return ready;
+}
 
 type Impact = "light" | "medium" | "heavy" | "rigid" | "soft";
 
@@ -165,3 +180,30 @@ export const cloud = {
     }
   },
 };
+
+// ---------- алерты в боте ----------
+
+/** Подписанная Telegram строка initData — по ней бэкенд узнаёт пользователя. Вне Telegram — null. */
+export function initDataRaw(): string | null {
+  if (!sdk) return null;
+  try {
+    return sdk.retrieveRawInitData() || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Бот может писать пользователю, только если тот разрешил.
+ * Уже разрешено (или нажимал /start) — true; иначе показываем системный запрос Telegram.
+ */
+export async function ensureWriteAccess(): Promise<boolean> {
+  if (!sdk) return false;
+  try {
+    if (sdk.retrieveLaunchParams().tgWebAppData?.user?.allows_write_to_pm) return true;
+    if (!sdk.requestWriteAccess.isAvailable()) return true;
+    return (await sdk.requestWriteAccess()) === "allowed";
+  } catch {
+    return false;
+  }
+}

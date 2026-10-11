@@ -9,7 +9,7 @@ export interface Clan {
   name: string;
   tag: string;
   level: number;
-  levelPoint: number;
+  levelPoints: number;
   registrationTime: string;
   alliance?: string;
   description: string;

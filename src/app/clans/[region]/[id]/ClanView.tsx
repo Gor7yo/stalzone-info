@@ -85,7 +85,7 @@ export function ClanView({ region, id }: { region: Region; id: string }) {
 
       <section className={`${styles.stats} stagger`}>
         <StatTile label="Бойцов" tone="acc" value={formatNumber(clan.memberCount)} />
-        <StatTile label="Очки уровня" value={formatNumber(clan.levelPoint)} />
+        <StatTile label="Очки уровня" value={formatNumber(clan.levelPoints)} />
         <StatTile
           label="Основан"
           value={clan.registrationTime ? formatShortDate(clan.registrationTime) : "—"}

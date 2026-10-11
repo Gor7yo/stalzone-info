@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { BarterSection } from "@/components/Barter/Barter";
+import { Icon } from "@/components/Icon";
+import { PriceAlertPanel } from "@/components/PriceAlert/PriceAlertPanel";
 import { PriceChart } from "@/components/PriceChart/PriceChart";
 import { LotFilters, type DealFilter } from "@/components/LotFilters/LotFilters";
 import { Tilt } from "@/components/Tilt/Tilt";
@@ -34,10 +36,12 @@ import {
   type Sale,
   type SortOrder,
 } from "@/features/auction";
+import { useAlerts } from "@/features/alerts";
 import { useBarter } from "@/features/barter";
 import { categoryLabel, rarityOf, useItem } from "@/features/items";
 import { formatCompact, formatDuration, formatNumber, formatPrice, formatRelative, plural } from "@/lib/format";
 import { actions, useApp } from "@/lib/store";
+import { haptic } from "@/lib/telegram";
 import { useNow } from "@/lib/useNow";
 import styles from "./item.module.css";
 
@@ -53,6 +57,9 @@ export function ItemView({ id }: { id: string }) {
   const { item, isLoading: itemLoading } = useItem(id);
 
   const [tab, setTab] = useState<"lots" | "history">("lots");
+  const [alertOpen, setAlertOpen] = useState(false);
+  const alerts = useAlerts();
+  const hasAlert = alerts.data?.price.some((a) => a.itemId === id) ?? false;
   const [sortKey, setSortKey] = useState("cheap");
   const sort = SORTS.find((s) => s.value === sortKey)!;
 
@@ -63,7 +70,9 @@ export function ItemView({ id }: { id: string }) {
   // у артефактов и модулей у каждого лота своё качество — цены разных качеств несравнимы
   const qualityItem = item?.group === "artefact" || item?.group === "weapon_modules";
   // фильтр «клетки» карты цен: качество × ступень заточки
-  const [filter, setFilter] = useState<LotFilter>(ALL);
+  // артефакт по умолчанию открывается на «Обычном»: без фильтра график — «пила» из смеси качеств
+  const [userFilter, setFilter] = useState<LotFilter | null>(null);
+  const filter = userFilter ?? (item?.group === "artefact" ? { quality: 0, upgrade: null } : ALL);
   const [dealFilter, setDealFilter] = useState<DealFilter>("all");
   const filtered = filter.quality !== null || filter.upgrade !== null;
   // у артефакта без выбранного качества медиана и тренд смешивают дешёвые и дорогие варианты
@@ -116,6 +125,21 @@ export function ItemView({ id }: { id: string }) {
       <div className={styles.toolbar}>
         <RegionSwitch />
         <div className="row" style={{ gap: 8 }}>
+          {tradable && (
+            <button
+              type="button"
+              className={`icon-btn ${styles.bell}`}
+              data-active={hasAlert || alertOpen || undefined}
+              aria-pressed={alertOpen}
+              aria-label="Уведомить о цене"
+              onClick={() => {
+                haptic.tap();
+                setAlertOpen((v) => !v);
+              }}
+            >
+              <Icon name="bell" size={19} filled={hasAlert} />
+            </button>
+          )}
           <ShareButton text={`${item?.name ?? "Предмет"} — цены на рынке STALCRAFT`} />
           <FavButton active={isFav} onToggle={() => actions.toggleFavItem(id)} />
         </div>
@@ -145,6 +169,17 @@ export function ItemView({ id }: { id: string }) {
           {item?.nameEn && <span className="dim" style={{ fontSize: 12, fontWeight: 600 }}>{item.nameEn}</span>}
         </div>
       </Tilt>
+
+      {tradable && alertOpen && (
+        <PriceAlertPanel
+          itemId={id}
+          itemName={item?.name ?? id}
+          region={region}
+          filter={filter}
+          bestPrice={bestPrice}
+          median={stats?.median}
+        />
+      )}
 
       {tradable && (
         <>

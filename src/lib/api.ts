@@ -23,9 +23,13 @@ export async function api<T>(path: string, params: Params = {}, init?: RequestIn
   });
 
   if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as { message?: string | string[] } | null;
+    const message = Array.isArray(body?.message) ? body.message[0] : body?.message;
+    if (message) throw new ApiError(response.status, message);
     throw new ApiError(response.status, response.statusText || `HTTP ${response.status}`);
   }
 
+  if (response.status === 204) return undefined as T;
   return response.json() as Promise<T>;
 }
 

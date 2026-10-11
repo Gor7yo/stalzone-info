@@ -189,3 +189,14 @@
   border-color: transparent;
   box-shadow: 0 0 12px rgb(var(--acc-rgb) / 0.45);
 }
+
+/* колокольчик алерта цены */
+.bell {
+  color: var(--text-2);
+}
+
+.bell[data-active] {
+  color: var(--acc);
+  background: rgb(var(--acc-rgb) / 0.12);
+  border-color: rgb(var(--acc-rgb) / 0.3);
+}
