@@ -60,8 +60,11 @@ export function ShareButton({ text }: { text: string }) {
   );
 }
 
-/** Обновить данные: крутится, пока идёт запрос, потом 3 с перезарядки (кольцо по кругу). */
-export function RefreshButton({ onRefresh, cooldownMs = 3000 }: { onRefresh: () => Promise<unknown>; cooldownMs?: number }) {
+/**
+ * Обновить данные: крутится, пока идёт запрос; перезарядка (кольцо по кругу)
+ * начинается только когда пришёл ответ — 5 с по умолчанию.
+ */
+export function RefreshButton({ onRefresh, cooldownMs = 5000 }: { onRefresh: () => Promise<unknown>; cooldownMs?: number }) {
   const [busy, setBusy] = useState(false);
   const [cooling, setCooling] = useState(false);
 
@@ -77,12 +80,13 @@ export function RefreshButton({ onRefresh, cooldownMs = 3000 }: { onRefresh: () 
       onClick={async () => {
         haptic.tap();
         setBusy(true);
-        setCooling(true);
-        setTimeout(() => setCooling(false), cooldownMs);
         try {
           await onRefresh();
         } finally {
+          // отсчёт — с момента ответа сервера (и при ошибке тоже, чтобы не долбить API)
           setBusy(false);
+          setCooling(true);
+          setTimeout(() => setCooling(false), cooldownMs);
         }
       }}
     >

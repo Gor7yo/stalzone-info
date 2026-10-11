@@ -1,0 +1,365 @@
+/* ---------- превью для бесплатной версии: размытые карточки ---------- */
+
+.preview {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  filter: blur(3px);
+  opacity: 0.55;
+  pointer-events: none;
+  user-select: none;
+}
+
+.previewCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 18px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  font-size: 18px;
+}
+
+/* ---------- сводка ---------- */
+
+.hero {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background:
+    radial-gradient(70% 140% at 0% 0%, rgb(78 224 138 / 0.16), transparent 70%),
+    repeating-linear-gradient(135deg, transparent 0 12px, rgb(255 255 255 / 0.015) 12px 13px);
+}
+
+.heroMain {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.heroLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--green);
+}
+
+.heroValue {
+  font-size: clamp(28px, 9vw, 38px);
+  font-weight: 700;
+  line-height: 1.05;
+  color: var(--green);
+}
+
+.heroStats {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+.heroStats strong {
+  color: var(--text);
+}
+
+/* ---------- сортировка и фильтры ---------- */
+
+.toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 14px;
+}
+
+.toolbar > :first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.filterBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: background 200ms;
+}
+
+.filterBtn[aria-expanded="true"] {
+  background: var(--surface-2);
+  border-color: var(--line-2);
+}
+
+.badge {
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--acc);
+  color: var(--acc-ink);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.panel {
+  display: grid;
+  gap: 14px;
+  margin-top: 8px;
+  padding: 14px;
+  animation: rise 260ms var(--ease) both;
+}
+
+.filter {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.filterLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.resetBtn {
+  justify-self: start;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-2);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ---------- флип-алерт ---------- */
+
+.alert {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  margin-top: 10px;
+  padding: 12px 14px;
+}
+
+.alertIcon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  color: var(--text-2);
+  flex: none;
+}
+
+.alert[data-on] .alertIcon {
+  background: rgb(78 224 138 / 0.14);
+  color: var(--green);
+}
+
+.alertBody {
+  flex: 1;
+  min-width: 180px;
+  display: grid;
+  gap: 2px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.alertBody strong {
+  font-size: 14px;
+}
+
+.alertChanged {
+  color: var(--acc);
+}
+
+.alertError {
+  color: var(--red);
+}
+
+.alertActions {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+/* ---------- карточка флипа ---------- */
+
+.card {
+  position: relative;
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px 12px 16px;
+  border-radius: 18px;
+  background:
+    linear-gradient(100deg, color-mix(in srgb, var(--q) 9%, transparent), transparent 55%),
+    var(--surface);
+  border: 1px solid var(--line);
+  overflow: hidden;
+  animation: rise 360ms var(--ease) both;
+  transition:
+    transform 160ms var(--ease),
+    border-color 200ms;
+}
+
+/* полоска цвета качества слева */
+.card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 14px;
+  bottom: 14px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--q);
+}
+
+.card:active {
+  transform: scale(0.985);
+}
+
+@media (hover: hover) {
+  .card:hover {
+    border-color: var(--line-2);
+  }
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cardTitle {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  font-size: 15px;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.tag,
+.qualityTag {
+  padding: 2px 7px;
+  border-radius: 7px;
+  background: rgb(255 255 255 / 0.06);
+  color: var(--text-2);
+}
+
+.qualityTag {
+  background: color-mix(in srgb, var(--q) 16%, transparent);
+  color: var(--q);
+}
+
+.conf {
+  font-size: 11px;
+}
+
+.profit {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  white-space: nowrap;
+}
+
+.profit strong {
+  font-size: 18px;
+  color: var(--green);
+}
+
+.profit span {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-3);
+}
+
+/* выкуп (серым) против выручки (зелёным): чем больше зелёного — тем жирнее флип */
+.bar {
+  height: 5px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, rgb(78 224 138 / 0.5), var(--green));
+  overflow: hidden;
+}
+
+.bar span {
+  display: block;
+  height: 100%;
+  background: #3a3d39;
+  border-right: 2px solid var(--bg);
+}
+
+.prices {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.prices small {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3);
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3);
+}
+
+.more {
+  color: var(--acc);
+}
+
+.note {
+  margin-top: 18px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+}

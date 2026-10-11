@@ -1,0 +1,92 @@
+.hero {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  padding: 22px 20px;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background:
+    radial-gradient(90% 150% at 100% 0%, rgb(255 201 74 / 0.22), transparent 65%),
+    radial-gradient(60% 120% at 0% 100%, rgb(255 122 47 / 0.12), transparent 70%),
+    repeating-linear-gradient(135deg, transparent 0 12px, rgb(255 255 255 / 0.015) 12px 13px);
+}
+
+.heroBadge {
+  transform: scale(1.3);
+  transform-origin: left center;
+}
+
+.heroTitle {
+  font-family: var(--font-display);
+  font-size: clamp(24px, 7vw, 32px);
+  line-height: 1.1;
+  background: linear-gradient(135deg, #ffe08a, #ff9f3a);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.heroText {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.featureIcon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: rgb(255 201 74 / 0.12);
+  color: #ffc94a;
+  flex: none;
+}
+
+.featureBody {
+  display: grid;
+  gap: 2px;
+}
+
+.featureBody strong {
+  font-size: 14px;
+}
+
+.featureBody span {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--text-2);
+}
+
+.buy {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.free {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+}

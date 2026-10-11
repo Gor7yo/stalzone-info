@@ -40,6 +40,14 @@ export type SortOrder = "asc" | "desc";
 
 const PAGE = 20;
 
+/**
+ * «Обновить»: сервер отдаёт лоты и продажи из своего снимка (до минуты давности).
+ * После нажатия несколько секунд просим снимок посвежее — `fresh=true`.
+ */
+const freshUntil = new Map<string, number>();
+export const requestFresh = (region: Region, item: string) => freshUntil.set(`${region}:${item}`, Date.now() + 3_000);
+const fresh = (region: Region, item: string) => ((freshUntil.get(`${region}:${item}`) ?? 0) > Date.now() ? true : undefined);
+
 /** pageSize: для предметов с качеством грузим сразу 200 лотов, чтобы фильтр по качеству работал по всему рынку. */
 export function useLots(region: Region, item: string, sort: LotSort, order: SortOrder, enabled = true, pageSize = PAGE) {
   return useInfiniteQuery({
@@ -54,6 +62,7 @@ export function useLots(region: Region, item: string, sort: LotSort, order: Sort
         offset: pageParam,
         sort,
         order,
+        fresh: fresh(region, item),
       }),
     initialPageParam: 0,
     getNextPageParam: (last, pages) => {
@@ -77,6 +86,9 @@ export const bestPriceQuery = (region: Region, item: string) => ({
       offset: 0,
       sort: "buyout_price",
       order: "asc",
+      // для цены в списках годится снимок сервера до 10 минут давности (не тратит квоту EXBO)
+      maxAge: fresh(region, item) ? undefined : 600,
+      fresh: fresh(region, item),
     });
     const prices = res.lots.map(lotUnitPrice).filter((p) => p > 0);
     return { price: prices.length ? Math.min(...prices) : null, total: res.total };
@@ -89,39 +101,49 @@ export const useBestPrice = (region: Region, item: string, enabled = true) =>
 
 // ---------- история за период ----------
 
-export type HistoryPeriod = "day" | "week" | "month" | "year";
+/** day / week — периоды графика (Pro); month — список продаж бесплатной версии. */
+export type HistoryPeriod = "day" | "week" | "month";
 
 const HOUR = 3_600_000;
 
-/** bucketMs — шаг графика: на длинном периоде рисуем медиану по корзинам, а не тысячи точек. */
-export const PERIODS: { value: HistoryPeriod; label: string; days: number; title: string; bucketMs: number }[] = [
+type PeriodInfo = { value: HistoryPeriod; label: string; days: number; title: string; bucketMs: number };
+
+/** Периоды графика (переключатель). bucketMs — шаг: на длинном периоде рисуем медиану по корзинам, а не тысячи точек. */
+export const PERIODS: PeriodInfo[] = [
   { value: "day", label: "День", days: 1, title: "за сутки", bucketMs: 0 },
   { value: "week", label: "Неделя", days: 7, title: "за неделю", bucketMs: 6 * HOUR },
-  { value: "month", label: "Месяц", days: 30, title: "за месяц", bucketMs: 24 * HOUR },
-  { value: "year", label: "Год", days: 365, title: "за год", bucketMs: 7 * 24 * HOUR },
 ];
 
-export const periodInfo = (p: HistoryPeriod) => PERIODS.find((x) => x.value === p)!;
+/** Бесплатная версия: без графика, история продаж за месяц. */
+export const FREE_PERIOD: PeriodInfo = { value: "month", label: "Месяц", days: 30, title: "за месяц", bucketMs: 24 * HOUR };
+
+export const periodInfo = (p: HistoryPeriod) => (p === "month" ? FREE_PERIOD : PERIODS.find((x) => x.value === p)!);
 
 /**
  * Точки графика → медиана цены в каждой корзине времени (bucketMs = 0 — без изменений).
  * Так выборка за год не рисуется «пилой» с прямыми через пустые промежутки.
  */
-export function bucketPoints(points: { t: number; price: number }[], bucketMs: number) {
+export function bucketPoints(points: ChartPoint[], bucketMs: number): ChartPoint[] {
   if (!bucketMs) return points;
-  const buckets = new Map<number, number[]>();
+  const buckets = new Map<number, ChartPoint[]>();
   for (const p of points) {
     const key = Math.floor(p.t / bucketMs);
     const list = buckets.get(key);
-    if (list) list.push(p.price);
-    else buckets.set(key, [p.price]);
+    if (list) list.push(p);
+    else buckets.set(key, [p]);
   }
   return [...buckets.entries()]
     .sort(([a], [b]) => a - b)
-    .map(([key, prices]) => ({
-      t: key * bucketMs + bucketMs / 2,
-      price: quantile(prices.sort((a, b) => a - b), 0.5),
-    }));
+    .map(([key, list]) =>
+      // одна сделка в корзине — оставляем её как есть (с качеством и заточкой для подсказки)
+      list.length === 1
+        ? list[0]
+        : {
+            t: key * bucketMs + bucketMs / 2,
+            price: quantile(list.map((p) => p.price).sort((a, b) => a - b), 0.5),
+            count: list.length,
+          },
+    );
 }
 
 export interface PeriodHistoryResponse extends HistoryResponse {
@@ -132,15 +154,17 @@ export interface PeriodHistoryResponse extends HistoryResponse {
 }
 
 /**
- * История продаж за период одним запросом: страницы EXBO листает и кеширует сервер.
+ * История продаж за период одним запросом: сервер берёт её из своей базы сделок
+ * (пока база не накопила историю предмета — листает страницы EXBO).
  * Чем длиннее период, тем дольше ответ живёт в кеше.
  */
 export function useHistory(region: Region, item: string, period: HistoryPeriod, enabled = true) {
   return useQuery({
     enabled,
     queryKey: ["history", region, item, period],
-    queryFn: () => api<PeriodHistoryResponse>("/api/auction/history/period", { region, item, period }),
-    staleTime: period === "day" ? 60_000 : period === "year" ? 30 * 60_000 : 5 * 60_000,
+    queryFn: () =>
+      api<PeriodHistoryResponse>("/api/auction/history/period", { region, item, period, fresh: fresh(region, item) }),
+    staleTime: period === "day" ? 60_000 : 5 * 60_000,
     // при смене периода старый график остаётся на экране, пока грузится новый
     placeholderData: keepPreviousData,
   });
@@ -157,7 +181,19 @@ export interface PriceStats {
   /** изменение медианы новой половины продаж относительно старой, % */
   trend: number | null;
   sales24h: number;
-  points: { t: number; price: number }[];
+  points: ChartPoint[];
+}
+
+/**
+ * Точка графика. У сделки — её качество и заточка (для подсказки «Редкий +15»),
+ * у корзины (медиана за 6 ч / день / неделю) — сколько сделок в неё вошло.
+ */
+export interface ChartPoint {
+  t: number;
+  price: number;
+  quality?: number | null;
+  upgrade?: number;
+  count?: number;
 }
 
 const quantile = (sorted: number[], q: number) => {
@@ -196,7 +232,14 @@ export function priceStats(sales: Sale[], filter: LotFilter = ALL, days = STATS_
   if (valid.length < MIN_SALES) return null;
 
   const points = valid
-    .map((s) => ({ t: new Date(s.time).getTime(), price: unit(s) }))
+    .map(
+      (s): ChartPoint => ({
+        t: new Date(s.time).getTime(),
+        price: unit(s),
+        quality: qualityOf(s.additional),
+        upgrade: upgradeOf(s.additional),
+      }),
+    )
     .sort((a, b) => a.t - b.t);
 
   const sorted = points.map((p) => p.price).sort((a, b) => a - b);

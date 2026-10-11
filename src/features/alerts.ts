@@ -26,10 +26,28 @@ export interface PriceAlert {
   createdAt: string;
 }
 
+/** Флип-алерт: бот присылает новые выгодные лоты из ленты флиппера (один на регион). */
+export interface FlipAlert {
+  id: string;
+  region: Region;
+  minProfit: number;
+  minPct: number;
+  minConfidence: "low" | "medium" | "high";
+  /** 0 — любой */
+  maxBudget: number;
+  /** пусто — любые категории */
+  groups: string[];
+  lastNotifiedAt: string | null;
+  createdAt: string;
+}
+
+export type FlipAlertInput = Pick<FlipAlert, "region" | "minProfit" | "minConfidence" | "maxBudget" | "groups">;
+
 export interface AlertsOverview {
   emission: Region[];
   blocked: boolean;
   price: PriceAlert[];
+  flip: FlipAlert[];
 }
 
 export interface NewPriceAlert {
@@ -47,7 +65,7 @@ const KEY = ["alerts"] as const;
  * Запрос от имени пользователя Telegram: в мини-приложении — подписанный initData,
  * в браузере — токен сессии, полученный при привязке через бота.
  */
-async function authed<T>(path: string, method = "GET", body?: unknown) {
+export async function authed<T>(path: string, method = "GET", body?: unknown) {
   const initData = initDataRaw();
   const session = initData ? null : tgSession.get();
   if (!initData && !session) throw new Error("Сначала привяжите Telegram");
@@ -111,6 +129,31 @@ export function useDeletePriceAlert() {
     mutationFn: (id: string) => authed<void>(`/api/alerts/price/${encodeURIComponent(id)}`, "DELETE"),
     onSuccess: (_, id) =>
       qc.setQueryData<AlertsOverview>(KEY, (old) => old && { ...old, price: old.price.filter((a) => a.id !== id) }),
+  });
+}
+
+/** Включить флип-алерт региона или обновить его условия. */
+export function useSetFlipAlert() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: FlipAlertInput) => {
+      await withWriteAccess();
+      return authed<FlipAlert>("/api/alerts/flip", "PUT", input);
+    },
+    onSuccess: (saved) =>
+      qc.setQueryData<AlertsOverview>(
+        KEY,
+        (old) => old && { ...old, flip: [...(old.flip ?? []).filter((f) => f.region !== saved.region), saved] },
+      ),
+  });
+}
+
+export function useDeleteFlipAlert() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (region: Region) => authed<void>(`/api/alerts/flip/${region}`, "DELETE"),
+    onSuccess: (_, region) =>
+      qc.setQueryData<AlertsOverview>(KEY, (old) => old && { ...old, flip: (old.flip ?? []).filter((f) => f.region !== region) }),
   });
 }
 

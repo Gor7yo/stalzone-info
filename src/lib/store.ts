@@ -36,6 +36,18 @@ export interface AppState {
   loot: { id: string; amount: number }[];
   /** план крафта: что хотим получить, каким рецептом/вариантом и сколько */
   plan: PlanEntry[];
+  /** фильтры флиппера */
+  flips: FlipSettings;
+}
+
+export interface FlipSettings {
+  sort: "profit" | "pct" | "fast";
+  minConfidence: "low" | "medium" | "high";
+  minProfit: number;
+  /** 0 — любой */
+  budget: number;
+  /** категория предметов; null — все */
+  group: string | null;
 }
 
 export interface PlanEntry {
@@ -57,6 +69,7 @@ const initial: AppState = {
   recentCharacters: [],
   loot: [],
   plan: [],
+  flips: { sort: "profit", minConfidence: "medium", minProfit: 50_000, budget: 0, group: null },
 };
 
 function load(): AppState {
@@ -179,6 +192,8 @@ export const actions = {
         .filter((p) => p.qty > 0),
     })),
   clearPlan: () => setState({ plan: [] }),
+
+  setFlips: (patch: Partial<FlipSettings>) => setState((s) => ({ flips: { ...s.flips, ...patch } })),
 
   clearRecentItems: () => setState({ recentItems: [] }),
   clearRecentCharacters: () => setState({ recentCharacters: [] }),

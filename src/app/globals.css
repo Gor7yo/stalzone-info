@@ -335,6 +335,38 @@ img {
   contain-intrinsic-size: auto 72px;
 }
 
+/* сетка плиток предметов: на телефоне две колонки, шире — сколько влезет */
+.item-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 6px;
+}
+
+.item-tile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 6px 10px 6px 6px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  transition:
+    transform 180ms var(--ease),
+    background 200ms;
+}
+
+.item-tile:active {
+  transform: scale(0.97);
+  background: var(--surface-2);
+}
+
+@media (hover: hover) {
+  .item-tile:hover {
+    background: var(--surface-2);
+  }
+}
+
 .list-row:active {
   transform: scale(0.985);
   background: var(--surface-2);

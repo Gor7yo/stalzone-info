@@ -6,7 +6,10 @@ import { Icon } from "@/components/Icon";
 import { PriceAlertPanel } from "@/components/PriceAlert/PriceAlertPanel";
 import { PriceChart } from "@/components/PriceChart/PriceChart";
 import { SwipePager } from "@/components/Pager/SwipePager";
-import { LotFilters, type DealFilter } from "@/components/LotFilters/LotFilters";
+import {
+  LotFilters,
+  type DealFilter,
+} from "@/components/LotFilters/LotFilters";
 import { Tilt } from "@/components/Tilt/Tilt";
 import { FavButton, RefreshButton, ShareButton } from "@/components/ui/Buttons";
 import { ItemIcon } from "@/components/ui/ItemIcon";
@@ -34,6 +37,7 @@ import {
   periodInfo,
   type HistoryPeriod,
   qualityOf,
+  requestFresh,
   useBestPrice,
   useHistory,
   useLots,
@@ -44,17 +48,31 @@ import {
   type Sale,
   type SortOrder,
 } from "@/features/auction";
+import { ProTeaser } from "@/components/Pro/Pro";
 import { useAlerts } from "@/features/alerts";
+import { usePro } from "@/features/pro";
 import { useBarter } from "@/features/barter";
 import { categoryLabel, rarityOf, useItem } from "@/features/items";
-import { formatCompact, formatDuration, formatNumber, formatPrice, formatRelative, plural } from "@/lib/format";
+import {
+  formatCompact,
+  formatDuration,
+  formatNumber,
+  formatPrice,
+  formatRelative,
+  plural,
+} from "@/lib/format";
 import { actions, useApp } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
 import { useNow } from "@/lib/useNow";
 import { useUndoable } from "@/lib/useUndoable";
 import styles from "./item.module.css";
 
-const SORTS: { value: string; label: string; sort: LotSort; order: SortOrder }[] = [
+const SORTS: {
+  value: string;
+  label: string;
+  sort: LotSort;
+  order: SortOrder;
+}[] = [
   { value: "cheap", label: "Дешевле", sort: "buyout_price", order: "asc" },
   { value: "ending", label: "Скоро конец", sort: "time_left", order: "asc" },
   { value: "new", label: "Новые", sort: "time_created", order: "desc" },
@@ -62,21 +80,47 @@ const SORTS: { value: string; label: string; sort: LotSort; order: SortOrder }[]
 
 const LOTS_PAGE = 10;
 
-export function ItemView({ id }: { id: string }) {
+/**
+ * quality / upgrade — открыть сразу с фильтром по ним (переход из флиппера);
+ * null — без фильтра (у артефакта по умолчанию «Обычный»).
+ */
+export function ItemView({
+  id,
+  quality = null,
+  upgrade = null,
+}: {
+  id: string;
+  quality?: number | null;
+  upgrade?: number | null;
+}) {
   const region = useApp((s) => s.region);
   const isFav = useApp((s) => s.favItems.includes(id));
   const { item, isLoading: itemLoading } = useItem(id);
+
+  const linked: LotFilter | null =
+    quality !== null || upgrade !== null
+      ? {
+          quality: null,
+          qualities: quality !== null ? [quality] : null,
+          upgrade: null,
+          upgrades: upgrade !== null ? [upgrade] : null,
+        }
+      : null;
 
   // всё, что меняет пользователь на экране, — с историей: кнопка «Отменить» / Ctrl+Z
   const view = useUndoable({
     tab: "lots" as "lots" | "history",
     sortKey: "cheap",
-    filter: null as LotFilter | null,
+    filter: linked,
     deal: "all" as DealFilter,
     page: 0,
-    period: "month" as HistoryPeriod,
+    period: "week" as HistoryPeriod,
   });
-  const { tab, sortKey, filter: userFilter, deal: dealFilter, period } = view.value;
+  const { tab, sortKey, filter: userFilter } = view.value;
+  // бесплатная версия: без графика (история продаж за месяц), без фильтров качества, заточки и «выгодно / дорого»
+  const { isPro } = usePro();
+  const period: HistoryPeriod = isPro ? view.value.period : "month";
+  const dealFilter: DealFilter = isPro ? view.value.deal : "all";
   const periodMeta = periodInfo(period);
   const [alertOpen, setAlertOpen] = useState(false);
   const alerts = useAlerts();
@@ -88,79 +132,141 @@ export function ItemView({ id }: { id: string }) {
   const tradable = barter ? !barter.farm.has(id) : false;
 
   // у артефактов и модулей у каждого лота своё качество — цены разных качеств несравнимы
-  const qualityItem = item?.group === "artefact" || item?.group === "weapon_modules";
+  const qualityItem =
+    item?.group === "artefact" || item?.group === "weapon_modules";
   // фильтр «клетки» карты цен: качество × ступень заточки
   // артефакт по умолчанию открывается на «Обычном»: без фильтра график — «пила» из смеси качеств
-  const filter = userFilter ?? (item?.group === "artefact" ? { quality: null, qualities: [0], upgrade: null } : ALL);
+  const filter = !isPro
+    ? ALL
+    : (userFilter ??
+      (item?.group === "artefact"
+        ? { quality: null, qualities: [0], upgrade: null }
+        : ALL));
   const qualities = pickedQualities(filter);
   const filtered = qualities.length > 0 || hasUpgradeFilter(filter);
   // у артефакта без одного выбранного качества медиана и тренд смешивают дешёвые и дорогие варианты
   const mixed = qualityItem && qualities.length !== 1;
 
   const history = useHistory(region, id, period, tradable);
-  const lots = useLots(region, id, sort.sort, sort.order, tradable, qualityItem ? 200 : undefined);
+  const lots = useLots(
+    region,
+    id,
+    sort.sort,
+    sort.order,
+    tradable,
+    qualityItem ? 200 : undefined,
+  );
   // артефакт с сортировкой «Дешевле» и так грузит 200 самых дешёвых лотов — лучшая цена
   // считается из них, отдельный запрос не нужен
-  const bestFromLots = qualityItem && sort.sort === "buyout_price" && sort.order === "asc";
+  const bestFromLots =
+    qualityItem && sort.sort === "buyout_price" && sort.order === "asc";
   const bestQuery = useBestPrice(region, id, tradable && !bestFromLots);
   const lotsBest = useMemo(() => {
     if (!bestFromLots || !lots.data) return undefined;
-    const prices = lots.data.pages.flatMap((p) => p.lots).map(lotUnitPrice).filter((p) => p > 0);
-    return { price: prices.length ? Math.min(...prices) : null, total: lots.data.pages[0]?.total ?? 0 };
+    const prices = lots.data.pages
+      .flatMap((p) => p.lots)
+      .map(lotUnitPrice)
+      .filter((p) => p > 0);
+    return {
+      price: prices.length ? Math.min(...prices) : null,
+      total: lots.data.pages[0]?.total ?? 0,
+    };
   }, [bestFromLots, lots.data]);
-  const best = bestFromLots ? { data: lotsBest, isLoading: lots.isLoading, refetch: lots.refetch } : bestQuery;
+  const best = bestFromLots
+    ? { data: lotsBest, isLoading: lots.isLoading, refetch: lots.refetch }
+    : bestQuery;
 
   const sales = history.data?.prices ?? [];
-  const stats = history.data ? priceStats(sales, filter, periodMeta.days) : null;
+  const stats = history.data
+    ? priceStats(sales, filter, periodMeta.days)
+    : null;
 
   useEffect(() => actions.pushRecentItem(id), [id]);
 
   const rarity = item ? rarityOf(item.rarity) : null;
   // у артефакта подсветка карточки — цвет выбранного качества (из нескольких — самого высокого)
-  const pickedQualityList = qualityItem ? qualities.map((q) => QUALITY[q]).filter(Boolean) : [];
-  const accent = pickedQualityList[pickedQualityList.length - 1]?.color ?? rarity?.color ?? "var(--text-3)";
+  const pickedQualityList = qualityItem
+    ? qualities.map((q) => QUALITY[q]).filter(Boolean)
+    : [];
+  const accent =
+    pickedQualityList[pickedQualityList.length - 1]?.color ??
+    rarity?.color ??
+    "var(--text-3)";
   const allLots = lots.data?.pages.flatMap((p) => p.lots) ?? [];
   const totalLots = lots.data?.pages[0]?.total ?? 0;
-  const hasQuality = qualityItem || allLots.some((l) => qualityOf(l.additional) !== null);
+  const hasQuality =
+    qualityItem || allLots.some((l) => qualityOf(l.additional) !== null);
 
   // лот сравниваем с такими же по качеству и заточке; не с чем сравнить — без оценки
   const medians = new Map<string, number | undefined>();
   const lotMedian = (lot: Lot) => {
     if (!hasQuality) return stats?.median;
     const key = `${qualityOf(lot.additional)}:${upgradeOf(lot.additional)}`;
-    if (!medians.has(key)) medians.set(key, comparableMedian(sales, lot.additional));
+    if (!medians.has(key))
+      medians.set(key, comparableMedian(sales, lot.additional));
     return medians.get(key);
   };
 
-  const lotsInFilter = filtered ? allLots.filter((l) => matchesFilter(l.additional, filter)) : allLots;
+  const lotsInFilter = filtered
+    ? allLots.filter((l) => matchesFilter(l.additional, filter))
+    : allLots;
   const dealKind = (lot: Lot) => dealOf(lot, lotMedian(lot))?.kind;
   const isGood = (lot: Lot) => ["hot", "good"].includes(dealKind(lot) ?? "");
   const isBad = (lot: Lot) => dealKind(lot) === "high";
-  const dealCounts = { good: lotsInFilter.filter(isGood).length, bad: lotsInFilter.filter(isBad).length };
-  const lotsShown = dealFilter === "good" ? lotsInFilter.filter(isGood) : dealFilter === "bad" ? lotsInFilter.filter(isBad) : lotsInFilter;
+  const dealCounts = {
+    good: lotsInFilter.filter(isGood).length,
+    bad: lotsInFilter.filter(isBad).length,
+  };
+  const lotsShown =
+    dealFilter === "good"
+      ? lotsInFilter.filter(isGood)
+      : dealFilter === "bad"
+        ? lotsInFilter.filter(isBad)
+        : lotsInFilter;
   // пагинация лотов: по LOTS_PAGE на страницу, листается свайпом
   const narrowed = filtered || dealFilter !== "all";
-  const pages = Math.max(1, Math.ceil((narrowed ? lotsShown.length : Math.max(totalLots, lotsShown.length)) / LOTS_PAGE));
+  const pages = Math.max(
+    1,
+    Math.ceil(
+      (narrowed ? lotsShown.length : Math.max(totalLots, lotsShown.length)) /
+        LOTS_PAGE,
+    ),
+  );
   const page = Math.min(view.value.page, pages - 1);
   const pageLots = lotsShown.slice(page * LOTS_PAGE, (page + 1) * LOTS_PAGE);
   // без фильтра страниц столько, сколько лотов на рынке — недостающие догружаем
-  const needMore = !narrowed && pageLots.length < LOTS_PAGE && allLots.length < totalLots;
+  const needMore =
+    !narrowed && pageLots.length < LOTS_PAGE && allLots.length < totalLots;
   useEffect(() => {
-    if (needMore && lots.hasNextPage && !lots.isFetchingNextPage) lots.fetchNextPage();
+    if (needMore && lots.hasNextPage && !lots.isFetchingNextPage)
+      lots.fetchNextPage();
   }, [needMore, lots]);
 
-  const salesShown = filtered ? sales.filter((s) => matchesFilter(s.additional, filter)) : sales;
+  const salesShown = filtered
+    ? sales.filter((s) => matchesFilter(s.additional, filter))
+    : sales;
 
   // «лучшая цена» с фильтром считается по загруженным лотам этой клетки
-  const cellBest = filtered ? Math.min(...lotsInFilter.map(lotUnitPrice).filter((p) => p > 0)) : null;
-  const bestPrice = filtered ? (Number.isFinite(cellBest) ? cellBest : null) : best.data?.price;
+  const cellBest = filtered
+    ? Math.min(...lotsInFilter.map(lotUnitPrice).filter((p) => p > 0))
+    : null;
+  const bestPrice = filtered
+    ? Number.isFinite(cellBest)
+      ? cellBest
+      : null
+    : best.data?.price;
   const latest = lastSale(sales, filter);
   const filterLabel = [qualityLabel(filter), upgradeLabel(filter)]
     .filter(Boolean)
     .join(" ");
   // нет ни лотов, ни свежих сделок — предмет сейчас не торгуется (или вообще не продаётся)
-  const inactive = !lots.isLoading && !history.isLoading && !lots.isError && !history.isError && totalLots === 0 && !stats;
-
+  const inactive =
+    !lots.isLoading &&
+    !history.isLoading &&
+    !lots.isError &&
+    !history.isError &&
+    totalLots === 0 &&
+    !stats;
 
   return (
     <main className="page">
@@ -182,12 +288,21 @@ export function ItemView({ id }: { id: string }) {
               <Icon name="bell" size={19} filled={hasAlert} />
             </button>
           )}
-          <ShareButton text={`${item?.name ?? "Предмет"} — цены на рынке STALCRAFT`} />
-          <FavButton active={isFav} onToggle={() => actions.toggleFavItem(id)} />
+          <ShareButton
+            text={`${item?.name ?? "Предмет"} — цены на рынке STALCRAFT`}
+          />
+          <FavButton
+            active={isFav}
+            onToggle={() => actions.toggleFavItem(id)}
+          />
         </div>
       </div>
 
-      <Tilt className={`glass ${styles.hero}`} style={{ "--rarity": accent } as React.CSSProperties} max={8}>
+      <Tilt
+        className={`glass ${styles.hero}`}
+        style={{ "--rarity": accent } as React.CSSProperties}
+        max={8}
+      >
         <span className={`${styles.heroIcon} depth`}>
           <ItemIcon item={item} size={72} />
         </span>
@@ -214,7 +329,11 @@ export function ItemView({ id }: { id: string }) {
               <span className="pill dim">{categoryLabel(item.category)}</span>
             </div>
           )}
-          {item?.nameEn && <span className="dim" style={{ fontSize: 12, fontWeight: 600 }}>{item.nameEn}</span>}
+          {item?.nameEn && (
+            <span className="dim" style={{ fontSize: 12, fontWeight: 600 }}>
+              {item.nameEn}
+            </span>
+          )}
         </div>
       </Tilt>
 
@@ -231,7 +350,7 @@ export function ItemView({ id }: { id: string }) {
 
       {tradable && (
         <>
-          {hasQuality && allLots.length > 0 && (
+          {isPro && hasQuality && allLots.length > 0 && (
             <section style={{ marginTop: 14 }}>
               <LotFilters
                 lots={allLots}
@@ -276,63 +395,122 @@ export function ItemView({ id }: { id: string }) {
                 <StatTile
                   label={`Медиана · ${periodMeta.title}`}
                   value={history.isLoading ? "…" : formatPrice(stats?.median)}
-                  hint={mixed ? "смесь качеств — выбери качество" : stats ? `${formatCompact(stats.p25)} – ${formatCompact(stats.p75)}` : undefined}
+                  hint={
+                    mixed
+                      ? isPro
+                        ? "смесь качеств — выбери качество"
+                        : "все качества вместе"
+                      : stats
+                        ? `${formatCompact(stats.p25)} – ${formatCompact(stats.p75)}`
+                        : undefined
+                  }
                 />
                 <StatTile
                   label="Тренд"
-                  tone={stats?.trend == null ? undefined : stats.trend >= 0 ? "up" : "down"}
-                  value={stats?.trend == null ? "—" : `${stats.trend > 0 ? "+" : ""}${stats.trend.toFixed(1)}%`}
+                  tone={
+                    stats?.trend == null
+                      ? undefined
+                      : stats.trend >= 0
+                        ? "up"
+                        : "down"
+                  }
+                  value={
+                    stats?.trend == null
+                      ? "—"
+                      : `${stats.trend > 0 ? "+" : ""}${stats.trend.toFixed(1)}%`
+                  }
                   hint={mixed ? "по всем качествам" : "новые vs старые сделки"}
                 />
                 <StatTile
                   label="Сделок за 24ч"
                   value={stats ? formatNumber(stats.sales24h) : "—"}
-                  hint={stats ? `мин ${formatCompact(stats.min)} · макс ${formatCompact(stats.max)}` : undefined}
+                  hint={
+                    stats
+                      ? `мин ${formatCompact(stats.min)} · макс ${formatCompact(stats.max)}`
+                      : undefined
+                  }
                 />
               </section>
 
-              <section className="section">
-                <h2 className="section-title">
-                  История цены <small>за штуку</small>
-                </h2>
-                <div className={styles.periodBar}>
-                  <Segmented
-                    size="sm"
-                    label="Период истории"
-                    value={period}
-                    onChange={(p) => view.set({ period: p })}
-                    options={PERIODS.map((p) => ({ value: p.value, label: p.label }))}
-                  />
-                  {history.data?.sampled && (
-                    <span className={styles.sampled} title="Сделок за период слишком много — график и медиана по равномерной выборке">
-                      выборка · ≈{formatCompact(history.data.total)} сделок
-                    </span>
-                  )}
-                </div>
-                {history.isLoading ? (
-                  <div className="skeleton" style={{ height: 260, borderRadius: 22 }} />
-                ) : stats ? (
-                  <div style={{ opacity: history.isPlaceholderData ? 0.5 : 1, transition: "opacity 200ms" }}>
-                    <PriceChart points={bucketPoints(stats.points, periodMeta.bucketMs)} median={stats.median} />
+              {!isPro && (
+                <ProTeaser
+                  compact
+                  title="График цены"
+                  text={
+                    hasQuality
+                      ? "Динамика цены, фильтр по качеству и заточке, оценка лотов «выгодно / дорого»"
+                      : "Динамика цены за день и неделю, медиана и тренд по сделкам"
+                  }
+                />
+              )}
+
+              {isPro && (
+                <section className="section">
+                  <div className={styles.chartHead}>
+                    <h2 className="section-title">
+                      История цены <small>за штуку</small>
+                    </h2>
                   </div>
-                ) : (
-                  <EmptyState
-                    icon="market"
-                    title={`Мало сделок ${periodMeta.title}`}
-                    text={
-                      latest
-                        ? `Последняя продажа${filtered ? ` «${filterLabel}»` : ""} — ${formatRelative(latest.t)} за ${formatPrice(latest.price)}.`
-                        : "Продаж не было."
-                    }
-                  />
-                )}
-              </section>
+                  <div className={styles.periodBar}>
+                    <Segmented
+                      size="sm"
+                      label="Период истории"
+                      value={period}
+                      onChange={(p) => view.set({ period: p })}
+                      options={PERIODS.map((p) => ({
+                        value: p.value,
+                        label: p.label,
+                      }))}
+                    />
+                    {history.data?.sampled && (
+                      <span
+                        className={styles.sampled}
+                        title="Сделок за период слишком много — график и медиана по равномерной выборке"
+                      >
+                        выборка · ≈{formatCompact(history.data.total)} сделок
+                      </span>
+                    )}
+                  </div>
+                  {history.isLoading ? (
+                    <div
+                      className="skeleton"
+                      style={{ height: 260, borderRadius: 22 }}
+                    />
+                  ) : stats ? (
+                    <div
+                      style={{
+                        opacity: history.isPlaceholderData ? 0.5 : 1,
+                        transition: "opacity 200ms",
+                      }}
+                    >
+                      <PriceChart
+                        points={bucketPoints(stats.points, periodMeta.bucketMs)}
+                        median={stats.median}
+                      />
+                    </div>
+                  ) : (
+                    <EmptyState
+                      icon="market"
+                      title={`Мало сделок ${periodMeta.title}`}
+                      text={
+                        latest
+                          ? `Последняя продажа${filtered ? ` «${filterLabel}»` : ""} — ${formatRelative(latest.t)} за ${formatPrice(latest.price)}.`
+                          : "Продаж не было."
+                      }
+                    />
+                  )}
+                </section>
+              )}
             </>
           )}
         </>
       )}
 
-      <BarterSection itemId={id} region={region} marketPrice={best.data?.price} />
+      <BarterSection
+        itemId={id}
+        region={region}
+        marketPrice={best.data?.price}
+      />
 
       {tradable && !(inactive && !latest) && (
         <>
@@ -346,7 +524,10 @@ export function ItemView({ id }: { id: string }) {
                   value: "lots",
                   label: `Лоты${filtered || dealFilter !== "all" ? ` · ${formatNumber(lotsShown.length)}` : totalLots ? ` · ${formatNumber(totalLots)}` : ""}`,
                 },
-                { value: "history", label: "Продажи" },
+                {
+                  value: "history",
+                  label: isPro ? "Продажи" : "Продажи · месяц",
+                },
               ]}
             />
 
@@ -380,7 +561,16 @@ export function ItemView({ id }: { id: string }) {
                       <Icon name="undo" size={18} />
                     </button>
                   )}
-                  <RefreshButton onRefresh={() => Promise.all([lots.refetch(), history.refetch(), best.refetch()])} />
+                  <RefreshButton
+                    onRefresh={() => {
+                      requestFresh(region, id);
+                      return Promise.all([
+                        lots.refetch(),
+                        history.refetch(),
+                        best.refetch(),
+                      ]);
+                    }}
+                  />
                 </div>
 
                 {lots.isError ? (
@@ -389,11 +579,26 @@ export function ItemView({ id }: { id: string }) {
                   <RowSkeleton count={5} />
                 ) : lotsShown.length ? (
                   <>
-                    <SwipePager page={page} pages={pages} onPage={(p) => view.set({ page: p })}>
+                    <SwipePager
+                      page={page}
+                      pages={pages}
+                      onPage={(p) => view.set({ page: p })}
+                    >
                       {pageLots.length ? (
-                        <div className="stack" style={{ gap: 8, opacity: lots.isPlaceholderData ? 0.5 : 1, transition: "opacity 200ms" }}>
+                        <div
+                          className="stack"
+                          style={{
+                            gap: 8,
+                            opacity: lots.isPlaceholderData ? 0.5 : 1,
+                            transition: "opacity 200ms",
+                          }}
+                        >
                           {pageLots.map((lot, i) => (
-                            <LotRow key={`${lot.startTime}-${lot.buyoutPrice}-${i}`} lot={lot} median={lotMedian(lot)} />
+                            <LotRow
+                              key={`${lot.startTime}-${lot.buyoutPrice}-${i}`}
+                              lot={lot}
+                              median={lotMedian(lot)}
+                            />
                           ))}
                         </div>
                       ) : (
@@ -408,7 +613,9 @@ export function ItemView({ id }: { id: string }) {
                         disabled={lots.isFetchingNextPage}
                         onClick={() => lots.fetchNextPage()}
                       >
-                        {lots.isFetchingNextPage ? "Загрузка…" : `Ещё лоты · осталось ${formatNumber(totalLots - allLots.length)}`}
+                        {lots.isFetchingNextPage
+                          ? "Загрузка…"
+                          : `Ещё лоты · осталось ${formatNumber(totalLots - allLots.length)}`}
                       </button>
                     )}
                   </>
@@ -435,7 +642,11 @@ export function ItemView({ id }: { id: string }) {
                 ) : history.isLoading ? (
                   <RowSkeleton count={5} />
                 ) : salesShown.length ? (
-                  salesShown.slice(0, 60).map((sale, i) => <SaleRow key={`${sale.time}-${i}`} sale={sale} />)
+                  salesShown
+                    .slice(0, 60)
+                    .map((sale, i) => (
+                      <SaleRow key={`${sale.time}-${i}`} sale={sale} />
+                    ))
                 ) : (
                   <EmptyState icon="clock" title="Продаж не было" />
                 )}
@@ -444,9 +655,20 @@ export function ItemView({ id }: { id: string }) {
           </section>
         </>
       )}
-
     </main>
   );
+}
+
+/** Класс и цвет подсветки строки по качеству (у предметов без качества — без подсветки). */
+function tint(additional?: Additional) {
+  const qi = qualityOf(additional);
+  const color = qi === null ? undefined : QUALITY[qi]?.color;
+  return color
+    ? {
+        className: styles.tinted,
+        style: { "--q": color } as React.CSSProperties,
+      }
+    : { className: "", style: undefined };
 }
 
 function Quality({ additional }: { additional?: Additional }) {
@@ -457,7 +679,10 @@ function Quality({ additional }: { additional?: Additional }) {
   const up = upgradeOf(additional);
   return (
     <>
-      <span className="pill" style={{ color: q.color, height: 22, fontSize: 11 }}>
+      <span
+        className={`pill ${styles.qualityPill}`}
+        style={{ color: q.color, height: 22, fontSize: 11 }}
+      >
         {q.label}
       </span>
       <span
@@ -472,7 +697,12 @@ function Quality({ additional }: { additional?: Additional }) {
   );
 }
 
-const DEAL_LABEL = { hot: "Огонь", good: "Выгодно", fair: "По рынку", high: "Дорого" } as const;
+const DEAL_LABEL = {
+  hot: "Огонь",
+  good: "Выгодно",
+  fair: "По рынку",
+  high: "Дорого",
+} as const;
 
 function LotRow({ lot, median }: { lot: Lot; median?: number }) {
   const now = useNow(1000);
@@ -480,12 +710,19 @@ function LotRow({ lot, median }: { lot: Lot; median?: number }) {
   const deal = dealOf(lot, median);
   const unit = lotUnitPrice(lot);
   const bid = lot.currentPrice || lot.startPrice;
+  const t = tint(lot.additional);
 
   return (
-    <article className={`list-row ${styles.lot}`} data-deal={deal?.kind}>
+    <article
+      className={`list-row ${styles.lot} ${t.className}`}
+      style={t.style}
+      data-deal={deal?.kind}
+    >
       <div className={styles.lotMain}>
         <div className="row" style={{ gap: 6, flexWrap: "wrap" }}>
-          <span className="pill mono" style={{ height: 22, fontSize: 11 }}>×{formatNumber(lot.amount)}</span>
+          <span className="pill mono" style={{ height: 22, fontSize: 11 }}>
+            ×{formatNumber(lot.amount)}
+          </span>
           <Quality additional={lot.additional} />
           {deal && deal.kind !== "fair" && (
             <span className={styles.deal} data-kind={deal.kind}>
@@ -499,8 +736,12 @@ function LotRow({ lot, median }: { lot: Lot; median?: number }) {
           {now > 0 && (
             <>
               {" · "}
-              <span style={{ color: left < 3_600_000 ? "var(--ember)" : undefined }}>
-                {left > 0 ? `${formatDuration(left, left < 3_600_000)} осталось` : "завершён"}
+              <span
+                style={{ color: left < 3_600_000 ? "var(--ember)" : undefined }}
+              >
+                {left > 0
+                  ? `${formatDuration(left, left < 3_600_000)} осталось`
+                  : "завершён"}
               </span>
             </>
           )}
@@ -508,7 +749,9 @@ function LotRow({ lot, median }: { lot: Lot; median?: number }) {
       </div>
       <div className={styles.lotPrice}>
         <strong className="mono">{unit ? formatPrice(unit) : "—"}</strong>
-        {lot.amount > 1 && lot.buyoutPrice > 0 && <span className="mono dim">{formatPrice(lot.buyoutPrice)} всего</span>}
+        {lot.amount > 1 && lot.buyoutPrice > 0 && (
+          <span className="mono dim">{formatPrice(lot.buyoutPrice)} всего</span>
+        )}
         {!lot.buyoutPrice && <span className="dim">без выкупа</span>}
       </div>
     </article>
@@ -518,11 +761,14 @@ function LotRow({ lot, median }: { lot: Lot; median?: number }) {
 function SaleRow({ sale }: { sale: Sale }) {
   const now = useNow(60_000);
   const amount = Number(sale.amount) || 1;
+  const t = tint(sale.additional);
   return (
-    <article className="list-row">
+    <article className={`list-row ${t.className}`} style={t.style}>
       <div style={{ flex: 1, minWidth: 0, display: "grid", gap: 4 }}>
         <div className="row" style={{ gap: 6 }}>
-          <span className="pill mono" style={{ height: 22, fontSize: 11 }}>×{formatNumber(amount)}</span>
+          <span className="pill mono" style={{ height: 22, fontSize: 11 }}>
+            ×{formatNumber(amount)}
+          </span>
           <Quality additional={sale.additional} />
         </div>
         <span className="dim" style={{ fontSize: 12, fontWeight: 600 }}>
@@ -531,7 +777,9 @@ function SaleRow({ sale }: { sale: Sale }) {
       </div>
       <div className={styles.lotPrice}>
         <strong className="mono">{formatPrice(sale.price / amount)}</strong>
-        {amount > 1 && <span className="mono dim">{formatPrice(sale.price)} всего</span>}
+        {amount > 1 && (
+          <span className="mono dim">{formatPrice(sale.price)} всего</span>
+        )}
       </div>
     </article>
   );

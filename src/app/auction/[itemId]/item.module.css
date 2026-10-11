@@ -70,6 +70,32 @@
   border-left-width: 3px;
 }
 
+/*
+ * Подсветка цветом качества (--q), как у карточки предмета: мягкое свечение слева
+ * и чуть окрашенная рамка. Полоска «выгодно/дорого» слева остаётся своей.
+ */
+.tinted {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-color: color-mix(in srgb, var(--q) 28%, var(--line));
+}
+
+.tinted::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(90% 160% at 0% 50%, color-mix(in srgb, var(--q) 22%, transparent), transparent 72%);
+}
+
+/* плашка качества в строке — в цвет качества */
+.qualityPill {
+  background: color-mix(in srgb, currentColor 14%, transparent);
+  border-color: color-mix(in srgb, currentColor 35%, transparent);
+}
+
 .lot[data-deal="hot"] {
   border-left-color: var(--acc);
   background: linear-gradient(90deg, rgb(var(--acc-rgb) / 0.08), transparent 60%), var(--surface);
@@ -210,6 +236,21 @@
   color: var(--acc);
   background: rgb(var(--acc-rgb) / 0.12);
   border-color: rgb(var(--acc-rgb) / 0.3);
+}
+
+/* ---------- заголовок графика + «Подробнее» ---------- */
+
+.chartHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.chartHead :global(.section-title) {
+  margin-bottom: 0;
+  gap: 8px;
 }
 
 /* ---------- период истории ---------- */

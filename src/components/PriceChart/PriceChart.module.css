@@ -7,21 +7,34 @@
 
 .readout {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 4px 10px;
   margin-bottom: 14px;
 }
 
+/* на узком экране блоки переносятся целиком, а не по словам («1 110 000 / ₽») */
 .readout strong {
-  font-size: 22px;
+  font-size: clamp(18px, 5.5vw, 22px);
   font-weight: 700;
+  white-space: nowrap;
+}
+
+/* цена, под ней — «последняя сделка» / время точки */
+.readout .value {
+  display: grid;
+  gap: 2px;
+}
+
+.readout .value strong {
+  color: var(--text);
 }
 
 .readout span {
   font-size: 12px;
   font-weight: 600;
   color: var(--text-3);
+  white-space: nowrap;
 }
 
 .plot {
@@ -89,14 +102,78 @@
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: var(--acc);
+  /* --dot — цвет качества сделки, иначе акцент */
+  background: var(--dot, var(--acc));
   border: 3px solid var(--bg);
-  box-shadow: 0 0 0 1px var(--acc), 0 0 16px var(--acc);
+  box-shadow:
+    0 0 0 1px var(--dot, var(--acc)),
+    0 0 16px var(--dot, var(--acc));
   transform: translate(-50%, -50%);
+  transition: background 120ms;
 }
 
 .cursor[data-visible] {
   opacity: 1;
+}
+
+/* качество/заточка в шапке графика */
+.readout .tag {
+  margin-left: auto;
+  font-weight: 800;
+}
+
+/* ---------- плавающая подсказка у точки ---------- */
+
+.tooltip {
+  --gap: 14px;
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  gap: 3px;
+  min-width: 120px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgb(14 16 19 / 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--line-2);
+  box-shadow: 0 12px 28px -10px rgb(0 0 0 / 0.85);
+  pointer-events: none;
+  white-space: nowrap;
+  /* по умолчанию — справа сверху от точки */
+  transform: translate(var(--gap), calc(-100% - var(--gap)));
+}
+
+.tooltip[data-flip-x] {
+  transform: translate(calc(-100% - var(--gap)), calc(-100% - var(--gap)));
+}
+
+.tooltip[data-flip-y] {
+  transform: translate(var(--gap), var(--gap));
+}
+
+.tooltip[data-flip-x][data-flip-y] {
+  transform: translate(calc(-100% - var(--gap)), var(--gap));
+}
+
+.tooltip strong {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.tooltipTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-2);
+}
+
+.tooltipTime {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3);
 }
 
 .axis {

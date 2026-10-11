@@ -18,7 +18,7 @@ const TABS: { href: string; label: string; icon: IconName }[] = [
 ];
 
 const tabIndex = (path: string) => {
-  if (path.startsWith("/loot") || path.startsWith("/craft")) return 1; // часть рынка
+  if (["/loot", "/craft", "/flips"].some((p) => path.startsWith(p))) return 1; // часть рынка
   const i = TABS.findIndex((t) => t.href !== "/" && path.startsWith(t.href));
   return i === -1 ? 0 : i;
 };

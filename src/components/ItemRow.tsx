@@ -1,35 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { categoryLabel, rarityOf, type Item } from "@/features/items";
+import { type Item } from "@/features/items";
 import { actions } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
-import { Icon } from "./Icon";
 import { ItemIcon } from "./ui/ItemIcon";
 
+/** Компактная плитка предмета: иконка + название (длинное — с «…»). Кладётся в сетку `.item-grid`. */
 export function ItemRow({ item, aside }: { item: Item; aside?: React.ReactNode }) {
-  const rarity = rarityOf(item.rarity);
-
   return (
     <Link
       href={`/auction/${item.id}`}
-      className="list-row"
+      className="item-tile"
+      title={item.name}
       onClick={() => {
         haptic.tap();
         actions.pushRecentItem(item.id);
       }}
     >
-      <ItemIcon item={item} size={46} />
-      <span style={{ flex: 1, minWidth: 0, display: "grid", gap: 2 }}>
-        <strong className="truncate" style={{ fontSize: 15 }}>
+      <ItemIcon item={item} size={34} />
+      <span style={{ flex: 1, minWidth: 0, display: "grid", gap: 1 }}>
+        <strong className="truncate" style={{ fontSize: 13 }}>
           {item.name}
         </strong>
-        <span className="truncate" style={{ fontSize: 12, fontWeight: 600 }}>
-          {item.rarity !== "DEFAULT" && <span style={{ color: rarity.color }}>{rarity.label} · </span>}
-          <span className="dim">{categoryLabel(item.category)}</span>
-        </span>
+        {aside}
       </span>
-      {aside ?? <Icon name="chevron" size={18} className="dim" />}
     </Link>
   );
 }

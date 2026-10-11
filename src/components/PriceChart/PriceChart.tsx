@@ -1,19 +1,31 @@
 "use client";
 
 import { useId, useMemo, useRef, useState } from "react";
-import { formatDateTime, formatPrice } from "@/lib/format";
+import { QUALITY, type ChartPoint } from "@/features/auction";
+import { formatDateTime, formatNumber, formatPrice, plural } from "@/lib/format";
 import { haptic } from "@/lib/telegram";
 import styles from "./PriceChart.module.css";
+import { smoothPath } from "./smooth";
 
 const W = 600;
 const H = 200;
 
-interface Point {
-  t: number;
-  price: number;
+type Point = ChartPoint;
+
+/** «Редкий +15» для сделки, «медиана 12 сделок» для корзины. */
+export function describe(p: Point) {
+  if (p.count !== undefined) {
+    return { text: `медиана ${formatNumber(p.count)} ${plural(p.count, ["сделки", "сделок", "сделок"])}`, color: undefined };
+  }
+  const q = p.quality != null ? QUALITY[p.quality] : undefined;
+  if (!q) return null;
+  return { text: `${q.label} +${p.upgrade ?? 0}`, color: q.color };
 }
 
-/** График продаж: SVG без библиотек, скраб пальцем, выбросы цены обрезаются по перцентилям. */
+/**
+ * График продаж: SVG без библиотек, скраб пальцем, выбросы цены обрезаются по перцентилям.
+ * Плавающая подсказка у точки — цена, время, качество и заточка сделки.
+ */
 export function PriceChart({ points, median }: { points: Point[]; median: number }) {
   const gradientId = useId();
   const boxRef = useRef<HTMLDivElement>(null);
@@ -34,7 +46,7 @@ export function PriceChart({ points, median }: { points: Point[]; median: number
     const y = (v: number) => H - ((Math.min(max, Math.max(min, v)) - min) / (max - min)) * H;
 
     const xy = points.map((p) => [x(p.t), y(p.price)] as const);
-    const line = xy.map(([px, py], i) => `${i ? "L" : "M"}${px.toFixed(1)},${py.toFixed(1)}`).join("");
+    const line = smoothPath(xy);
     const area = `${line}L${W},${H}L0,${H}Z`;
 
     return { xy, line, area, medianY: y(median), max, min };
@@ -56,12 +68,23 @@ export function PriceChart({ points, median }: { points: Point[]; median: number
 
   const point = active != null ? points[active] : points[points.length - 1];
   const [ax, ay] = active != null ? geo.xy[active] : geo.xy[geo.xy.length - 1];
+  const tag = describe(point);
+  // у правого края подсказка разворачивается влево, у верхнего — опускается под точку
+  const flipX = ax > W * 0.62;
+  const flipY = ay < H * 0.35;
 
   return (
     <div className={styles.chart}>
       <div className={styles.readout}>
-        <strong className="mono">{formatPrice(point.price)}</strong>
-        <span>{active != null ? formatDateTime(point.t) : "последняя сделка"}</span>
+        <span className={styles.value}>
+          <strong className="mono">{formatPrice(point.price)}</strong>
+          <span>{active != null ? formatDateTime(point.t) : "последняя сделка"}</span>
+        </span>
+        {tag && (
+          <span className={styles.tag} style={{ color: tag.color }}>
+            {tag.text}
+          </span>
+        )}
       </div>
 
       <div
@@ -90,9 +113,34 @@ export function PriceChart({ points, median }: { points: Point[]; median: number
 
         <span
           className={styles.cursor}
-          style={{ left: `${(ax / W) * 100}%`, "--y": `${(ay / H) * 100}%` } as React.CSSProperties}
+          style={
+            {
+              left: `${(ax / W) * 100}%`,
+              "--y": `${(ay / H) * 100}%`,
+              ...(tag?.color && { "--dot": tag.color }),
+            } as React.CSSProperties
+          }
           data-visible={active != null || undefined}
         />
+
+        {active != null && (
+          <div
+            className={styles.tooltip}
+            role="status"
+            data-flip-x={flipX || undefined}
+            data-flip-y={flipY || undefined}
+            style={{ left: `${(ax / W) * 100}%`, top: `${(ay / H) * 100}%` }}
+          >
+            <strong className="mono">{formatPrice(point.price)}</strong>
+            {tag && (
+              <span className={styles.tooltipTag} style={{ color: tag.color, "--c": tag.color } as React.CSSProperties}>
+                {tag.color && <span className="dot" />}
+                {tag.text}
+              </span>
+            )}
+            <span className={styles.tooltipTime}>{formatDateTime(point.t)}</span>
+          </div>
+        )}
       </div>
 
       <div className={styles.axis}>

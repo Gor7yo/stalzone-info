@@ -10,7 +10,7 @@ import { SearchField } from "@/components/ui/SearchField";
 import { EmptyState, ErrorState, RowSkeleton } from "@/components/ui/States";
 import { useBestPrice } from "@/features/auction";
 import { GROUPS, searchItems, useItems, type Item } from "@/features/items";
-import { formatPrice } from "@/lib/format";
+import { formatShort } from "@/lib/format";
 import { actions, useApp, type Region } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
 
@@ -52,7 +52,20 @@ export default function AuctionPage() {
         aria-label="Поиск предмета"
       />
 
-      <Link href="/craft" className="list-row" style={{ marginTop: 12 }} onClick={() => haptic.tap()}>
+      <Link href="/flips" className="list-row" style={{ marginTop: 12 }} onClick={() => haptic.tap()}>
+        <span style={{ display: "grid", placeItems: "center", width: 40, height: 40, borderRadius: 13, background: "rgb(78 224 138 / 0.12)", color: "var(--green)", flex: "none" }}>
+          <Icon name="bolt" size={20} />
+        </span>
+        <span style={{ flex: 1, minWidth: 0 }}>
+          <strong style={{ fontSize: 14 }}>Флиппер</strong>
+          <span className="dim" style={{ display: "block", fontSize: 12, fontWeight: 600 }}>
+            Лоты дешевле рынка — выкупить и перепродать
+          </span>
+        </span>
+        <Icon name="chevron" size={18} className="dim" />
+      </Link>
+
+      <Link href="/craft" className="list-row" style={{ marginTop: 8 }} onClick={() => haptic.tap()}>
         <span style={{ display: "grid", placeItems: "center", width: 40, height: 40, borderRadius: 13, background: "rgb(var(--acc-rgb) / 0.12)", color: "var(--acc)", flex: "none" }}>
           <Icon name="sparkle" size={20} />
         </span>
@@ -97,7 +110,7 @@ export default function AuctionPage() {
         ) : browsing ? (
           results.length ? (
             <>
-              <div className="stack" style={{ gap: 8 }}>
+              <div className="item-grid">
                 {results.slice(0, limit).map((item) => (
                   <ItemRow key={item.id} item={item} />
                 ))}
@@ -150,7 +163,7 @@ function Shortcuts({
           <h2 className="section-title">
             Избранное <small>лучшая цена · {region.toUpperCase()}</small>
           </h2>
-          <div className="stack" style={{ gap: 8 }}>
+          <div className="item-grid">
             {favs.map((item) => (
               <ItemRow key={item.id} item={item} aside={<BestPrice id={item.id} region={region} />} />
             ))}
@@ -165,7 +178,7 @@ function Shortcuts({
               Очистить
             </button>
           </h2>
-          <div className="stack" style={{ gap: 8 }}>
+          <div className="item-grid">
             {recents.map((item) => (
               <ItemRow key={item.id} item={item} />
             ))}
@@ -178,10 +191,10 @@ function Shortcuts({
 
 function BestPrice({ id, region }: { id: string; region: Region }) {
   const { data, isLoading } = useBestPrice(region, id);
-  if (isLoading) return <span className="skeleton" style={{ width: 70, height: 16 }} />;
+  if (isLoading) return <span className="skeleton" style={{ width: 60, height: 12 }} />;
   return (
-    <strong className="mono" style={{ fontSize: 14, color: data?.price ? "var(--acc)" : "var(--text-3)", whiteSpace: "nowrap" }}>
-      {data?.price ? formatPrice(data.price) : "—"}
-    </strong>
+    <span className="mono truncate" style={{ fontSize: 11, fontWeight: 700, color: data?.price ? "var(--acc)" : "var(--text-3)" }}>
+      {data?.price ? formatShort(data.price) : "—"}
+    </span>
   );
 }
