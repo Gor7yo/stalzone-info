@@ -211,3 +211,40 @@
   background: rgb(var(--acc-rgb) / 0.12);
   border-color: rgb(var(--acc-rgb) / 0.3);
 }
+
+/* ---------- период истории ---------- */
+
+.periodBar {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.sampled {
+  justify-self: end;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-3);
+}
+
+/* ---------- панель над лотами: сортировка + обновить ---------- */
+
+.lotsBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.sorts {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 2px 0;
+}
+
+/* «Отменить» — шаг назад по фильтрам, сортировке и страницам */
+.undo {
+  color: var(--acc);
+  animation: rise 220ms var(--ease);
+}

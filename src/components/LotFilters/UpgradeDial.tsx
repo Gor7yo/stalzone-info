@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { MAX_UPGRADE } from "@/features/auction";
+import { MAX_UPGRADE, upgradeLabel, upgradeRuns } from "@/features/auction";
 import { formatShort, plural } from "@/lib/format";
 import { haptic } from "@/lib/telegram";
 import { Icon } from "../Icon";
@@ -12,9 +12,15 @@ export interface LevelInfo {
   best: number | null;
 }
 
+const between = (a: number, b: number) => Array.from({ length: Math.abs(b - a) + 1 }, (_, i) => Math.min(a, b) + i);
+const sorted = (set: Set<number>) => [...set].sort((a, b) => a - b);
+
 /**
- * Шкала заточки «эквалайзер»: 16 столбиков, высота — лучшая цена уровня.
- * Выбор пальцем (ведёшь по шкале), тапом или стрелками; повторный тап — сброс.
+ * Шкала заточки «эквалайзер»: 16 столбиков, высота — количество лотов на уровне.
+ * Выбирается любой набор уровней:
+ * - тап — включить/выключить уровень (+1 и +5 — два тапа);
+ * - провёл с зажатой кнопкой/пальцем — закрасить отрезок; если начал с выбранного уровня — стереть;
+ * - стрелки ←/→ — один соседний уровень, Shift+стрелка — добавить соседний, Esc — очистить.
  */
 export function UpgradeDial({
   levels,
@@ -22,17 +28,17 @@ export function UpgradeDial({
   onChange,
 }: {
   levels: LevelInfo[];
-  value: number | null;
-  onChange: (value: number | null) => void;
+  /** выбранные уровни по возрастанию; пусто — любая заточка */
+  value: number[];
+  onChange: (value: number[]) => void;
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
-  const drag = useRef<{ start: number | null; moved: boolean } | null>(null);
+  const drag = useRef<{ start: number; base: Set<number>; erase: boolean; moved: boolean } | null>(null);
+  const selected = new Set(value);
 
-  // логарифмическая высота: 20к и 12кк должны уместиться в одну шкалу
-  const prices = levels.map((l) => l.best).filter((p): p is number => !!p);
-  const lo = Math.log(Math.min(...prices));
-  const hi = Math.log(Math.max(...prices));
-  const height = (p: number | null) => (!p ? 0 : hi > lo ? 0.3 + ((Math.log(p) - lo) / (hi - lo)) * 0.7 : 0.65);
+  // высота — сколько лотов на уровне; корень, чтобы 1 лот рядом с 50 не превращался в ноль
+  const maxCount = Math.max(1, ...levels.map((l) => l.count));
+  const height = (count: number) => (count ? 0.2 + Math.sqrt(count / maxCount) * 0.8 : 0);
 
   const levelAt = (clientX: number) => {
     const box = trackRef.current!.getBoundingClientRect();
@@ -40,29 +46,53 @@ export function UpgradeDial({
     return Math.floor((x / box.width) * (MAX_UPGRADE + 1));
   };
 
-  const set = (next: number | null) => {
-    if (next === value) return;
+  const set = (next: number[]) => {
+    if (next.length === value.length && next.every((l, i) => l === value[i])) return;
     haptic.select();
     onChange(next);
   };
 
-  const current = value === null ? null : levels[value];
+  /** Закрасить (или стереть) отрезок от точки нажатия до пальца поверх выбора на момент нажатия. */
+  const paint = (to: number) => {
+    const d = drag.current!;
+    const next = new Set(d.base);
+    for (const l of between(d.start, to)) {
+      if (d.erase) next.delete(l);
+      else next.add(l);
+    }
+    set(sorted(next));
+  };
+
+  const toggle = (level: number) => {
+    const next = new Set(selected);
+    if (next.has(level)) next.delete(level);
+    else next.add(level);
+    set(sorted(next));
+  };
+
+  // итог по выбранным уровням: сколько лотов и самая низкая цена
+  const picked = value.map((l) => levels[l]).filter(Boolean);
+  const count = picked.reduce((sum, l) => sum + l.count, 0);
+  const prices = picked.map((l) => l.best).filter((p): p is number => p !== null);
+  const best = prices.length ? Math.min(...prices) : null;
+  const label = upgradeLabel({ upgrade: null, upgrades: value });
 
   return (
     <div className={styles.dial}>
       <div className={styles.readout} aria-live="polite">
         <span className={styles.label}>Заточка</span>
-        {value === null ? (
-          <span className={styles.value}>любая</span>
+        {!value.length ? (
+          <span className={styles.value}>любая · тапай или проведи</span>
         ) : (
           <>
-            <b className="mono">+{value}</b>
+            <b className={`mono ${styles.picked}`}>{label}</b>
             <span className={styles.value}>
-              {current?.best ? `от ${formatShort(current.best)}` : "нет лотов"}
-              {current?.count ? ` · ${current.count} ${plural(current.count, ["лот", "лота", "лотов"])}` : ""}
+              {best ? `от ${formatShort(best)}` : "нет лотов"}
+              {count ? ` · ${count} ${plural(count, ["лот", "лота", "лотов"])}` : ""}
             </span>
-            <button type="button" className={styles.reset} aria-label="Любая заточка" onClick={() => set(null)}>
-              <Icon name="close" size={13} />
+            <button type="button" className={styles.reset} onClick={() => set([])}>
+              <Icon name="close" size={12} />
+              Очистить
             </button>
           </>
         )}
@@ -71,37 +101,38 @@ export function UpgradeDial({
       <div
         ref={trackRef}
         className={styles.track}
-        role="slider"
+        role="group"
         tabIndex={0}
-        aria-label="Уровень заточки"
-        aria-valuemin={0}
-        aria-valuemax={MAX_UPGRADE}
-        aria-valuenow={value ?? undefined}
-        aria-valuetext={value === null ? "любая" : `+${value}`}
-        data-active={value !== null || undefined}
+        aria-label={`Уровни заточки: ${label || "любая"}`}
+        data-active={value.length > 0 || undefined}
         onPointerDown={(e) => {
           trackRef.current?.setPointerCapture(e.pointerId);
-          drag.current = { start: levelAt(e.clientX), moved: false };
+          const start = levelAt(e.clientX);
+          drag.current = { start, base: new Set(selected), erase: selected.has(start), moved: false };
         }}
         onPointerMove={(e) => {
           if (!drag.current) return;
           const level = levelAt(e.clientX);
           if (level !== drag.current.start) drag.current.moved = true;
-          if (drag.current.moved) set(level);
+          if (drag.current.moved) paint(level);
         }}
         onPointerUp={(e) => {
           const d = drag.current;
           drag.current = null;
-          if (!d || d.moved) return;
-          // простой тап: по выбранному — сброс, иначе выбор
-          const level = levelAt(e.clientX);
-          set(level === value ? null : level);
+          if (d && !d.moved) toggle(levelAt(e.clientX));
         }}
         onPointerCancel={() => (drag.current = null)}
         onKeyDown={(e) => {
-          if (e.key === "ArrowRight") set(Math.min(MAX_UPGRADE, (value ?? -1) + 1));
-          else if (e.key === "ArrowLeft") set(value === null || value === 0 ? null : value - 1);
-          else if (e.key === "Escape") set(null);
+          const first = value[0] ?? -1;
+          const last = value[value.length - 1] ?? -1;
+          if (e.key === "ArrowRight") {
+            const next = Math.min(MAX_UPGRADE, last + 1);
+            set(e.shiftKey ? sorted(new Set([...value, next])) : [next]);
+          } else if (e.key === "ArrowLeft") {
+            const prev = Math.max(0, first - 1);
+            if (e.shiftKey && value.length) set(sorted(new Set([...value, prev])));
+            else set(first <= 0 ? [] : [prev]);
+          } else if (e.key === "Escape") set([]);
           else return;
           e.preventDefault();
         }}
@@ -111,14 +142,15 @@ export function UpgradeDial({
             key={i}
             className={styles.bar}
             data-empty={!l.count || undefined}
-            data-selected={value === i || undefined}
+            data-selected={selected.has(i) || undefined}
             data-max={i === MAX_UPGRADE || undefined}
-            style={{ "--h": height(l.best) } as React.CSSProperties}
+            style={{ "--h": height(l.count) } as React.CSSProperties}
           />
         ))}
-        {value !== null && (
-          <span className={styles.cursor} style={{ "--pos": (value + 0.5) / (MAX_UPGRADE + 1) } as React.CSSProperties} />
-        )}
+        {/* рамка вокруг каждого подряд идущего отрезка выбора */}
+        {upgradeRuns(value).map(([from, to]) => (
+          <span key={from} className={styles.cursor} style={{ "--from": from, "--n": to - from + 1 } as React.CSSProperties} />
+        ))}
       </div>
 
       <div className={styles.scale} aria-hidden>

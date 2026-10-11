@@ -13,8 +13,14 @@ export interface PriceAlert {
   region: Region;
   itemId: string;
   itemName: string;
+  /** Старые алерты: одно качество (новые пишут qualities) */
   quality: number | null;
+  /** Выбранные качества; пусто — любое */
+  qualities: number[];
+  /** Старые алерты: один уровень заточки (новые пишут upgrades) */
   upgrade: number | null;
+  /** Выбранные уровни заточки; пусто — любая */
+  upgrades: number[];
   maxPrice: number;
   lastNotifiedAt: string | null;
   createdAt: string;
@@ -30,8 +36,8 @@ export interface NewPriceAlert {
   region: Region;
   itemId: string;
   itemName: string;
-  quality?: number;
-  upgrade?: number;
+  qualities?: number[];
+  upgrades?: number[];
   maxPrice: number;
 }
 

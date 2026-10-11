@@ -342,3 +342,51 @@
     transform: translateY(10px);
   }
 }
+
+/* ---------- кнопка «Обновить» ---------- */
+
+.refresh {
+  position: relative;
+  color: var(--text-2);
+}
+
+.refresh[data-busy] svg {
+  animation: spin 800ms linear infinite;
+}
+
+/* кольцо перезарядки: заполняется за --cooldown */
+.refresh[data-cooling]::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(var(--acc) calc(var(--p) * 1%), transparent 0);
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  animation: cooldown var(--cooldown) linear forwards;
+  pointer-events: none;
+}
+
+.refresh:disabled {
+  opacity: 0.7;
+}
+
+@property --p {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+@keyframes cooldown {
+  to {
+    --p: 100;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -87,20 +87,62 @@ export const bestPriceQuery = (region: Region, item: string) => ({
 export const useBestPrice = (region: Region, item: string, enabled = true) =>
   useQuery({ ...bestPriceQuery(region, item), enabled });
 
-/** pages — сколько страниц по 200 продаж грузить: у популярных артефактов 200 сделок — это ~сутки. */
-export function useHistory(region: Region, item: string, enabled = true, pages = 1) {
+// ---------- история за период ----------
+
+export type HistoryPeriod = "day" | "week" | "month" | "year";
+
+const HOUR = 3_600_000;
+
+/** bucketMs — шаг графика: на длинном периоде рисуем медиану по корзинам, а не тысячи точек. */
+export const PERIODS: { value: HistoryPeriod; label: string; days: number; title: string; bucketMs: number }[] = [
+  { value: "day", label: "День", days: 1, title: "за сутки", bucketMs: 0 },
+  { value: "week", label: "Неделя", days: 7, title: "за неделю", bucketMs: 6 * HOUR },
+  { value: "month", label: "Месяц", days: 30, title: "за месяц", bucketMs: 24 * HOUR },
+  { value: "year", label: "Год", days: 365, title: "за год", bucketMs: 7 * 24 * HOUR },
+];
+
+export const periodInfo = (p: HistoryPeriod) => PERIODS.find((x) => x.value === p)!;
+
+/**
+ * Точки графика → медиана цены в каждой корзине времени (bucketMs = 0 — без изменений).
+ * Так выборка за год не рисуется «пилой» с прямыми через пустые промежутки.
+ */
+export function bucketPoints(points: { t: number; price: number }[], bucketMs: number) {
+  if (!bucketMs) return points;
+  const buckets = new Map<number, number[]>();
+  for (const p of points) {
+    const key = Math.floor(p.t / bucketMs);
+    const list = buckets.get(key);
+    if (list) list.push(p.price);
+    else buckets.set(key, [p.price]);
+  }
+  return [...buckets.entries()]
+    .sort(([a], [b]) => a - b)
+    .map(([key, prices]) => ({
+      t: key * bucketMs + bucketMs / 2,
+      price: quantile(prices.sort((a, b) => a - b), 0.5),
+    }));
+}
+
+export interface PeriodHistoryResponse extends HistoryResponse {
+  period: HistoryPeriod;
+  since: string;
+  /** true — период длинный, сервер прислал равномерную выборку сделок, а не все */
+  sampled: boolean;
+}
+
+/**
+ * История продаж за период одним запросом: страницы EXBO листает и кеширует сервер.
+ * Чем длиннее период, тем дольше ответ живёт в кеше.
+ */
+export function useHistory(region: Region, item: string, period: HistoryPeriod, enabled = true) {
   return useQuery({
     enabled,
-    queryKey: ["history", region, item, pages],
-    queryFn: async (): Promise<HistoryResponse> => {
-      const parts = await Promise.all(
-        Array.from({ length: pages }, (_, i) =>
-          api<HistoryResponse>("/api/auction/history", { region, item, additional: true, limit: 200, offset: i * 200 }),
-        ),
-      );
-      return { total: parts[0].total, prices: parts.flatMap((p) => p.prices) };
-    },
-    staleTime: 5 * 60_000,
+    queryKey: ["history", region, item, period],
+    queryFn: () => api<PeriodHistoryResponse>("/api/auction/history/period", { region, item, period }),
+    staleTime: period === "day" ? 60_000 : period === "year" ? 30 * 60_000 : 5 * 60_000,
+    // при смене периода старый график остаётся на экране, пока грузится новый
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -144,9 +186,12 @@ export function lastSale(sales: Sale[], filter: LotFilter = ALL) {
   return latest ? { t: new Date(latest.time).getTime(), price: unit(latest) } : null;
 }
 
-/** filter — считать только сделки с тем же качеством и заточкой (у артефактов цены разных вариантов несравнимы). */
-export function priceStats(sales: Sale[], filter: LotFilter = ALL): PriceStats | null {
-  const since = Date.now() - STATS_WINDOW_DAYS * 86_400_000;
+/**
+ * filter — считать только сделки с тем же качеством и заточкой (у артефактов цены разных вариантов несравнимы);
+ * days — окно статистики (выбранный период истории).
+ */
+export function priceStats(sales: Sale[], filter: LotFilter = ALL, days = STATS_WINDOW_DAYS): PriceStats | null {
+  const since = Date.now() - days * 86_400_000;
   const valid = matching(sales, filter).filter((s) => new Date(s.time).getTime() >= since);
   if (valid.length < MIN_SALES) return null;
 
@@ -227,19 +272,64 @@ export const tierOf = (additional?: Additional) => {
   return TIERS.findIndex((t) => u >= t.min && u <= t.max);
 };
 
-/** Фильтр лотов и сделок; null/undefined — без ограничения. upgrade — точный уровень, tier — ступень. */
+/**
+ * Фильтр лотов и сделок; null/undefined/пусто — без ограничения.
+ * qualities / upgrades — выбранные пользователем качества и уровни заточки (любой набор);
+ * quality / upgrade — одно точное значение (для оценки лота), tier — ступень заточки.
+ */
 export interface LotFilter {
   quality: number | null;
+  qualities?: number[] | null;
   upgrade: number | null;
+  upgrades?: number[] | null;
   tier?: number | null;
 }
 
 export const ALL: LotFilter = { quality: null, upgrade: null };
 
-export const matchesFilter = (additional: Additional | undefined, f: LotFilter) =>
-  (f.quality === null || qualityOf(additional) === f.quality) &&
-  (f.upgrade === null || upgradeOf(additional) === f.upgrade) &&
-  (f.tier == null || tierOf(additional) === f.tier);
+/** Выбранные качества по возрастанию (точное quality или набор qualities). */
+export const pickedQualities = (f: Pick<LotFilter, "quality" | "qualities">) =>
+  f.qualities?.length ? [...f.qualities].sort((a, b) => a - b) : f.quality !== null ? [f.quality] : [];
+
+/** «Редкий», «Особый, Редкий» */
+export const qualityLabel = (f: Pick<LotFilter, "quality" | "qualities">) =>
+  pickedQualities(f)
+    .map((q) => QUALITY[q]?.label)
+    .filter(Boolean)
+    .join(", ");
+
+/** Выбраны ли уровни заточки (точный уровень или набор). */
+export const hasUpgradeFilter = (f: LotFilter) => f.upgrade !== null || Boolean(f.upgrades?.length);
+
+/** Набор уровней → подряд идущие отрезки: [1,3,4,5] → [[1,1],[3,5]] */
+export function upgradeRuns(levels: number[]) {
+  const runs: [number, number][] = [];
+  for (const l of [...levels].sort((a, b) => a - b)) {
+    const last = runs[runs.length - 1];
+    if (last && l === last[1] + 1) last[1] = l;
+    else runs.push([l, l]);
+  }
+  return runs;
+}
+
+/** «+5», «+5…+10», «+1, +5», «+1, +3…+5» */
+export const upgradeLabel = (f: Pick<LotFilter, "upgrade" | "upgrades">) => {
+  const levels = f.upgrades?.length ? f.upgrades : f.upgrade !== null ? [f.upgrade] : [];
+  return upgradeRuns(levels)
+    .map(([a, b]) => (a === b ? `+${a}` : `+${a}…+${b}`))
+    .join(", ");
+};
+
+export const matchesFilter = (additional: Additional | undefined, f: LotFilter) => {
+  const u = upgradeOf(additional);
+  return (
+    (f.quality === null || qualityOf(additional) === f.quality) &&
+    (!f.qualities?.length || f.qualities.includes(qualityOf(additional) ?? -1)) &&
+    (f.upgrade === null || u === f.upgrade) &&
+    (!f.upgrades?.length || f.upgrades.includes(u)) &&
+    (f.tier == null || tierOf(additional) === f.tier)
+  );
+};
 
 /**
  * Медиана для оценки лота: сначала по точному качеству и заточке,

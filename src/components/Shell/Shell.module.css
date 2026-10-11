@@ -160,3 +160,30 @@
     transform: translate(-50%, 40px) scale(0.92);
   }
 }
+
+/* «Назад» на прошлый экран/вкладку (в Telegram вместо неё нативная кнопка) */
+.back {
+  position: fixed;
+  z-index: 45;
+  left: max(16px, calc(50% - 230px));
+  bottom: calc(var(--dock-h) + var(--safe-bottom) + 20px);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 36px;
+  padding: 0 14px 0 10px;
+  border-radius: 999px;
+  background: rgb(14 16 19 / 0.78);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--line-2);
+  font-size: 13px;
+  font-weight: 800;
+  box-shadow: 0 12px 30px -10px rgb(0 0 0 / 0.8);
+  animation: rise 260ms var(--ease);
+  transition: transform 160ms var(--ease);
+}
+
+.back:active {
+  transform: scale(0.94);
+}

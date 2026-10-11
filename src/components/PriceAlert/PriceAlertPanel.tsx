@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useAlerts, useCreatePriceAlert, useDeletePriceAlert, type PriceAlert } from "@/features/alerts";
-import { QUALITY, type LotFilter } from "@/features/auction";
+import { hasUpgradeFilter, pickedQualities, qualityLabel, upgradeLabel, type LotFilter } from "@/features/auction";
 import { formatShort, parseGamePrice } from "@/lib/format";
 import { REGIONS, type Region } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
@@ -22,8 +22,13 @@ interface Props {
 
 const regionLabel = (r: string) => REGIONS.find((x) => x.value === r)?.label ?? r.toUpperCase();
 
-export const variantLabel = (a: { quality: number | null; upgrade: number | null }) =>
-  [a.quality !== null && QUALITY[a.quality]?.label, a.upgrade !== null && `+${a.upgrade}`].filter(Boolean).join(" ");
+export const variantLabel = (a: {
+  quality: number | null;
+  qualities?: number[] | null;
+  upgrade?: number | null;
+  upgrades?: number[] | null;
+}) =>
+  [qualityLabel(a), upgradeLabel({ upgrade: a.upgrade ?? null, upgrades: a.upgrades })].filter(Boolean).join(" ");
 
 /** «Сообщи в Telegram, когда этот предмет будет дешевле N». */
 export function PriceAlertPanel({ itemId, itemName, region, filter, bestPrice, median }: Props) {
@@ -54,8 +59,8 @@ export function PriceAlertPanel({ itemId, itemName, region, filter, bestPrice, m
         region,
         itemId,
         itemName,
-        quality: filter.quality ?? undefined,
-        upgrade: filter.upgrade ?? undefined,
+        qualities: pickedQualities(filter).length ? pickedQualities(filter) : undefined,
+        upgrades: filter.upgrades?.length ? filter.upgrades : undefined,
         maxPrice: price,
       },
       {
@@ -110,7 +115,7 @@ export function PriceAlertPanel({ itemId, itemName, region, filter, bestPrice, m
         </div>
       )}
 
-      {filter.quality === null && filter.upgrade === null && (
+      {!pickedQualities(filter).length && !hasUpgradeFilter(filter) && (
         <p className={styles.hint}>Без фильтра сработает на любой вариант. Качество и заточку выберите в фильтре выше.</p>
       )}
       {create.error && <p className={styles.error}>{create.error.message}</p>}

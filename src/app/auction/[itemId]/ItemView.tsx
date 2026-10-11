@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BarterSection } from "@/components/Barter/Barter";
 import { Icon } from "@/components/Icon";
 import { PriceAlertPanel } from "@/components/PriceAlert/PriceAlertPanel";
 import { PriceChart } from "@/components/PriceChart/PriceChart";
+import { SwipePager } from "@/components/Pager/SwipePager";
 import { LotFilters, type DealFilter } from "@/components/LotFilters/LotFilters";
 import { Tilt } from "@/components/Tilt/Tilt";
-import { FavButton, ShareButton } from "@/components/ui/Buttons";
+import { FavButton, RefreshButton, ShareButton } from "@/components/ui/Buttons";
 import { ItemIcon } from "@/components/ui/ItemIcon";
 import { StatTile } from "@/components/ui/PageHeader";
 import { RegionSwitch } from "@/components/ui/RegionSwitch";
@@ -20,11 +21,18 @@ import {
   comparableMedian,
   matchesFilter,
   MAX_UPGRADE,
+  hasUpgradeFilter,
+  pickedQualities,
+  qualityLabel,
+  upgradeLabel,
   upgradeOf,
   lotUnitPrice,
   priceStats,
   QUALITY,
-  STATS_WINDOW_DAYS,
+  bucketPoints,
+  PERIODS,
+  periodInfo,
+  type HistoryPeriod,
   qualityOf,
   useBestPrice,
   useHistory,
@@ -43,6 +51,7 @@ import { formatCompact, formatDuration, formatNumber, formatPrice, formatRelativ
 import { actions, useApp } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
 import { useNow } from "@/lib/useNow";
+import { useUndoable } from "@/lib/useUndoable";
 import styles from "./item.module.css";
 
 const SORTS: { value: string; label: string; sort: LotSort; order: SortOrder }[] = [
@@ -51,16 +60,27 @@ const SORTS: { value: string; label: string; sort: LotSort; order: SortOrder }[]
   { value: "new", label: "Новые", sort: "time_created", order: "desc" },
 ];
 
+const LOTS_PAGE = 10;
+
 export function ItemView({ id }: { id: string }) {
   const region = useApp((s) => s.region);
   const isFav = useApp((s) => s.favItems.includes(id));
   const { item, isLoading: itemLoading } = useItem(id);
 
-  const [tab, setTab] = useState<"lots" | "history">("lots");
+  // всё, что меняет пользователь на экране, — с историей: кнопка «Отменить» / Ctrl+Z
+  const view = useUndoable({
+    tab: "lots" as "lots" | "history",
+    sortKey: "cheap",
+    filter: null as LotFilter | null,
+    deal: "all" as DealFilter,
+    page: 0,
+    period: "month" as HistoryPeriod,
+  });
+  const { tab, sortKey, filter: userFilter, deal: dealFilter, period } = view.value;
+  const periodMeta = periodInfo(period);
   const [alertOpen, setAlertOpen] = useState(false);
   const alerts = useAlerts();
   const hasAlert = alerts.data?.price.some((a) => a.itemId === id) ?? false;
-  const [sortKey, setSortKey] = useState("cheap");
   const sort = SORTS.find((s) => s.value === sortKey)!;
 
   // бартерные ресурсы на аукционе не продаются — не дёргаем API зря
@@ -71,26 +91,34 @@ export function ItemView({ id }: { id: string }) {
   const qualityItem = item?.group === "artefact" || item?.group === "weapon_modules";
   // фильтр «клетки» карты цен: качество × ступень заточки
   // артефакт по умолчанию открывается на «Обычном»: без фильтра график — «пила» из смеси качеств
-  const [userFilter, setFilter] = useState<LotFilter | null>(null);
-  const filter = userFilter ?? (item?.group === "artefact" ? { quality: 0, upgrade: null } : ALL);
-  const [dealFilter, setDealFilter] = useState<DealFilter>("all");
-  const filtered = filter.quality !== null || filter.upgrade !== null;
-  // у артефакта без выбранного качества медиана и тренд смешивают дешёвые и дорогие варианты
-  const mixed = qualityItem && filter.quality === null;
+  const filter = userFilter ?? (item?.group === "artefact" ? { quality: null, qualities: [0], upgrade: null } : ALL);
+  const qualities = pickedQualities(filter);
+  const filtered = qualities.length > 0 || hasUpgradeFilter(filter);
+  // у артефакта без одного выбранного качества медиана и тренд смешивают дешёвые и дорогие варианты
+  const mixed = qualityItem && qualities.length !== 1;
 
-  const history = useHistory(region, id, tradable, qualityItem ? 3 : 1);
+  const history = useHistory(region, id, period, tradable);
   const lots = useLots(region, id, sort.sort, sort.order, tradable, qualityItem ? 200 : undefined);
-  const best = useBestPrice(region, id, tradable);
+  // артефакт с сортировкой «Дешевле» и так грузит 200 самых дешёвых лотов — лучшая цена
+  // считается из них, отдельный запрос не нужен
+  const bestFromLots = qualityItem && sort.sort === "buyout_price" && sort.order === "asc";
+  const bestQuery = useBestPrice(region, id, tradable && !bestFromLots);
+  const lotsBest = useMemo(() => {
+    if (!bestFromLots || !lots.data) return undefined;
+    const prices = lots.data.pages.flatMap((p) => p.lots).map(lotUnitPrice).filter((p) => p > 0);
+    return { price: prices.length ? Math.min(...prices) : null, total: lots.data.pages[0]?.total ?? 0 };
+  }, [bestFromLots, lots.data]);
+  const best = bestFromLots ? { data: lotsBest, isLoading: lots.isLoading, refetch: lots.refetch } : bestQuery;
 
   const sales = history.data?.prices ?? [];
-  const stats = history.data ? priceStats(sales, filter) : null;
+  const stats = history.data ? priceStats(sales, filter, periodMeta.days) : null;
 
   useEffect(() => actions.pushRecentItem(id), [id]);
 
   const rarity = item ? rarityOf(item.rarity) : null;
-  // у артефакта подсветка карточки — цвет выбранного качества
-  const pickedQuality = qualityItem && filter.quality !== null ? QUALITY[filter.quality] : null;
-  const accent = pickedQuality?.color ?? rarity?.color ?? "var(--text-3)";
+  // у артефакта подсветка карточки — цвет выбранного качества (из нескольких — самого высокого)
+  const pickedQualityList = qualityItem ? qualities.map((q) => QUALITY[q]).filter(Boolean) : [];
+  const accent = pickedQualityList[pickedQualityList.length - 1]?.color ?? rarity?.color ?? "var(--text-3)";
   const allLots = lots.data?.pages.flatMap((p) => p.lots) ?? [];
   const totalLots = lots.data?.pages[0]?.total ?? 0;
   const hasQuality = qualityItem || allLots.some((l) => qualityOf(l.additional) !== null);
@@ -110,13 +138,24 @@ export function ItemView({ id }: { id: string }) {
   const isBad = (lot: Lot) => dealKind(lot) === "high";
   const dealCounts = { good: lotsInFilter.filter(isGood).length, bad: lotsInFilter.filter(isBad).length };
   const lotsShown = dealFilter === "good" ? lotsInFilter.filter(isGood) : dealFilter === "bad" ? lotsInFilter.filter(isBad) : lotsInFilter;
+  // пагинация лотов: по LOTS_PAGE на страницу, листается свайпом
+  const narrowed = filtered || dealFilter !== "all";
+  const pages = Math.max(1, Math.ceil((narrowed ? lotsShown.length : Math.max(totalLots, lotsShown.length)) / LOTS_PAGE));
+  const page = Math.min(view.value.page, pages - 1);
+  const pageLots = lotsShown.slice(page * LOTS_PAGE, (page + 1) * LOTS_PAGE);
+  // без фильтра страниц столько, сколько лотов на рынке — недостающие догружаем
+  const needMore = !narrowed && pageLots.length < LOTS_PAGE && allLots.length < totalLots;
+  useEffect(() => {
+    if (needMore && lots.hasNextPage && !lots.isFetchingNextPage) lots.fetchNextPage();
+  }, [needMore, lots]);
+
   const salesShown = filtered ? sales.filter((s) => matchesFilter(s.additional, filter)) : sales;
 
   // «лучшая цена» с фильтром считается по загруженным лотам этой клетки
   const cellBest = filtered ? Math.min(...lotsInFilter.map(lotUnitPrice).filter((p) => p > 0)) : null;
   const bestPrice = filtered ? (Number.isFinite(cellBest) ? cellBest : null) : best.data?.price;
   const latest = lastSale(sales, filter);
-  const filterLabel = [filter.quality !== null && QUALITY[filter.quality].label, filter.upgrade !== null && `+${filter.upgrade}`]
+  const filterLabel = [qualityLabel(filter), upgradeLabel(filter)]
     .filter(Boolean)
     .join(" ");
   // нет ни лотов, ни свежих сделок — предмет сейчас не торгуется (или вообще не продаётся)
@@ -160,12 +199,12 @@ export function ItemView({ id }: { id: string }) {
           )}
           {item && rarity && (
             <div className="row" style={{ flexWrap: "wrap", gap: 6 }}>
-              {pickedQuality && (
-                <span className="pill" style={{ color: pickedQuality.color }}>
+              {pickedQualityList.map((q) => (
+                <span key={q.label} className="pill" style={{ color: q.color }}>
                   <span className="dot" />
-                  {pickedQuality.label}
+                  {q.label}
                 </span>
-              )}
+              ))}
               {item.rarity !== "DEFAULT" && (
                 <span className="pill" style={{ color: rarity.color }}>
                   <span className="dot" />
@@ -197,9 +236,9 @@ export function ItemView({ id }: { id: string }) {
               <LotFilters
                 lots={allLots}
                 filter={filter}
-                onFilter={setFilter}
+                onFilter={(f) => view.set({ filter: f, page: 0 })}
                 deal={dealFilter}
-                onDeal={setDealFilter}
+                onDeal={(d) => view.set({ deal: d, page: 0 })}
                 dealCounts={dealCounts}
               />
             </section>
@@ -212,7 +251,7 @@ export function ItemView({ id }: { id: string }) {
                 title="Сейчас не торгуется"
                 text={
                   latest
-                    ? `Лотов нет, сделок за ${STATS_WINDOW_DAYS} дней не было. Последняя продажа — ${formatRelative(latest.t)} за ${formatPrice(latest.price)}.`
+                    ? `Лотов нет, сделок ${periodMeta.title} не было. Последняя продажа — ${formatRelative(latest.t)} за ${formatPrice(latest.price)}.`
                     : "Лотов нет и продаж на аукционе этого региона не было."
                 }
               />
@@ -235,7 +274,7 @@ export function ItemView({ id }: { id: string }) {
                   }
                 />
                 <StatTile
-                  label={`Медиана · ${STATS_WINDOW_DAYS} дн`}
+                  label={`Медиана · ${periodMeta.title}`}
                   value={history.isLoading ? "…" : formatPrice(stats?.median)}
                   hint={mixed ? "смесь качеств — выбери качество" : stats ? `${formatCompact(stats.p25)} – ${formatCompact(stats.p75)}` : undefined}
                 />
@@ -256,14 +295,30 @@ export function ItemView({ id }: { id: string }) {
                 <h2 className="section-title">
                   История цены <small>за штуку</small>
                 </h2>
+                <div className={styles.periodBar}>
+                  <Segmented
+                    size="sm"
+                    label="Период истории"
+                    value={period}
+                    onChange={(p) => view.set({ period: p })}
+                    options={PERIODS.map((p) => ({ value: p.value, label: p.label }))}
+                  />
+                  {history.data?.sampled && (
+                    <span className={styles.sampled} title="Сделок за период слишком много — график и медиана по равномерной выборке">
+                      выборка · ≈{formatCompact(history.data.total)} сделок
+                    </span>
+                  )}
+                </div>
                 {history.isLoading ? (
                   <div className="skeleton" style={{ height: 260, borderRadius: 22 }} />
                 ) : stats ? (
-                  <PriceChart points={stats.points} median={stats.median} />
+                  <div style={{ opacity: history.isPlaceholderData ? 0.5 : 1, transition: "opacity 200ms" }}>
+                    <PriceChart points={bucketPoints(stats.points, periodMeta.bucketMs)} median={stats.median} />
+                  </div>
                 ) : (
                   <EmptyState
                     icon="market"
-                    title={`Мало сделок за ${STATS_WINDOW_DAYS} дней`}
+                    title={`Мало сделок ${periodMeta.title}`}
                     text={
                       latest
                         ? `Последняя продажа${filtered ? ` «${filterLabel}»` : ""} — ${formatRelative(latest.t)} за ${formatPrice(latest.price)}.`
@@ -285,7 +340,7 @@ export function ItemView({ id }: { id: string }) {
             <Segmented
               label="Раздел"
               value={tab}
-              onChange={setTab}
+              onChange={(t) => view.set({ tab: t })}
               options={[
                 {
                   value: "lots",
@@ -297,12 +352,35 @@ export function ItemView({ id }: { id: string }) {
 
             {tab === "lots" ? (
               <div style={{ marginTop: 12 }}>
-                <div className="chips" style={{ marginBottom: 12 }}>
-                  {SORTS.map((s) => (
-                    <button key={s.value} type="button" className="chip" aria-pressed={s.value === sortKey} onClick={() => setSortKey(s.value)}>
-                      {s.label}
+                <div className={styles.lotsBar}>
+                  <div className={`chips ${styles.sorts}`}>
+                    {SORTS.map((s) => (
+                      <button
+                        key={s.value}
+                        type="button"
+                        className="chip"
+                        aria-pressed={s.value === sortKey}
+                        onClick={() => view.set({ sortKey: s.value, page: 0 })}
+                      >
+                        {s.label}
+                      </button>
+                    ))}
+                  </div>
+                  {view.canUndo && (
+                    <button
+                      type="button"
+                      className={`icon-btn ${styles.undo}`}
+                      aria-label="Отменить (Ctrl+Z)"
+                      title="Отменить (Ctrl+Z)"
+                      onClick={() => {
+                        haptic.tap();
+                        view.undo();
+                      }}
+                    >
+                      <Icon name="undo" size={18} />
                     </button>
-                  ))}
+                  )}
+                  <RefreshButton onRefresh={() => Promise.all([lots.refetch(), history.refetch(), best.refetch()])} />
                 </div>
 
                 {lots.isError ? (
@@ -311,12 +389,18 @@ export function ItemView({ id }: { id: string }) {
                   <RowSkeleton count={5} />
                 ) : lotsShown.length ? (
                   <>
-                    <div className="stack" style={{ gap: 8, opacity: lots.isPlaceholderData ? 0.5 : 1, transition: "opacity 200ms" }}>
-                      {lotsShown.map((lot, i) => (
-                        <LotRow key={`${lot.startTime}-${lot.buyoutPrice}-${i}`} lot={lot} median={lotMedian(lot)} />
-                      ))}
-                    </div>
-                    {lots.hasNextPage && (
+                    <SwipePager page={page} pages={pages} onPage={(p) => view.set({ page: p })}>
+                      {pageLots.length ? (
+                        <div className="stack" style={{ gap: 8, opacity: lots.isPlaceholderData ? 0.5 : 1, transition: "opacity 200ms" }}>
+                          {pageLots.map((lot, i) => (
+                            <LotRow key={`${lot.startTime}-${lot.buyoutPrice}-${i}`} lot={lot} median={lotMedian(lot)} />
+                          ))}
+                        </div>
+                      ) : (
+                        <RowSkeleton count={5} />
+                      )}
+                    </SwipePager>
+                    {narrowed && page === pages - 1 && lots.hasNextPage && (
                       <button
                         type="button"
                         className="btn"
@@ -360,6 +444,7 @@ export function ItemView({ id }: { id: string }) {
           </section>
         </>
       )}
+
     </main>
   );
 }

@@ -26,6 +26,18 @@
   color: var(--text-3);
 }
 
+/* «+1, +3…+5, +12…+15» может быть длинным — режем многоточием, полный текст в aria-label шкалы */
+.picked {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.value {
+  white-space: nowrap;
+}
+
 .readout b {
   font-size: 15px;
   color: var(--acc);
@@ -37,14 +49,23 @@
 }
 
 .reset {
-  display: grid;
-  place-items: center;
-  width: 22px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   height: 22px;
   margin-left: auto;
+  padding: 0 8px 0 6px;
   border-radius: 7px;
   background: var(--surface-2);
+  border: 1px solid var(--line);
   color: var(--text-2);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.reset:active {
+  transform: scale(0.95);
 }
 
 /* ---------- шкала ---------- */
@@ -115,22 +136,33 @@
     0 0 2px #fff inset;
 }
 
+/* пустой уровень внутри выбора — чуть заметнее «земли», но не спорит с настоящими столбиками */
 .track[data-active] .bar[data-selected][data-empty] {
-  height: 10px;
-  background: var(--text-2);
+  height: 6px;
+  background: var(--text-3);
   box-shadow: none;
+  opacity: 0.7;
 }
 
-/* вертикальный «прицел» над выбранным уровнем */
+/*
+ * рамка вокруг отрезка выбора: --from — первый столбик, --n — сколько подряд.
+ * Ширина столбика = (100% − 15 промежутков по 3px) / 16; рамка выступает на 2px с каждой стороны
+ * (меньше промежутка — не наезжает на соседние столбики).
+ */
 .cursor {
+  --cell: calc((100% - 45px) / 16);
   position: absolute;
   top: -4px;
-  bottom: -4px;
-  left: calc(var(--pos) * 100%);
-  width: 1px;
-  background: linear-gradient(180deg, transparent, rgb(var(--acc-rgb) / 0.8), transparent);
+  bottom: -3px;
+  left: calc(var(--from) * (var(--cell) + 3px) - 2px);
+  width: calc(var(--n) * var(--cell) + (var(--n) - 1) * 3px + 4px);
+  border-radius: 6px;
+  background: rgb(var(--acc-rgb) / 0.07);
+  box-shadow: inset 0 0 0 1px rgb(var(--acc-rgb) / 0.35);
   pointer-events: none;
-  transition: left 220ms var(--ease);
+  transition:
+    left 180ms var(--ease),
+    width 180ms var(--ease);
 }
 
 .scale {

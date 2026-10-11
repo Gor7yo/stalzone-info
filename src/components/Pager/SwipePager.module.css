@@ -1,0 +1,69 @@
+.pager {
+  display: grid;
+  gap: 12px;
+}
+
+.track {
+  transition: transform 260ms var(--ease);
+}
+
+.track[data-dragging] {
+  transition: none;
+}
+
+.track[data-enter="right"] {
+  animation: enter-right 300ms var(--ease);
+}
+
+.track[data-enter="left"] {
+  animation: enter-left 300ms var(--ease);
+}
+
+@keyframes enter-right {
+  from {
+    opacity: 0;
+    transform: translateX(36px);
+  }
+}
+
+@keyframes enter-left {
+  from {
+    opacity: 0;
+    transform: translateX(-36px);
+  }
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav :global(.icon-btn):disabled {
+  opacity: 0.35;
+}
+
+.dots {
+  flex: 1;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.bar {
+  width: 100%;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--acc);
+  transition: width 300ms var(--ease);
+}

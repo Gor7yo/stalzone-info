@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { emissionState, useEmission } from "@/features/emission";
 import { useApp } from "@/lib/store";
-import { bindBackButton, haptic } from "@/lib/telegram";
+import { bindBackButton, haptic, useIsTelegram } from "@/lib/telegram";
 import { Icon, type IconName } from "../Icon";
 import styles from "./Shell.module.css";
 
@@ -41,6 +41,15 @@ export function Shell({ children }: { children: React.ReactNode }) {
     });
   }, [pathname, router]);
 
+  // история переходов внутри приложения: «Назад» показываем, только если есть куда возвращаться
+  const [trail, setTrail] = useState<string[]>([pathname]);
+  // обновляем при рендере, а не в эффекте — без лишнего перерендера
+  if (trail[trail.length - 1] !== pathname) {
+    setTrail(trail[trail.length - 2] === pathname ? trail.slice(0, -1) : [...trail.slice(-49), pathname]);
+  }
+  const inTelegram = useIsTelegram();
+  const canGoBack = !inTelegram && trail.length > 1;
+
   // при выбросе — вибро-сигнал
   useEffect(() => {
     if (emissionActive) haptic.notify("warning");
@@ -55,6 +64,27 @@ export function Shell({ children }: { children: React.ReactNode }) {
       </div>
 
       {children}
+
+      {canGoBack && (
+        <button
+          type="button"
+          className={styles.back}
+          aria-label="Назад на прошлый экран"
+          onClick={() => {
+            haptic.tap();
+            const from = window.location.pathname;
+            const prev = trail[trail.length - 2];
+            router.back();
+            // браузер не вернулся (начало истории вкладки) — переходим на прошлый экран сами
+            setTimeout(() => {
+              if (window.location.pathname === from) router.replace(prev);
+            }, 400);
+          }}
+        >
+          <Icon name="back" size={18} />
+          Назад
+        </button>
+      )}
 
       <nav className={styles.dock} aria-label="Навигация" style={{ "--index": active } as React.CSSProperties}>
         <span className={styles.indicator} aria-hidden />

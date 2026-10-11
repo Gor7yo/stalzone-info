@@ -3,6 +3,7 @@
 import {
   lotUnitPrice,
   MAX_UPGRADE,
+  pickedQualities,
   qualityOf,
   QUALITY,
   upgradeOf,
@@ -41,10 +42,17 @@ export function LotFilters({
     onFilter(next);
   };
 
-  // лучшая цена и число лотов на каждом уровне — с учётом выбранного качества
+  // выбранные качества: тап по чипу включает/выключает, «Все» — сброс
+  const qualities = pickedQualities(filter);
+  const toggleQuality = (q: number) => {
+    const next = qualities.includes(q) ? qualities.filter((x) => x !== q) : [...qualities, q].sort((a, b) => a - b);
+    pick({ ...filter, quality: null, qualities: next.length ? next : null });
+  };
+
+  // лучшая цена и число лотов на каждом уровне — с учётом выбранных качеств
   const byLevel = LEVELS.map((level) => {
     const list = lots.filter(
-      (l) => upgradeOf(l.additional) === level && (filter.quality === null || qualityOf(l.additional) === filter.quality),
+      (l) => upgradeOf(l.additional) === level && (!qualities.length || qualities.includes(qualityOf(l.additional) ?? -1)),
     );
     const prices = list.map(lotUnitPrice).filter((p) => p > 0);
     return { count: list.length, best: prices.length ? Math.min(...prices) : null };
@@ -53,8 +61,13 @@ export function LotFilters({
 
   return (
     <div className={styles.panel}>
-      <div className={styles.row} role="radiogroup" aria-label="Качество">
-        <button type="button" className={styles.chip} aria-pressed={filter.quality === null} onClick={() => pick({ ...filter, quality: null })}>
+      <div className={styles.row} role="group" aria-label="Качество (можно несколько)">
+        <button
+          type="button"
+          className={styles.chip}
+          aria-pressed={!qualities.length}
+          onClick={() => pick({ ...filter, quality: null, qualities: null })}
+        >
           Все
         </button>
         {QUALITY.map((q, i) => (
@@ -62,10 +75,10 @@ export function LotFilters({
             key={q.label}
             type="button"
             className={styles.chip}
-            aria-pressed={filter.quality === i}
+            aria-pressed={qualities.includes(i)}
             data-empty={!qualityCount(i) || undefined}
             style={{ "--c": q.color } as React.CSSProperties}
-            onClick={() => pick({ ...filter, quality: filter.quality === i ? null : i })}
+            onClick={() => toggleQuality(i)}
           >
             <span className={styles.dot} />
             {q.short}
@@ -73,7 +86,11 @@ export function LotFilters({
         ))}
       </div>
 
-      <UpgradeDial levels={byLevel} value={filter.upgrade} onChange={(upgrade) => onFilter({ ...filter, upgrade })} />
+      <UpgradeDial
+        levels={byLevel}
+        value={filter.upgrades ?? []}
+        onChange={(upgrades) => onFilter({ ...filter, upgrade: null, upgrades: upgrades.length ? upgrades : null })}
+      />
 
       <div className={styles.deals} role="radiogroup" aria-label="Выгодность">
         {(

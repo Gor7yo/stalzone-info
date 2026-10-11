@@ -59,3 +59,34 @@ export function ShareButton({ text }: { text: string }) {
     </button>
   );
 }
+
+/** Обновить данные: крутится, пока идёт запрос, потом 3 с перезарядки (кольцо по кругу). */
+export function RefreshButton({ onRefresh, cooldownMs = 3000 }: { onRefresh: () => Promise<unknown>; cooldownMs?: number }) {
+  const [busy, setBusy] = useState(false);
+  const [cooling, setCooling] = useState(false);
+
+  return (
+    <button
+      type="button"
+      className={`icon-btn ${styles.refresh}`}
+      aria-label="Обновить"
+      data-busy={busy || undefined}
+      data-cooling={cooling || undefined}
+      style={{ "--cooldown": `${cooldownMs}ms` } as React.CSSProperties}
+      disabled={busy || cooling}
+      onClick={async () => {
+        haptic.tap();
+        setBusy(true);
+        setCooling(true);
+        setTimeout(() => setCooling(false), cooldownMs);
+        try {
+          await onRefresh();
+        } finally {
+          setBusy(false);
+        }
+      }}
+    >
+      <Icon name="refresh" size={18} />
+    </button>
+  );
+}
