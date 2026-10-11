@@ -6,7 +6,18 @@
   margin-bottom: 14px;
 }
 
+/* регистрируем --rarity как цвет, чтобы подсветка плавно перетекала при смене качества */
+@property --rarity {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
 .hero {
+  /* transform — анимация наклона от .tilt, её нельзя потерять */
+  transition:
+    transform 500ms var(--ease),
+    --rarity 450ms var(--ease);
   display: flex;
   align-items: center;
   gap: 14px;

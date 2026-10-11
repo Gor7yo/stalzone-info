@@ -88,6 +88,9 @@ export function ItemView({ id }: { id: string }) {
   useEffect(() => actions.pushRecentItem(id), [id]);
 
   const rarity = item ? rarityOf(item.rarity) : null;
+  // у артефакта подсветка карточки — цвет выбранного качества
+  const pickedQuality = qualityItem && filter.quality !== null ? QUALITY[filter.quality] : null;
+  const accent = pickedQuality?.color ?? rarity?.color ?? "var(--text-3)";
   const allLots = lots.data?.pages.flatMap((p) => p.lots) ?? [];
   const totalLots = lots.data?.pages[0]?.total ?? 0;
   const hasQuality = qualityItem || allLots.some((l) => qualityOf(l.additional) !== null);
@@ -145,7 +148,7 @@ export function ItemView({ id }: { id: string }) {
         </div>
       </div>
 
-      <Tilt className={`glass ${styles.hero}`} style={{ "--rarity": rarity?.color ?? "var(--text-3)" } as React.CSSProperties} max={8}>
+      <Tilt className={`glass ${styles.hero}`} style={{ "--rarity": accent } as React.CSSProperties} max={8}>
         <span className={`${styles.heroIcon} depth`}>
           <ItemIcon item={item} size={72} />
         </span>
@@ -157,6 +160,12 @@ export function ItemView({ id }: { id: string }) {
           )}
           {item && rarity && (
             <div className="row" style={{ flexWrap: "wrap", gap: 6 }}>
+              {pickedQuality && (
+                <span className="pill" style={{ color: pickedQuality.color }}>
+                  <span className="dot" />
+                  {pickedQuality.label}
+                </span>
+              )}
               {item.rarity !== "DEFAULT" && (
                 <span className="pill" style={{ color: rarity.color }}>
                   <span className="dot" />
