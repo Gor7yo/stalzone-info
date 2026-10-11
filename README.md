@@ -1,36 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Stalzone — КПК сталкера
 
-## Getting Started
+Telegram Mini App для STALCRAFT: рынок с аналитикой цен, досье сталкеров, кланы и радар выбросов.
 
-First, run the development server:
+## Запуск
 
 ```bash
+npm install
+cp .env.example .env.local   # указать URL бэкенда
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`npm run items` — пересобрать справочники из официальной базы EXBO
+([stalcraft-database](https://github.com/EXBO-Studio/stalcraft-database)):
+`public/items.json` (2 354 предмета), `public/meta.json` (названия статистик и достижений)
+и `public/barter.json` (рецепты бартера во всех поселениях).
+Запускать после крупных обновлений игры.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Фишки
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **3D-аномалия** на чистом WebGL-шейдере (без three.js): крутится пальцем, реагирует на тап,
+  краснеет во время выброса, засыпает вне экрана.
+- **Поиск предметов по названию** (рус/англ), с иконками и редкостью, понимает неправильную
+  раскладку: `rjvtnf` → «Комета».
+- **Аналитика рынка**: медиана, тренд, сделки за 24ч, интерактивный график, оценка каждого лота
+  («Огонь −32%», «Дорого +40%»), живые таймеры, сортировка.
+- **«Бартер или купить?»**: для каждого рецепта считается себестоимость (ингредиенты по
+  текущему рынку + оплата поселению) и сравнивается с ценой на аукционе.
+- **«Куда девать»**: на странице ресурса — в каких бартерах он нужен и сколько.
+- **Рюкзак**: оценка лута после вылазки — общая стоимость, что продавать первым,
+  ходовые ресурсы добавляются в один тап.
+- **«Мой рынок»**: избранные предметы с лучшей ценой прямо на главной.
+- **Радар выбросов** по всем регионам, живой таймер, вибро-сигнал и красная тревога в навбаре.
+- **Досье сталкера**: K/D, точность, хедшоты, часы в игре, витрина достижений, вся статистика
+  с поиском и переводом названий.
+- **Telegram-native**: хаптика, нативная кнопка «Назад», избранное синхронизируется через
+  CloudStorage, диплинки — ссылка из чата открывает сразу нужный экран.
 
-## Learn More
+## Архитектура
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/
+  app/            страницы (App Router)
+  components/     Anomaly (WebGL), Shell (навбар/фон), PriceChart, Tilt, ui/*
+  features/       данные и хуки по доменам: auction, items, character, clans, emission, meta
+  lib/            api, store (useSyncExternalStore + localStorage + CloudStorage), telegram, format
+scripts/          build-items.mjs — сборка справочников
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Оптимизация: ни одной UI- или 3D-библиотеки; Telegram SDK грузится лениво и только внутри
+Telegram; справочники загружаются по требованию и кешируются; один общий таймер на все
+счётчики; `content-visibility` для длинных списков; `prefers-reduced-motion` поддерживается.

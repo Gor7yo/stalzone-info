@@ -1,0 +1,60 @@
+import { Icon, type IconName } from "../Icon";
+import styles from "./ui.module.css";
+
+export function EmptyState({
+  icon = "search",
+  title,
+  text,
+  children,
+  tone,
+}: {
+  icon?: IconName;
+  title: string;
+  text?: string;
+  children?: React.ReactNode;
+  tone?: "error";
+}) {
+  return (
+    <div className={styles.empty} data-tone={tone}>
+      <span className={styles.emptyIcon}>
+        <Icon name={icon} size={26} />
+      </span>
+      <strong>{title}</strong>
+      {text && <p>{text}</p>}
+      {children}
+    </div>
+  );
+}
+
+export function ErrorState({ onRetry, text }: { onRetry?: () => void; text?: string }) {
+  return (
+    <EmptyState
+      icon="bolt"
+      tone="error"
+      title="Связь с Зоной потеряна"
+      text={text ?? "Сервер не ответил. Проверьте соединение и попробуйте ещё раз."}
+    >
+      {onRetry && (
+        <button type="button" className="btn" onClick={onRetry}>
+          Повторить
+        </button>
+      )}
+    </EmptyState>
+  );
+}
+
+export function RowSkeleton({ count = 6 }: { count?: number }) {
+  return (
+    <div className="stack" aria-busy>
+      {Array.from({ length: count }, (_, i) => (
+        <div key={i} className="list-row" style={{ opacity: 1 - i * 0.12 }}>
+          <span className="skeleton" style={{ width: 48, height: 48, borderRadius: 14 }} />
+          <span style={{ flex: 1, display: "grid", gap: 8 }}>
+            <span className="skeleton" style={{ height: 14, width: "60%" }} />
+            <span className="skeleton" style={{ height: 11, width: "35%" }} />
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}

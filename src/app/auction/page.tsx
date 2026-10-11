@@ -1,365 +1,187 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import styles from "./page.module.css";
-import { useQuery } from "@tanstack/react-query";
-import { getAuctionLots } from "@/features/auction/api";
-import { useStore } from "@/components/MobxProvider";
-import { AuctionLots } from "@/features/auction/types";
 import Link from "next/link";
-import { BackUp } from "@/components/ui/BackUp/BackUp";
-import { useCanScroll } from "@/hooks/useCanScroll";
+import { useDeferredValue, useState } from "react";
+import { Icon } from "@/components/Icon";
+import { ItemRow } from "@/components/ItemRow";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { RegionSwitch } from "@/components/ui/RegionSwitch";
+import { SearchField } from "@/components/ui/SearchField";
+import { EmptyState, ErrorState, RowSkeleton } from "@/components/ui/States";
+import { useBestPrice } from "@/features/auction";
+import { GROUPS, searchItems, useItems, type Item } from "@/features/items";
+import { formatPrice } from "@/lib/format";
+import { actions, useApp, type Region } from "@/lib/store";
+import { haptic } from "@/lib/telegram";
 
-interface LotsProps {
-  dataAuction: AuctionLots[];
-  isLoading: boolean;
-  error: Error | null;
-  page: number;
-}
+const STEP = 40;
 
 export default function AuctionPage() {
-  const { globalStore } = useStore();
+  const region = useApp((s) => s.region);
+  const favItems = useApp((s) => s.favItems);
+  const recentItems = useApp((s) => s.recentItems);
 
-  const [itemName, setItemName] = useState(globalStore.auctionLastItemName);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [isCanScroll, setIsCanScroll] = useState(false);
-  const [isAdditional, setIsAdditional] = useState(false);
-  const [totalPages, setTotalPages] = useState<number[] | null | undefined>(
-    null,
-  );
-  const renderCount = useRef(0);
-  const { canScroll } = useCanScroll();
+  const [query, setQuery] = useState("");
+  const [group, setGroup] = useState<string | undefined>();
+  const [limit, setLimit] = useState(STEP);
+  const deferred = useDeferredValue(query);
 
-  const {
-    data: dataAuctionLots,
-    isLoading: isLoadingAuctionLots,
-    error: errorAuctionLots,
-    refetch: refetchAuctionLots,
-  } = useQuery({
-    queryKey: ["auctionLots"],
-    enabled: false,
-    queryFn: async () =>
-      await getAuctionLots(globalStore.region, itemName, {
-        offset: String((currentPage - 1) * 20),
-        additional: String(isAdditional),
-        limit: "20",
-      }),
-    retry: false,
-  });
+  const { data: index, isLoading, isError, refetch } = useItems();
+  const browsing = deferred.trim().length > 0 || group !== undefined;
+  const results = index && browsing ? searchItems(index, deferred, group, limit + 1) : [];
 
-  const handleSearchLots = async () => {
-    globalStore.setAuctionItemName(itemName);
-    const { data } = await refetchAuctionLots();
-
-    if (!data?.total) {
-      return;
-    }
-
-    const totalPagesArray: number[] = Array.from(
-      { length: Math.floor(data?.total / 20) },
-      (_, index) => index + 1,
-    );
-
-    setTotalPages(totalPagesArray);
+  const pick = (id?: string) => {
+    haptic.select();
+    setGroup(id);
+    setLimit(STEP);
   };
-
-  const handleSetCurrentPage = (page: number) => {
-    setCurrentPage(page);
-  };
-
-  const handleScroll = (e: Event) => {
-    canScroll(e, isCanScroll, setIsCanScroll);
-  };
-
-  useEffect(() => {
-    if (itemName) {
-      handleSearchLots();
-    }
-  }, []);
-
-  useEffect(() => {
-    renderCount.current += 1;
-
-    if (renderCount.current <= 2) {
-      return;
-    }
-
-    refetchAuctionLots();
-  }, [currentPage]);
-
-  if (typeof window !== "undefined") {
-    window.addEventListener("scroll", handleScroll);
-  }
 
   return (
-    <main className={styles.page}>
-      <div className={styles.container}>
-        <header className={styles.header}>
-          <Link href="/" className={styles.back} id="backMenu">
-            ← НАЗАД
-          </Link>
+    <main className="page">
+      <PageHeader eyebrow="Аукцион" title="Рынок" aside={<RegionSwitch />}>
+        {index ? `${index.list.length.toLocaleString("ru-RU")} предметов. ` : ""}Ищите по-русски или по-английски — даже в неправильной раскладке.
+      </PageHeader>
 
-          <span className={styles.eyebrow}>STALZONE / MARKET</span>
+      <SearchField
+        value={query}
+        onChange={(v) => {
+          setQuery(v);
+          setLimit(STEP);
+        }}
+        placeholder="Например, «Сердце» или «AK-74»"
+        aria-label="Поиск предмета"
+      />
 
-          <div className={styles.headerRow}>
-            <div>
-              <span className={styles.number}>01</span>
-              <h1>Аукцион</h1>
-            </div>
+      <Link href="/craft" className="list-row" style={{ marginTop: 12 }} onClick={() => haptic.tap()}>
+        <span style={{ display: "grid", placeItems: "center", width: 40, height: 40, borderRadius: 13, background: "rgb(var(--acc-rgb) / 0.12)", color: "var(--acc)", flex: "none" }}>
+          <Icon name="sparkle" size={20} />
+        </span>
+        <span style={{ flex: 1, minWidth: 0 }}>
+          <strong style={{ fontSize: 14 }}>Планировщик крафта</strong>
+          <span className="dim" style={{ display: "block", fontSize: 12, fontWeight: 600 }}>
+            Что нафармить, что докупить блоками
+          </span>
+        </span>
+        <Icon name="chevron" size={18} className="dim" />
+      </Link>
 
-            <div className={styles.live}>
-              <span />
-              LIVE
-            </div>
-          </div>
+      <Link href="/loot" className="list-row" style={{ marginTop: 8 }} onClick={() => haptic.tap()}>
+        <span style={{ display: "grid", placeItems: "center", width: 40, height: 40, borderRadius: 13, background: "rgb(255 201 74 / 0.12)", color: "#ffc94a", flex: "none" }}>
+          <Icon name="bag" size={20} />
+        </span>
+        <span style={{ flex: 1, minWidth: 0 }}>
+          <strong style={{ fontSize: 14 }}>Рюкзак</strong>
+          <span className="dim" style={{ display: "block", fontSize: 12, fontWeight: 600 }}>
+            Оценить лут после вылазки
+          </span>
+        </span>
+        <Icon name="chevron" size={18} className="dim" />
+      </Link>
 
-          <p className={styles.description}>
-            Актуальные лоты и история торгов на рынке Зоны.
-          </p>
-        </header>
-
-        <section className={styles.tabs}>
-          <h3>Лоты</h3>
-        </section>
-
-        <section className={styles.filters}>
-          <div className={styles.search}>
-            <span>⌕</span>
-            <input
-              placeholder="Название предмета..."
-              value={itemName}
-              onChange={(e) => setItemName(e.target.value)}
-            />
-          </div>
-
-          <button
-            className={styles.actionButton}
-            onClick={handleSearchLots}
-            disabled={isLoadingAuctionLots}
-          >
-            Поиск
+      <div className="chips" style={{ marginTop: 12 }}>
+        <button type="button" className="chip" aria-pressed={!group} onClick={() => pick(undefined)}>
+          Все
+        </button>
+        {GROUPS.map((g) => (
+          <button key={g.id} type="button" className="chip" aria-pressed={group === g.id} onClick={() => pick(g.id)}>
+            <span aria-hidden>{g.icon}</span> {g.label}
           </button>
+        ))}
+      </div>
 
-          <button className={styles.filterButton}>
-            Фильтры
-            <span>+</span>
-          </button>
-        </section>
-
-        <section className={styles.meta}>
-          <span>"АКТИВНЫЕ ЛОТЫ"</span>
-          <span>REGION: {globalStore.region.toUpperCase()}</span>
-        </section>
-
-        <Lots
-          dataAuction={dataAuctionLots ? [dataAuctionLots] : []}
-          isLoading={isLoadingAuctionLots}
-          error={errorAuctionLots}
-          page={currentPage}
-        />
-
-        {isCanScroll && <BackUp />}
-        <footer className={styles.footer}>
-          <span>STALZONE MARKET</span>
-          {totalPages && totalPages.length > 1 && (
-            <div className={styles.paginationPages}>
-              {totalPages?.map((page, index) => (
-                <span
-                  className={`${currentPage === page && styles.isActivePage}`}
-                  key={index}
-                  onClick={() => handleSetCurrentPage(page)}
-                >
-                  {page}
-                </span>
-              ))}
-            </div>
-          )}
-          <span>01</span>
-        </footer>
+      <div className="section" style={{ marginTop: 18 }}>
+        {isError ? (
+          <ErrorState onRetry={() => refetch()} text="Не удалось загрузить базу предметов." />
+        ) : isLoading || !index ? (
+          <RowSkeleton />
+        ) : browsing ? (
+          results.length ? (
+            <>
+              <div className="stack" style={{ gap: 8 }}>
+                {results.slice(0, limit).map((item) => (
+                  <ItemRow key={item.id} item={item} />
+                ))}
+              </div>
+              {results.length > limit && (
+                <button type="button" className="btn" style={{ width: "100%", marginTop: 12 }} onClick={() => setLimit((l) => l + STEP)}>
+                  Показать ещё
+                </button>
+              )}
+            </>
+          ) : (
+            <EmptyState title="Ничего не найдено" text="Проверьте название или попробуйте другую категорию." />
+          )
+        ) : (
+          <Shortcuts index={index.byId} favItems={favItems} recentItems={recentItems} region={region} />
+        )}
       </div>
     </main>
   );
 }
 
-function Lots({ dataAuction, isLoading, error, page }: LotsProps) {
-  if (isLoading) {
-    return (
-      <div className={styles.state}>
-        <div className={styles.spinner} />
-        <span>Загрузка лотов...</span>
-      </div>
-    );
-  }
+function Shortcuts({
+  index,
+  favItems,
+  recentItems,
+  region,
+}: {
+  index: Map<string, Item>;
+  favItems: string[];
+  recentItems: string[];
+  region: Region;
+}) {
+  const favs = favItems.map((id) => index.get(id)).filter((i): i is Item => !!i);
+  const recents = recentItems.map((id) => index.get(id)).filter((i): i is Item => !!i && !favItems.includes(i.id));
 
-  if (error) {
+  if (!favs.length && !recents.length) {
     return (
-      <div className={styles.stateError}>
-        <span className={styles.errorIcon}>!</span>
-        <div>
-          <strong>Не удалось загрузить лоты</strong>
-        </div>
-      </div>
+      <EmptyState
+        icon="sparkle"
+        title="Что ищем, сталкер?"
+        text="Введите название предмета. Добавляйте предметы в избранное ★ — их цены появятся на главной."
+      />
     );
   }
 
   return (
-    <div className={styles.list}>
-      {dataAuction.length > 0 ? (
-        dataAuction.map((item) =>
-          item.lots.map((lot) => (
-            <AuctionCard
-              key={lot.startTime.toString()}
-              name={lot.itemId}
-              category={"Категория"}
-              price={lot.buyoutPrice ?? "-"}
-              quantity={lot.amount}
-              time={lot.endTime.toString()}
-              startPrice={lot.startPrice ?? "-"}
-            />
-          )),
-        )
-      ) : (
-        <div className={styles.state}>
-          <span>Пустовато тут...</span>
+    <>
+      {favs.length > 0 && (
+        <>
+          <h2 className="section-title">
+            Избранное <small>лучшая цена · {region.toUpperCase()}</small>
+          </h2>
+          <div className="stack" style={{ gap: 8 }}>
+            {favs.map((item) => (
+              <ItemRow key={item.id} item={item} aside={<BestPrice id={item.id} region={region} />} />
+            ))}
+          </div>
+        </>
+      )}
+      {recents.length > 0 && (
+        <div className={favs.length ? "section" : undefined}>
+          <h2 className="section-title">
+            Недавние
+            <button type="button" onClick={actions.clearRecentItems}>
+              Очистить
+            </button>
+          </h2>
+          <div className="stack" style={{ gap: 8 }}>
+            {recents.map((item) => (
+              <ItemRow key={item.id} item={item} />
+            ))}
+          </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 
-function AuctionCard({
-  name,
-  category,
-  price,
-  quantity,
-  startPrice,
-  time,
-}: {
-  name: string;
-  category: string;
-  price: number;
-  quantity: number;
-  startPrice: number;
-  time: string;
-}) {
-  const [timer, setTimer] = useState<string>("");
-  const { globalStore } = useStore();
-
-  const dateCreate = (timer: string, interval?: NodeJS.Timeout) => {
-    const target = Date.parse(time);
-    const now = Date.now();
-    const difference = target - now;
-
-    if (difference <= 0) {
-      clearInterval(interval);
-      return;
-    }
-
-    const days: number = Math.floor(difference / (1000 * 60 * 60 * 24));
-    const hours: number = Math.floor(
-      (difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
-    );
-    const minutes: number = Math.floor(
-      (difference % (1000 * 60 * 60)) / (1000 * 60),
-    );
-    const seconds: number = Math.floor((difference % (1000 * 60)) / 1000);
-
-    timer = `Осталось: ${days}д ${hours}ч ${minutes}м ${seconds}с`;
-    setTimer(timer);
-  };
-
-  const endTime = () => {
-    let timer: string = "";
-    const intervalItem = setInterval(() => {
-      dateCreate(time, intervalItem);
-    }, 1000);
-  };
-
-  useEffect(() => {
-    let timer: string = "";
-    dateCreate(timer);
-    endTime();
-  }, []);
-
+function BestPrice({ id, region }: { id: string; region: Region }) {
+  const { data, isLoading } = useBestPrice(region, id);
+  if (isLoading) return <span className="skeleton" style={{ width: 70, height: 16 }} />;
   return (
-    <article className={styles.card}>
-      <div className={styles.cardIcon}>◆</div>
-
-      <div className={styles.cardMain}>
-        <span className={styles.category}>{category}</span>
-
-        <h2>{name}</h2>
-
-        <div className={styles.details}>
-          <span>
-            Кол-во <strong>{quantity}</strong>
-          </span>
-
-          <span>
-            Осталось <strong>{timer}</strong>
-          </span>
-        </div>
-      </div>
-
-      <div className={styles.price}>
-        <div className={styles.endPrice}>
-          <span>ЦЕНА</span>
-          <strong>{price}</strong>
-          <small>₽</small>
-        </div>
-
-        <div className={styles.startPrice}>
-          <span>ЦЕНА СТАВКИ</span>
-          <strong>{startPrice}</strong>
-          <small>₽</small>
-        </div>
-      </div>
-
-      <Link
-        href={`auction/${name}`}
-        className={styles.openButton}
-        onClick={() =>
-          globalStore.setAuctionItem({
-            name,
-            category,
-            price,
-            quantity,
-            startPrice,
-            time,
-          })
-        }
-      >
-        ↗
-      </Link>
-    </article>
-  );
-}
-
-function History() {
-  return <div className={styles.list}></div>;
-}
-
-function HistoryCard({
-  name,
-  price,
-  date,
-}: {
-  name: string;
-  price: string;
-  date: string;
-}) {
-  return (
-    <article className={styles.historyCard}>
-      <div>
-        <span className={styles.category}>ПРОДАЖА</span>
-        <h2>{name}</h2>
-        <p>{date}</p>
-      </div>
-
-      <div className={styles.historyPrice}>
-        <span>ЦЕНА</span>
-        <strong>{price} ₽</strong>
-      </div>
-    </article>
+    <strong className="mono" style={{ fontSize: 14, color: data?.price ? "var(--acc)" : "var(--text-3)", whiteSpace: "nowrap" }}>
+      {data?.price ? formatPrice(data.price) : "—"}
+    </strong>
   );
 }

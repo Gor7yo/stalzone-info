@@ -1,0 +1,121 @@
+.radar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 20px 22px;
+  overflow: hidden;
+  text-align: center;
+}
+
+.radar[data-phase="active"] {
+  border-color: rgb(var(--red-rgb) / 0.45);
+}
+
+/* радар: всё центрировано по аномалии */
+.scope {
+  --beam: var(--acc-rgb);
+  position: relative;
+  width: min(330px, 100%);
+  aspect-ratio: 1;
+  margin-bottom: -40px;
+}
+
+.radar[data-phase="active"] .scope {
+  --beam: var(--red-rgb);
+}
+
+.rings,
+.sweep {
+  position: absolute;
+  inset: -22%;
+  border-radius: 50%;
+  pointer-events: none;
+  mask-image: radial-gradient(circle, #000 40%, transparent 71%);
+}
+
+.rings {
+  background:
+    repeating-radial-gradient(circle, transparent 0 36px, rgb(var(--beam) / 0.09) 36px 37px),
+    linear-gradient(rgb(var(--beam) / 0.07), rgb(var(--beam) / 0.07)) center / 1px 100% no-repeat,
+    linear-gradient(rgb(var(--beam) / 0.07), rgb(var(--beam) / 0.07)) center / 100% 1px no-repeat;
+}
+
+/* луч: яркая передняя кромка и затухающий хвост, вращается вокруг центра */
+.sweep {
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg 270deg,
+    rgb(var(--beam) / 0.04) 300deg,
+    rgb(var(--beam) / 0.22) 358deg,
+    rgb(var(--beam) / 0.5) 360deg
+  );
+  animation: sweep 4s linear infinite;
+}
+
+.radar[data-phase="active"] .sweep {
+  animation-duration: 1.6s;
+}
+
+.scope .orb {
+  position: absolute;
+  inset: 0;
+}
+
+.radarText {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.radarText > div {
+  align-items: center;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  text-align: left;
+  transition:
+    transform 180ms var(--ease),
+    border-color 250ms,
+    background 250ms;
+}
+
+.card:active {
+  transform: scale(0.97);
+}
+
+.card[aria-pressed="true"] {
+  border-color: rgb(var(--acc-rgb) / 0.4);
+  background: linear-gradient(160deg, rgb(var(--acc-rgb) / 0.1), transparent 60%), var(--surface);
+}
+
+.card[data-phase="active"] {
+  border-color: rgb(var(--red-rgb) / 0.5);
+  background: linear-gradient(160deg, rgb(var(--red-rgb) / 0.14), transparent 60%), var(--surface);
+}
+
+.cardRegion {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+@keyframes sweep {
+  to {
+    transform: rotate(360deg);
+  }
+}

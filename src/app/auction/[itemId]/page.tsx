@@ -1,21 +1,9 @@
-"use client";
+import type { Metadata } from "next";
+import { ItemView } from "./ItemView";
 
-import { useParams } from "next/navigation";
-import styles from "./page.module.css";
-import { useStore } from "@/components/MobxProvider";
-import Link from "next/link";
+export const metadata: Metadata = { title: "Предмет" };
 
-export default function AuctionItemPage() {
-	const params = useParams(); // Хук для клиента
-  const itemId = params.itemId as string;
-
-  if (!itemId) return <div>Не найдено</div>;
-
-  return (
-    <div className={styles.page}>
-      <div className={styles.container}>
-        
-      </div>
-    </div>
-  );
+export default async function ItemPage({ params }: PageProps<"/auction/[itemId]">) {
+  const { itemId } = await params;
+  return <ItemView id={decodeURIComponent(itemId)} />;
 }

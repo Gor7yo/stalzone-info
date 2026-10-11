@@ -1,0 +1,191 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.hero {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background:
+    radial-gradient(70% 120% at 0% 50%, color-mix(in srgb, var(--rarity) 22%, transparent), transparent 70%),
+    repeating-linear-gradient(135deg, transparent 0 12px, rgb(255 255 255 / 0.015) 12px 13px);
+}
+
+.heroIcon {
+  flex: none;
+  filter: drop-shadow(0 16px 24px rgb(0 0 0 / 0.6));
+  animation: float 5s ease-in-out infinite;
+}
+
+.heroText {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.heroText h1 {
+  font-size: clamp(18px, 5.4vw, 24px);
+  font-weight: 600;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* ---------- лоты ---------- */
+
+.lot {
+  align-items: stretch;
+  border-left-width: 3px;
+}
+
+.lot[data-deal="hot"] {
+  border-left-color: var(--acc);
+  background: linear-gradient(90deg, rgb(var(--acc-rgb) / 0.08), transparent 60%), var(--surface);
+}
+
+.lot[data-deal="good"] {
+  border-left-color: var(--green);
+}
+
+.lot[data-deal="high"] {
+  border-left-color: rgb(var(--red-rgb) / 0.6);
+}
+
+.lotMain {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  align-content: center;
+}
+
+.lotMeta {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-3);
+}
+
+.lotPrice {
+  display: grid;
+  gap: 2px;
+  justify-items: end;
+  align-content: center;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.lotPrice strong {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.lotPrice span {
+  font-size: 11px;
+}
+
+.deal {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.deal[data-kind="hot"] {
+  background: var(--acc);
+  color: var(--acc-ink);
+  box-shadow: 0 0 14px rgb(var(--acc-rgb) / 0.4);
+}
+
+.deal[data-kind="good"] {
+  background: rgb(78 224 138 / 0.14);
+  color: var(--green);
+}
+
+.deal[data-kind="high"] {
+  background: rgb(var(--red-rgb) / 0.12);
+  color: var(--red);
+}
+
+@keyframes float {
+  50% {
+    transform: translateZ(28px) translateY(-6px);
+  }
+}
+
+/* ---------- фильтр качества ---------- */
+
+.qualityChip[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--q) 18%, transparent);
+  color: var(--q);
+  border-color: color-mix(in srgb, var(--q) 45%, transparent);
+}
+
+.qualityCount {
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-align: center;
+  color: var(--text-2);
+}
+
+/* ---------- заточка: «+N» с полоской заполнения до +15 ---------- */
+
+.upgrade {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.upgrade::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: -1;
+  width: calc(var(--up) * 100%);
+  background: linear-gradient(90deg, rgb(var(--acc-rgb) / 0.15), rgb(var(--acc-rgb) / 0.4));
+}
+
+.upgrade[data-max] {
+  color: var(--acc-ink);
+  background: var(--acc);
+  border-color: transparent;
+  box-shadow: 0 0 12px rgb(var(--acc-rgb) / 0.45);
+}

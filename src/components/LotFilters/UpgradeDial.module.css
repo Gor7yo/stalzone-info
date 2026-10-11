@@ -1,0 +1,145 @@
+.dial {
+  padding: 8px 10px 6px;
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgb(var(--acc-rgb) / 0.04), transparent 60%),
+    var(--surface);
+  border: 1px solid var(--line);
+}
+
+/* ---------- табло ---------- */
+
+.readout {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 22px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.readout b {
+  font-size: 15px;
+  color: var(--acc);
+  text-shadow: 0 0 12px rgb(var(--acc-rgb) / 0.6);
+}
+
+.value {
+  color: var(--text-2);
+}
+
+.reset {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin-left: auto;
+  border-radius: 7px;
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+
+/* ---------- шкала ---------- */
+
+.track {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(16, 1fr);
+  align-items: end;
+  gap: 3px;
+  height: 34px;
+  margin-top: 4px;
+  touch-action: none;
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+}
+
+.track:focus-visible {
+  outline: 2px solid var(--acc);
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+
+/* линия «земли» */
+.track::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--line-2), transparent);
+}
+
+.bar {
+  height: calc(var(--h) * 100%);
+  min-height: 4px;
+  border-radius: 3px 3px 1px 1px;
+  background: linear-gradient(180deg, rgb(var(--acc-rgb) / 0.75), rgb(var(--acc-rgb) / 0.2));
+  transform-origin: bottom;
+  transition:
+    height 380ms var(--spring),
+    opacity 200ms,
+    background 200ms,
+    box-shadow 200ms;
+}
+
+.bar[data-empty] {
+  height: 4px;
+  background: var(--line-2);
+}
+
+.bar[data-max]:not([data-empty]) {
+  background: linear-gradient(180deg, #fff, var(--acc));
+}
+
+/* при выборе остальные «гаснут», выбранный светится */
+.track[data-active] .bar {
+  opacity: 0.35;
+}
+
+.track[data-active] .bar[data-selected] {
+  opacity: 1;
+  background: var(--acc);
+  box-shadow:
+    0 0 14px rgb(var(--acc-rgb) / 0.7),
+    0 0 2px #fff inset;
+}
+
+.track[data-active] .bar[data-selected][data-empty] {
+  height: 10px;
+  background: var(--text-2);
+  box-shadow: none;
+}
+
+/* вертикальный «прицел» над выбранным уровнем */
+.cursor {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  left: calc(var(--pos) * 100%);
+  width: 1px;
+  background: linear-gradient(180deg, transparent, rgb(var(--acc-rgb) / 0.8), transparent);
+  pointer-events: none;
+  transition: left 220ms var(--ease);
+}
+
+.scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  padding: 0 1px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-3);
+}

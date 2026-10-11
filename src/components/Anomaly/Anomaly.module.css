@@ -1,0 +1,46 @@
+.wrap {
+  position: relative;
+  aspect-ratio: 1;
+  width: 100%;
+}
+
+.canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  touch-action: pan-y;
+  cursor: grab;
+  animation: appear 1200ms var(--ease) both;
+}
+
+.canvas:active {
+  cursor: grabbing;
+}
+
+/* без WebGL — CSS-сфера, чтобы не было пустоты */
+.fallback {
+  position: absolute;
+  inset: 22%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, rgb(255 255 255 / 0.5), transparent 30%),
+    radial-gradient(circle, var(--acc) 0%, #0a5a45 70%);
+  box-shadow: 0 0 80px 10px rgb(var(--acc-rgb) / 0.35);
+  animation: appear 1200ms var(--ease) both;
+}
+
+.wrap[data-mode="active"] .fallback {
+  background:
+    radial-gradient(circle at 35% 30%, rgb(255 255 255 / 0.5), transparent 30%),
+    radial-gradient(circle, var(--red) 0%, #5a0a25 70%);
+  box-shadow: 0 0 80px 10px rgb(var(--red-rgb) / 0.4);
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+    filter: blur(12px);
+  }
+}

@@ -1,0 +1,162 @@
+.total {
+  display: grid;
+  gap: 6px;
+  padding: 20px;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.total::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background:
+    radial-gradient(60% 120% at 100% 0%, rgb(var(--acc-rgb) / 0.16), transparent 70%),
+    repeating-linear-gradient(135deg, transparent 0 12px, rgb(255 255 255 / 0.015) 12px 13px);
+}
+
+.totalLabel {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--acc);
+}
+
+.totalValue {
+  font-size: clamp(32px, 10vw, 44px);
+  font-weight: 700;
+  line-height: 1.05;
+}
+
+.search {
+  position: relative;
+  margin-top: 14px;
+}
+
+.results {
+  margin-top: 8px;
+  gap: 6px;
+}
+
+.plus {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  background: var(--acc);
+  color: var(--acc-ink);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+/* ---------- строка рюкзака ---------- */
+
+.row {
+  position: relative;
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 18px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  overflow: hidden;
+  isolation: isolate;
+  animation: rise 360ms var(--ease) both;
+}
+
+/* полоска доли в общей стоимости */
+.row::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: var(--share);
+  background: var(--acc);
+  opacity: 0.5;
+  transition: width 500ms var(--ease);
+}
+
+.row[data-top] {
+  border-color: rgb(var(--acc-rgb) / 0.35);
+  background: linear-gradient(110deg, rgb(var(--acc-rgb) / 0.08), transparent 60%), var(--surface);
+}
+
+.rowMain {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.stepper button {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  font-size: 18px;
+  font-weight: 700;
+  transition: transform 150ms var(--ease);
+}
+
+.stepper button:active {
+  transform: scale(0.88);
+}
+
+.stepper input {
+  width: 72px;
+  height: 34px;
+  border-radius: 11px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.stepper input:focus {
+  border-color: rgb(var(--acc-rgb) / 0.5);
+}
+
+.stepper .remove {
+  margin-left: 4px;
+  color: var(--text-3);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-right: auto;
+  height: 24px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: var(--acc);
+  color: var(--acc-ink);
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
