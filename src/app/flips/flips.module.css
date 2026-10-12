@@ -270,6 +270,22 @@
   font-size: 15px;
 }
 
+/* название + заточка рядом, как в игре: «Опал +7» */
+.nameRow {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.upgrade {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--acc);
+}
+
 .tags {
   display: flex;
   flex-wrap: wrap;

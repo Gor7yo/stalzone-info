@@ -315,10 +315,12 @@ function OfferCard({ offer, item }: { offer: Offer; item?: Item }) {
       <div className={styles.cardHead}>
         <ItemIcon item={item} size={46} />
         <span className={styles.cardTitle}>
-          <strong className="truncate">{item?.name ?? f.itemId}</strong>
+          <span className={styles.nameRow}>
+            <strong className="truncate">{item?.name ?? f.itemId}</strong>
+            {(f.upgrade > 0 || quality) && <span className={styles.upgrade}>+{f.upgrade}</span>}
+          </span>
           <span className={styles.tags}>
             {quality && <span className={styles.qualityTag}>{quality.label}</span>}
-            {(f.upgrade > 0 || quality) && <span className={styles.tag}>+{f.upgrade}</span>}
             {f.amount > 1 && <span className={styles.tag}>×{f.amount}</span>}
             <span className={styles.conf} style={{ color: conf.color }}>
               ● {conf.label}
