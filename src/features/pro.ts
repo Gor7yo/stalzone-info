@@ -17,7 +17,7 @@ export interface ProStatus {
 }
 
 /** Страница оплаты Pro в Tribute; Pro выдаётся вебхуком на Telegram покупателя. */
-export const PRO_BUY_URL = "https://web.tribute.tg/p/GMr";
+export const PRO_BUY_URL = "https://web.tribute.tg/p/GO6";
 /** Пробный Pro на 3 дня (один раз на Telegram). */
 export function useStartTrial() {
   const qc = useQueryClient();
