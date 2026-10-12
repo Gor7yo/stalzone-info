@@ -29,7 +29,7 @@ export default function CharacterSearchPage() {
 
   return (
     <main className="page">
-      <PageHeader eyebrow="Досье" title="Сталкеры" aside={<RegionSwitch />}>
+      <PageHeader eyebrow="Профили" title="Игроки" aside={<RegionSwitch />}>
         Профиль, группировка, клан и вся статистика по нику.
       </PageHeader>
 

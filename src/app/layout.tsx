@@ -14,10 +14,12 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: { default: "Stalzone — КПК сталкера", template: "%s · Stalzone" },
-  description: "Рынок, сталкеры, кланы и выбросы STALCRAFT в одном Telegram-приложении.",
-  applicationName: "Stalzone",
-  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Stalzone" },
+  metadataBase: new URL("https://stalzone-info.ru"),
+  title: { default: "STALZONE INFO", template: "%s · STALZONE INFO" },
+  description: "Цены аукциона, флиппер, алерты, кланы и выбросы STALZONE — на сайте и в Telegram.",
+  applicationName: "STALZONE INFO",
+  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "STALZONE INFO" },
+  openGraph: { siteName: "STALZONE INFO", type: "website", locale: "ru_RU" },
   formatDetection: { telephone: false },
 };
 

@@ -13,7 +13,7 @@ import styles from "./Shell.module.css";
 const TABS: { href: string; label: string; icon: IconName }[] = [
   { href: "/", label: "Главная", icon: "home" },
   { href: "/auction", label: "Рынок", icon: "market" },
-  { href: "/character", label: "Сталкер", icon: "user" },
+  { href: "/character", label: "Игроки", icon: "user" },
   { href: "/clans", label: "Кланы", icon: "shield" },
   { href: "/emission", label: "Выброс", icon: "radiation" },
 ];

@@ -215,7 +215,7 @@ export function ItemView({ id, quality = null, upgrade = null }: { id: string; q
               <Icon name="bell" size={19} filled={hasAlert} />
             </button>
           )}
-          <ShareButton text={`${item?.name ?? "Предмет"} — цены на рынке STALCRAFT`} />
+          <ShareButton text={`${item?.name ?? "Предмет"} — цены на рынке STALZONE`} />
           <FavButton active={isFav} onToggle={() => actions.toggleFavItem(id)} />
         </div>
       </div>

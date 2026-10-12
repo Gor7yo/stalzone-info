@@ -34,7 +34,7 @@ export function CharacterView({ region, name }: { region: Region; name: string }
       <div className={styles.toolbar}>
         <span className="pill dim">{region.toUpperCase()}</span>
         <div className="row" style={{ gap: 8 }}>
-          <ShareButton text={`Досье сталкера ${data?.username ?? name}`} />
+          <ShareButton text={`Профиль игрока ${data?.username ?? name}`} />
           <FavButton active={isFav} onToggle={() => actions.toggleFavCharacter({ region, name: data?.username ?? name })} />
         </div>
       </div>
@@ -47,7 +47,7 @@ export function CharacterView({ region, name }: { region: Region; name: string }
         </div>
       ) : error ? (
         isNotFound(error) ? (
-          <EmptyState icon="user" title="Сталкер не найден" text={`Нет персонажа «${name}» в регионе ${region.toUpperCase()}. Проверьте ник или регион.`}>
+          <EmptyState icon="user" title="Игрок не найден" text={`Нет персонажа «${name}» в регионе ${region.toUpperCase()}. Проверьте ник или регион.`}>
             <Link href="/character" className="btn">
               Новый поиск
             </Link>

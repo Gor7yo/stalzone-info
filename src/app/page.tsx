@@ -27,7 +27,7 @@ type Tile = { href: string; title: string; text: string; icon: IconName; accent:
 const TILES = ([
   { href: "/auction", title: "Рынок", text: "Цены, графики и выгодные лоты", icon: "market", accent: "#5aa9ff" },
   { href: "/craft", title: "Крафт", text: "Что фармить и сколько это стоит", icon: "sparkle", accent: "var(--acc)" },
-  { href: "/character", title: "Сталкеры", text: "Профили и статистика", icon: "user", accent: "var(--cyan)" },
+  { href: "/character", title: "Игроки", text: "Профили и статистика", icon: "user", accent: "var(--cyan)" },
   { href: "/clans", title: "Кланы", text: "Рейтинг и составы", icon: "shield", accent: "#c08bff" },
   { href: "/emission", title: "Выбросы", text: "Все регионы онлайн", icon: "radiation", accent: "var(--ember)" },
   { href: "/loot", title: "Рюкзак", text: "Сколько стоит лут", icon: "bag", accent: "#ffc94a" },
@@ -46,9 +46,9 @@ export default function HomePage() {
   return (
     <main className="page">
       <header className={styles.top}>
-        <Link href="/" className={styles.logo} aria-label="Stalzone">
+        <Link href="/" className={styles.logo} aria-label="STALZONE INFO">
           <span className={styles.logoMark} />
-          STALZONE
+          STALZONE <span style={{ color: "var(--acc)" }}>INFO</span>
         </Link>
         <RegionSwitch />
       </header>
@@ -130,8 +130,8 @@ export default function HomePage() {
       )}
 
       <footer className={styles.footer}>
-        <span>STALZONE v0.2</span>
-        <span>данные: STALCRAFT API · EXBO</span>
+        <span>STALZONE INFO v0.2</span>
+        <span>данные: STALZONE API · EXBO</span>
       </footer>
     </main>
   );
@@ -153,7 +153,7 @@ function UniversalSearch({ region, wantIndex }: { region: Region; wantIndex: boo
         value={query}
         onChange={setQuery}
         onFocus={() => setFocused(true)}
-        placeholder="Предмет, сталкер или клан…"
+        placeholder="Предмет, игрок или клан…"
         aria-label="Поиск по Зоне"
         onSubmit={() => {
           if (items[0]) router.push(`/auction/${items[0].id}`);
@@ -172,7 +172,7 @@ function UniversalSearch({ region, wantIndex }: { region: Region; wantIndex: boo
                 <Icon name="user" size={20} />
               </span>
               <span style={{ flex: 1, minWidth: 0 }}>
-                <strong className="truncate">Сталкер «{deferred}»</strong>
+                <strong className="truncate">Игрок «{deferred}»</strong>
                 <span className="dim" style={{ display: "block", fontSize: 12, fontWeight: 600 }}>
                   Открыть профиль · {region.toUpperCase()}
                 </span>

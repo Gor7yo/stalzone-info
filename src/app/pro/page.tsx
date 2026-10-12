@@ -14,7 +14,7 @@ export default function ProPage() {
 
   return (
     <main className="page">
-      <PageHeader eyebrow="Подписка" title="Stalzone Pro">
+      <PageHeader eyebrow="Подписка" title="STALZONE INFO Pro">
         Всё, что нужно трейдеру Зоны: флиппер, алерты в Telegram, графики и точные цены по качеству и заточке.
       </PageHeader>
 
@@ -79,7 +79,7 @@ export default function ProPage() {
       <section className="section">
         <h2 className="section-title">Бесплатно остаётся</h2>
         <p className={`dim ${styles.free}`}>
-          Поиск и цены на рынке, лоты, история продаж за месяц, крафт, рюкзак, кланы, сталкеры, уведомления о выбросе и один ценовой
+          Поиск и цены на рынке, лоты, история продаж за месяц, кланы, профили игроков, уведомления о выбросе и один ценовой
           алерт.
         </p>
       </section>
