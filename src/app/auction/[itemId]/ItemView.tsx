@@ -70,6 +70,8 @@ const SORTS: {
 ];
 
 const LOTS_PAGE = 10;
+/** Сколько лотов предмета с качеством грузим целиком (столько же снимает сборщик: 5 страниц по 200). */
+const QUALITY_LOTS_MAX = 1000;
 
 /**
  * quality / upgrade — открыть сразу с фильтром по ним (переход из флиппера);
@@ -179,8 +181,12 @@ export function ItemView({ id, quality = null, upgrade = null }: { id: string; q
   const pages = Math.max(1, Math.ceil((narrowed ? lotsShown.length : Math.max(totalLots, lotsShown.length)) / LOTS_PAGE));
   const page = Math.min(view.value.page, pages - 1);
   const pageLots = lotsShown.slice(page * LOTS_PAGE, (page + 1) * LOTS_PAGE);
-  // без фильтра страниц столько, сколько лотов на рынке — недостающие догружаем
-  const needMore = !narrowed && pageLots.length < LOTS_PAGE && allLots.length < totalLots;
+  // без фильтра страниц столько, сколько лотов на рынке — недостающие догружаем.
+  // У предметов с качеством догружаем весь рынок (до QUALITY_LOTS_MAX): дорогие редкие и легендарные
+  // лоты лежат после 200 самых дешёвых, иначе фильтр качества их не видит
+  const needMore =
+    (qualityItem && allLots.length < Math.min(totalLots, QUALITY_LOTS_MAX)) ||
+    (!narrowed && pageLots.length < LOTS_PAGE && allLots.length < totalLots);
   useEffect(() => {
     if (needMore && lots.hasNextPage && !lots.isFetchingNextPage) lots.fetchNextPage();
   }, [needMore, lots]);
