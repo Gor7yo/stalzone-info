@@ -1,0 +1,212 @@
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.stat {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.stat[data-accent] {
+  background: radial-gradient(120% 120% at 100% 0%, rgb(var(--acc-rgb) / 0.12), transparent 70%), var(--surface);
+}
+
+.statLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-2);
+}
+
+.statValue {
+  font-size: 24px;
+  line-height: 1.1;
+  color: var(--text);
+}
+
+.statHint {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3);
+}
+
+.card {
+  padding: 14px;
+  border-radius: 18px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+/* ---------- столбики ---------- */
+
+.bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 110px;
+  border-bottom: 1px solid var(--line);
+}
+
+.barHit {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  cursor: default;
+}
+
+.bar {
+  width: 100%;
+  border-radius: 4px 4px 0 0;
+  background: rgb(var(--acc-rgb) / 0.75);
+  transition: background 150ms;
+}
+
+.barHit[data-active] .bar {
+  background: var(--acc);
+}
+
+.axis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-3);
+}
+
+.facts {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.facts > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.facts dt {
+  color: var(--text-2);
+}
+
+.facts dd {
+  text-align: right;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.updated {
+  margin-top: 12px;
+  font-size: 11px;
+  text-align: center;
+}
+
+/* ---------- пользователи ---------- */
+
+.badges {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex: none;
+}
+
+.badge {
+  padding: 2px 7px;
+  border-radius: 7px;
+  background: rgb(255 255 255 / 0.06);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-2);
+}
+
+.badge[data-tone="pro"] {
+  background: rgb(var(--acc-rgb) / 0.16);
+  color: var(--acc);
+}
+
+.badge[data-tone="ban"] {
+  background: rgb(255 91 121 / 0.16);
+  color: #ff5b79;
+}
+
+.userName {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-family: var(--font-display);
+  font-size: 18px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.actions :global(.btn),
+.inline :global(.btn) {
+  min-height: 36px;
+  padding: 0 12px;
+}
+
+.inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.input {
+  height: 36px;
+  min-width: 0;
+  width: 110px;
+  padding: 0 10px;
+  border-radius: 11px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0 10px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.card :global(.btn)[data-danger] {
+  color: #ff5b79;
+}
+
+.card :global(.btn)[data-confirm] {
+  background: #ff5b79;
+  color: #fff;
+}
+
+.error {
+  margin: 10px 0;
+  font-size: 13px;
+  color: #ff5b79;
+}
+
+.log {
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+}

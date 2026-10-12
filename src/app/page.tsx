@@ -11,6 +11,7 @@ import { Tilt } from "@/components/Tilt/Tilt";
 import { ItemIcon } from "@/components/ui/ItemIcon";
 import { RegionSwitch } from "@/components/ui/RegionSwitch";
 import { SearchField } from "@/components/ui/SearchField";
+import { useIsAdmin } from "@/features/admin";
 import { useBestPrice } from "@/features/auction";
 import { allianceOf } from "@/features/alliances";
 import { CRAFT_ENABLED, LOOT_ENABLED } from "@/lib/flags";
@@ -40,6 +41,7 @@ export default function HomePage() {
 
   const emission = useEmission(region);
   const phase = emissionState(emission.data).phase;
+  const isAdmin = useIsAdmin();
 
   return (
     <main className="page">
@@ -90,6 +92,14 @@ export default function HomePage() {
           </Tilt>
         ))}
       </section>
+
+      {isAdmin && (
+        <Link href="/admin" className="list-row" style={{ marginTop: 12 }} onClick={() => haptic.tap()}>
+          <Icon name="shield" size={20} />
+          <strong style={{ flex: 1, fontSize: 14 }}>Админка</strong>
+          <Icon name="chevron" size={18} className="dim" />
+        </Link>
+      )}
 
       {favItems.length > 0 && (
         <section className="section">

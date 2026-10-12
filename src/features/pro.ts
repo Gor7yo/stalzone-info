@@ -12,6 +12,8 @@ export interface ProStatus {
   limits: { priceAlerts: number };
   /** можно взять пробный период */
   trialAvailable: boolean;
+  /** администратор (видит /admin) */
+  admin?: boolean;
 }
 
 /** Страница оплаты Pro в Tribute; Pro выдаётся вебхуком на Telegram покупателя. */
