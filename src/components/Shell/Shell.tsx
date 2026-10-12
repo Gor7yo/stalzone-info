@@ -71,6 +71,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         <Link href={creatorHref} onClick={() => haptic.tap()}>
           {CREATOR.nick}
         </Link>
+        <span className={styles.disclaimer}>Неофициальный фан-проект · данные STALZONE API · EXBO</span>
       </footer>
 
       {canGoBack && (
