@@ -1,8 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { notFound } from "next/navigation";
+import { CRAFT_ENABLED } from "@/lib/flags";
 import { useDeferredValue, useState } from "react";
 import { CostSummary, IngredientList } from "@/components/Barter/Barter";
+import { BarterTreeView } from "@/components/Barter/BarterTree";
+import { Segmented } from "@/components/ui/Segmented";
 import { ItemIcon } from "@/components/ui/ItemIcon";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { RegionSwitch } from "@/components/ui/RegionSwitch";
@@ -26,6 +30,11 @@ import { haptic } from "@/lib/telegram";
 import styles from "./craft.module.css";
 
 export default function CraftPage() {
+  if (!CRAFT_ENABLED) notFound();
+  return <CraftView />;
+}
+
+function CraftView() {
   const region = useApp((s) => s.region);
   const plan = useApp((s) => s.plan);
   const { data: index } = useItems();
@@ -33,6 +42,7 @@ export default function CraftPage() {
 
   const [query, setQuery] = useState("");
   const q = useDeferredValue(query.trim());
+  const [tab, setTab] = useState<"tree" | "plan">(() => (plan.length ? "plan" : "tree"));
 
   if (!index || !barter) {
     return (
@@ -43,16 +53,58 @@ export default function CraftPage() {
     );
   }
 
+  return (
+    <main className="page">
+      <PageHeader eyebrow="Бартер" title="Крафт" aside={<RegionSwitch />}>
+        {tab === "tree"
+          ? "Древо бартера как в игре: ветки улучшений по категориям. Нажми на предмет — покажем рецепт и цену ингредиентов."
+          : "Добавь, что хочешь получить бартером, — соберём общий список: что нафармить, что докупить и во что это обойдётся."}
+      </PageHeader>
+
+      <div style={{ marginBottom: 12 }}>
+        <Segmented
+          label="Раздел"
+          value={tab}
+          onChange={(v) => setTab(v as "tree" | "plan")}
+          options={[
+            { value: "tree", label: "Древо" },
+            { value: "plan", label: plan.length ? `Мой план · ${plan.length}` : "Мой план" },
+          ]}
+        />
+      </div>
+
+      {tab === "tree" ? (
+        <BarterTreeView barter={barter} index={index} region={region} />
+      ) : (
+        <PlanTab query={query} setQuery={setQuery} q={q} plan={plan} index={index} barter={barter} region={region} />
+      )}
+    </main>
+  );
+}
+
+function PlanTab({
+  query,
+  setQuery,
+  q,
+  plan,
+  index,
+  barter,
+  region,
+}: {
+  query: string;
+  setQuery: (v: string) => void;
+  q: string;
+  plan: PlanEntry[];
+  index: NonNullable<ReturnType<typeof useItems>["data"]>;
+  barter: BarterIndex;
+  region: Parameters<typeof useBestPrices>[0];
+}) {
   // в поиске — только то, что можно получить бартером
   const results =
     q.length >= 2 ? searchItems(index, q, undefined, 60).filter((i) => barter.byResult.has(i.id)).slice(0, 6) : [];
 
   return (
-    <main className="page">
-      <PageHeader eyebrow="Планировщик" title="Крафт" aside={<RegionSwitch />}>
-        Добавь, что хочешь получить бартером, — соберём общий список: что нафармить, что докупить и во что это обойдётся.
-      </PageHeader>
-
+    <>
       <SearchField
         value={query}
         onChange={setQuery}
@@ -119,11 +171,11 @@ export default function CraftPage() {
           <EmptyState
             icon="sparkle"
             title="План пуст"
-            text="Найди предмет выше или нажми «В план крафта» на странице предмета — мы сложим все рецепты в один список ресурсов."
+            text="Найди предмет выше, выбери его в древе или нажми «В план крафта» на странице предмета — мы сложим все рецепты в один список ресурсов."
           />
         </div>
       )}
-    </main>
+    </>
   );
 }
 

@@ -1,0 +1,556 @@
+/* ---------- категории ---------- */
+
+.cats {
+  display: flex;
+  gap: 6px;
+  margin: 0 -16px;
+  padding: 2px 16px 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.cats::-webkit-scrollbar {
+  display: none;
+}
+
+.cat {
+  flex: none;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-2);
+  white-space: nowrap;
+  transition: background 200ms, color 200ms, border-color 200ms;
+}
+
+.cat[aria-selected="true"] {
+  background: rgb(var(--acc-rgb) / 0.14);
+  border-color: rgb(var(--acc-rgb) / 0.5);
+  color: var(--acc);
+}
+
+/* ---------- древо ---------- */
+
+/* на всю ширину окна, а не страницы (640px) */
+.frame {
+  position: relative;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  border-block: 1px solid var(--line);
+  box-shadow: inset 0 0 80px rgb(0 0 0 / 0.45);
+  background:
+    radial-gradient(circle, rgb(255 255 255 / 0.06) 1px, transparent 1.5px) 0 0 / 18px 18px,
+    var(--bg-2);
+}
+
+.frame::before,
+.frame::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 16px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.frame::before {
+  left: 0;
+  background: linear-gradient(90deg, var(--bg-2), transparent);
+}
+
+.frame::after {
+  right: 0;
+  background: linear-gradient(-90deg, var(--bg-2), transparent);
+}
+
+.scroller {
+  overflow: auto;
+  height: clamp(360px, 64vh, 720px);
+  padding: 0 max(16px, calc(50vw - 600px)) 24px;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  cursor: grab;
+}
+
+.scroller[data-dragging] {
+  cursor: grabbing;
+  user-select: none;
+}
+
+.scroller[data-dragging] .node {
+  pointer-events: none;
+}
+
+.frameHint {
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.55);
+  backdrop-filter: blur(6px);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-2);
+  pointer-events: none;
+}
+
+/* выбранная ветка ярче, остальное — приглушено */
+.frame[data-dim] .node:not([data-chain]) {
+  opacity: 0.38;
+  filter: saturate(0.4);
+}
+
+.frame[data-dim] .node[data-chain]:not([data-selected]) {
+  border-color: rgb(var(--acc-rgb) / 0.45);
+}
+
+.heads {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  height: 38px;
+  background: linear-gradient(var(--bg-2) 70%, transparent);
+}
+
+.head {
+  position: absolute;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 38px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.head em {
+  font-style: normal;
+  color: var(--acc);
+  font-weight: 600;
+}
+
+.head em::before {
+  content: "|";
+  margin-right: 6px;
+  color: var(--text-3);
+}
+
+.canvas {
+  position: relative;
+  margin-top: 10px;
+}
+
+.links {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.links path {
+  fill: none;
+  stroke: var(--text-3);
+  stroke-opacity: 0.45;
+  stroke-width: 1.5;
+  stroke-dasharray: 3 4;
+  transition: stroke 200ms, stroke-opacity 200ms;
+}
+
+.links g[data-active] path {
+  stroke: var(--acc);
+  stroke-opacity: 1;
+  stroke-dasharray: none;
+  stroke-width: 2;
+}
+
+.node {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: calc(76px - 14px);
+  padding: 6px 10px 6px 6px;
+  border-radius: 4px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  text-align: left;
+  transition: border-color 200ms, background 200ms, transform 150ms var(--ease);
+}
+
+.node:active {
+  transform: scale(0.97);
+}
+
+.node[data-selected] {
+  border-color: var(--acc);
+  background: rgb(var(--acc-rgb) / 0.1);
+  box-shadow: 0 0 0 1px rgb(var(--acc-rgb) / 0.35), 0 8px 24px -10px rgb(var(--acc-rgb) / 0.6);
+}
+
+.node[data-ghost] {
+  border-style: dashed;
+  opacity: 0.75;
+}
+
+.node[data-base] .nodeMeta {
+  color: var(--text-3);
+}
+
+/* угловые скобки, как у слотов в игре */
+.nodeIcon {
+  position: relative;
+  flex: none;
+  padding: 2px;
+}
+
+.nodeIcon::before,
+.nodeIcon::after,
+.result::before,
+.result::after {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border: 1.5px solid var(--text-2);
+  pointer-events: none;
+}
+
+.nodeIcon::before,
+.result::before {
+  top: 0;
+  left: 0;
+  border-right: 0;
+  border-bottom: 0;
+}
+
+.nodeIcon::after,
+.result::after {
+  right: 0;
+  bottom: 0;
+  border-left: 0;
+  border-top: 0;
+}
+
+.nodeText {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.nodeName {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--rarity);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.nodeMeta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+/* ---------- панель рецепта ---------- */
+
+/* ---------- выезжающая панель ---------- */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgb(0 0 0 / 0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 260ms;
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 91;
+  width: min(440px, 100vw);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: calc(var(--safe-top, 0px) + 12px) 12px calc(var(--safe-bottom, 0px) + 16px);
+  background: var(--bg);
+  border-left: 1px solid var(--line-2);
+  box-shadow: -24px 0 60px -20px rgb(0 0 0 / 0.8);
+  transform: translateX(105%);
+  visibility: hidden;
+  transition:
+    transform 340ms var(--ease),
+    visibility 0s 340ms;
+}
+
+.drawer[data-open] {
+  transform: none;
+  visibility: visible;
+  transition: transform 340ms var(--ease);
+}
+
+/* на широком экране дерево остаётся видно и кликабельно */
+@media (min-width: 900px) {
+  .backdrop {
+    display: none;
+  }
+}
+
+@media (max-width: 899px) {
+  .backdrop[data-open] {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+.close {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin-left: auto;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: 14px;
+  flex: none;
+}
+
+.close:hover {
+  color: var(--text);
+  border-color: var(--line-2);
+}
+
+.hint {
+  font-size: 13px;
+  text-align: center;
+  padding: 10px 0;
+}
+
+.panel {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 6px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.panelHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+  font-family: var(--font-display);
+  font-size: 17px;
+}
+
+.tabs,
+.offers {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabs button,
+.offers button {
+  flex: 1 0 auto;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 3px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+
+.tabs button[aria-selected="true"],
+.offers button[aria-selected="true"] {
+  color: var(--text);
+  background: var(--surface-2);
+  border-color: var(--line-2);
+}
+
+.offers button[aria-selected="true"] {
+  box-shadow: inset 0 -2px 0 var(--acc);
+}
+
+.block {
+  display: grid;
+  gap: 0;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.blockTitle {
+  padding: 7px;
+  background: var(--bg-2);
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-2);
+}
+
+.result {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  min-height: 112px;
+  padding: 10px 12px;
+  background:
+    radial-gradient(80% 120% at 85% 70%, color-mix(in srgb, var(--rarity) 16%, transparent), transparent 70%),
+    var(--surface-2);
+}
+
+.resultCat {
+  grid-column: 1 / -1;
+  align-self: start;
+  justify-self: start;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-2);
+  border-bottom: 1px solid var(--line-2);
+}
+
+.resultName {
+  align-self: start;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--rarity);
+}
+
+.resultArt {
+  grid-row: 2 / 4;
+  grid-column: 2;
+}
+
+.resultArt > * {
+  background: transparent !important;
+}
+
+.slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(86px, 1fr));
+  gap: 1px;
+  background: var(--line);
+}
+
+.slot {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 8px 4px 6px;
+  background:
+    repeating-linear-gradient(135deg, transparent 0 6px, rgb(255 255 255 / 0.018) 6px 12px),
+    var(--surface-2);
+  transition: background 200ms;
+}
+
+.slot:active {
+  background: var(--surface);
+}
+
+.slotCount {
+  position: absolute;
+  top: 44px;
+  right: 6px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: rgb(0 0 0 / 0.6);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffb36b;
+}
+
+.slotName {
+  width: 100%;
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  min-height: 2.5em;
+}
+
+.slotPrice {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-3);
+}
+
+.slot[data-kind="farm"] .slotPrice {
+  color: #ffb36b;
+}
+
+.slot[data-kind="pack"] .slotPrice {
+  color: var(--acc);
+}
+
+.facts {
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.facts > div {
+  display: flex;
+  gap: 6px;
+}
+
+.facts dt {
+  color: var(--text-2);
+}
+
+.facts dt::after {
+  content: ":";
+}
+
+.facts dd {
+  color: var(--acc);
+  font-weight: 700;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 8px;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}

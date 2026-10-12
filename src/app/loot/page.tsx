@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { notFound } from "next/navigation";
+import { LOOT_ENABLED } from "@/lib/flags";
 import { useDeferredValue, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { ItemIcon } from "@/components/ui/ItemIcon";
@@ -16,6 +18,11 @@ import { haptic } from "@/lib/telegram";
 import styles from "./loot.module.css";
 
 export default function LootPage() {
+  if (!LOOT_ENABLED) notFound();
+  return <LootView />;
+}
+
+function LootView() {
   const region = useApp((s) => s.region);
   const loot = useApp((s) => s.loot);
   const { data: index } = useItems();

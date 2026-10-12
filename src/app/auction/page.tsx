@@ -4,11 +4,13 @@ import Link from "next/link";
 import { useDeferredValue, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { ItemRow } from "@/components/ItemRow";
+import { ProBadge } from "@/components/Pro/Pro";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { RegionSwitch } from "@/components/ui/RegionSwitch";
 import { SearchField } from "@/components/ui/SearchField";
 import { EmptyState, ErrorState, RowSkeleton } from "@/components/ui/States";
 import { useBestPrice } from "@/features/auction";
+import { CRAFT_ENABLED, LOOT_ENABLED } from "@/lib/flags";
 import { GROUPS, searchItems, useItems, type Item } from "@/features/items";
 import { formatShort } from "@/lib/format";
 import { actions, useApp, type Region } from "@/lib/store";
@@ -39,7 +41,8 @@ export default function AuctionPage() {
   return (
     <main className="page">
       <PageHeader eyebrow="Аукцион" title="Рынок" aside={<RegionSwitch />}>
-        {index ? `${index.list.length.toLocaleString("ru-RU")} предметов. ` : ""}Ищите по-русски или по-английски — даже в неправильной раскладке.
+        {index ? `${index.list.length.toLocaleString("ru-RU")} предметов. ` : ""}Ищите по-русски или по-английски — даже в неправильной
+        раскладке.
       </PageHeader>
 
       <SearchField
@@ -53,11 +56,24 @@ export default function AuctionPage() {
       />
 
       <Link href="/flips" className="list-row" style={{ marginTop: 12 }} onClick={() => haptic.tap()}>
-        <span style={{ display: "grid", placeItems: "center", width: 40, height: 40, borderRadius: 13, background: "rgb(78 224 138 / 0.12)", color: "var(--green)", flex: "none" }}>
+        <span
+          style={{
+            display: "grid",
+            placeItems: "center",
+            width: 40,
+            height: 40,
+            borderRadius: 13,
+            background: "rgb(78 224 138 / 0.12)",
+            color: "var(--green)",
+            flex: "none",
+          }}
+        >
           <Icon name="bolt" size={20} />
         </span>
         <span style={{ flex: 1, minWidth: 0 }}>
-          <strong style={{ fontSize: 14 }}>Флиппер</strong>
+          <strong style={{ fontSize: 14 }}>
+            Флиппер <ProBadge />
+          </strong>
           <span className="dim" style={{ display: "block", fontSize: 12, fontWeight: 600 }}>
             Лоты дешевле рынка — выкупить и перепродать
           </span>
@@ -65,31 +81,57 @@ export default function AuctionPage() {
         <Icon name="chevron" size={18} className="dim" />
       </Link>
 
-      <Link href="/craft" className="list-row" style={{ marginTop: 8 }} onClick={() => haptic.tap()}>
-        <span style={{ display: "grid", placeItems: "center", width: 40, height: 40, borderRadius: 13, background: "rgb(var(--acc-rgb) / 0.12)", color: "var(--acc)", flex: "none" }}>
-          <Icon name="sparkle" size={20} />
-        </span>
-        <span style={{ flex: 1, minWidth: 0 }}>
-          <strong style={{ fontSize: 14 }}>Планировщик крафта</strong>
-          <span className="dim" style={{ display: "block", fontSize: 12, fontWeight: 600 }}>
-            Что нафармить, что докупить блоками
+      {CRAFT_ENABLED && (
+        <Link href="/craft" className="list-row" style={{ marginTop: 8 }} onClick={() => haptic.tap()}>
+          <span
+            style={{
+              display: "grid",
+              placeItems: "center",
+              width: 40,
+              height: 40,
+              borderRadius: 13,
+              background: "rgb(var(--acc-rgb) / 0.12)",
+              color: "var(--acc)",
+              flex: "none",
+            }}
+          >
+            <Icon name="sparkle" size={20} />
           </span>
-        </span>
-        <Icon name="chevron" size={18} className="dim" />
-      </Link>
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <strong style={{ fontSize: 14 }}>Планировщик крафта</strong>
+            <span className="dim" style={{ display: "block", fontSize: 12, fontWeight: 600 }}>
+              Что нафармить, что докупить блоками
+            </span>
+          </span>
+          <Icon name="chevron" size={18} className="dim" />
+        </Link>
+      )}
 
-      <Link href="/loot" className="list-row" style={{ marginTop: 8 }} onClick={() => haptic.tap()}>
-        <span style={{ display: "grid", placeItems: "center", width: 40, height: 40, borderRadius: 13, background: "rgb(255 201 74 / 0.12)", color: "#ffc94a", flex: "none" }}>
-          <Icon name="bag" size={20} />
-        </span>
-        <span style={{ flex: 1, minWidth: 0 }}>
-          <strong style={{ fontSize: 14 }}>Рюкзак</strong>
-          <span className="dim" style={{ display: "block", fontSize: 12, fontWeight: 600 }}>
-            Оценить лут после вылазки
+      {LOOT_ENABLED && (
+        <Link href="/loot" className="list-row" style={{ marginTop: 8 }} onClick={() => haptic.tap()}>
+          <span
+            style={{
+              display: "grid",
+              placeItems: "center",
+              width: 40,
+              height: 40,
+              borderRadius: 13,
+              background: "rgb(255 201 74 / 0.12)",
+              color: "#ffc94a",
+              flex: "none",
+            }}
+          >
+            <Icon name="bag" size={20} />
           </span>
-        </span>
-        <Icon name="chevron" size={18} className="dim" />
-      </Link>
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <strong style={{ fontSize: 14 }}>Рюкзак</strong>
+            <span className="dim" style={{ display: "block", fontSize: 12, fontWeight: 600 }}>
+              Оценить лут после вылазки
+            </span>
+          </span>
+          <Icon name="chevron" size={18} className="dim" />
+        </Link>
+      )}
 
       <div className="chips" style={{ marginTop: 12 }}>
         <button type="button" className="chip" aria-pressed={!group} onClick={() => pick(undefined)}>

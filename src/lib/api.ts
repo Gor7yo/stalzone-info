@@ -22,7 +22,9 @@ export async function api<T>(path: string, params: Params = {}, init?: RequestIn
     if (value !== undefined && value !== "") search.set(key, String(value));
   }
 
-  const response = await fetch(`${API_URL}${path}?${search}`, {
+  // параметры могут быть и в самом path (?region=ru) — не дописываем лишний «?»
+  const query = search.size ? `${path.includes("?") ? "&" : "?"}${search}` : "";
+  const response = await fetch(`${API_URL}${path}${query}`, {
     ...init,
     headers: { Accept: "application/json", ...init?.headers },
   });

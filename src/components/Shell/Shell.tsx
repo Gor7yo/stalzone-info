@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { emissionState, useEmission } from "@/features/emission";
+import { CREATOR, creatorHref } from "@/lib/creator";
 import { useApp } from "@/lib/store";
 import { bindBackButton, haptic, useIsTelegram } from "@/lib/telegram";
 import { Icon, type IconName } from "../Icon";
@@ -64,6 +65,13 @@ export function Shell({ children }: { children: React.ReactNode }) {
       </div>
 
       {children}
+
+      <footer className={styles.credit}>
+        STALZONE INFO · by{" "}
+        <Link href={creatorHref} onClick={() => haptic.tap()}>
+          {CREATOR.nick}
+        </Link>
+      </footer>
 
       {canGoBack && (
         <button

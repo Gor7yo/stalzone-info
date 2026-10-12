@@ -15,6 +15,7 @@ import { STAT_CATEGORIES, useMeta, type Meta } from "@/features/meta";
 import { isNotFound } from "@/lib/api";
 import { McText, stripMc } from "@/lib/mcText";
 import { formatDate, formatNumber, formatRelative } from "@/lib/format";
+import { CREATOR, isCreator } from "@/lib/creator";
 import { actions, sameChar, useApp, type Region } from "@/lib/store";
 import { useNow } from "@/lib/useNow";
 import styles from "./character.module.css";
@@ -76,10 +77,39 @@ function Profile({ character: c, region, meta }: { character: Character; region:
   const playMs = stat("pla-tim");
   const regTime = c.stats?.find((s) => s.id === "reg-tim")?.value;
   const online = /online|playing/i.test(c.status ?? "");
+  const creator = isCreator(region, c.username);
+  // медиа-партнёр EXBO: видно, только если «Стрингер» выставлен на витрину достижений
+  const media = c.displayedAchievements?.includes("media_advanced")
+    ? "advanced"
+    : c.displayedAchievements?.includes("media_base")
+      ? "base"
+      : null;
 
   return (
     <>
-      <Tilt className={`glass ${styles.hero}`} style={{ "--ally": alliance.color } as React.CSSProperties} max={7}>
+      <Tilt
+        className={`glass ${styles.hero}`}
+        style={{ "--ally": alliance.color } as React.CSSProperties}
+        max={7}
+        data-creator={creator || undefined}
+        data-media={(!creator && media) || undefined}
+      >
+        {(creator || media) && (
+          <div className="row" style={{ flexWrap: "wrap", gap: 6, justifyContent: "center" }}>
+            {creator && (
+              <span className={styles.creatorBadge}>
+                <Icon name="star" size={14} filled />
+                Создатель STALZONE INFO
+              </span>
+            )}
+            {media && (
+              <span className={styles.mediaBadge} data-tier={media}>
+                <Icon name="share" size={13} />
+                {media === "advanced" ? "Медиа-партнёр · продвинутый" : "Медиа-партнёр"}
+              </span>
+            )}
+          </div>
+        )}
         <div className={`${styles.emblem} depth`}>
           {alliance.image ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -99,7 +129,18 @@ function Profile({ character: c, region, meta }: { character: Character; region:
             {online ? "В сети" : now && c.lastLogin ? `был ${formatRelative(c.lastLogin, now)}` : "Не в сети"}
           </span>
         </div>
+        {creator && <span className={styles.creatorNick}>автор сервиса · {CREATOR.nick}</span>}
       </Tilt>
+
+      {creator ? (
+        <CreatorCard status={c.status} />
+      ) : (
+        hasStatus(c.status) && (
+          <section className={`glass ${styles.creatorCard}`}>
+            <Status status={c.status} />
+          </section>
+        )
+      )}
 
       {c.clan?.info && (
         <Link href={`/clans/${region}/${c.clan.info.id}`} className={`list-row ${styles.clan}`}>
@@ -149,6 +190,74 @@ function Profile({ character: c, region, meta }: { character: Character; region:
 
       {c.stats?.length > 0 && <AllStats stats={c.stats} meta={meta} />}
     </>
+  );
+}
+
+/** Строка длиннее этого в карточку не влезет — значит, это арт, а не текст. */
+const ART_LINE = 34;
+const hasStatus = (status?: string) => Boolean(status && stripMc(status).trim());
+
+/**
+ * Описание персонажа из игры. Разбиваем на блоки по пустым строкам: обычный текст — как есть,
+ * блок с длинными строками (ASCII-арт, рамки) — моноширинно и с уменьшением под ширину карточки.
+ */
+function Status({ status, divided = false }: { status?: string; divided?: boolean }) {
+  const blocks: string[][] = [];
+  let current: string[] = [];
+  for (const line of (status ?? "").split("\n")) {
+    if (stripMc(line).trim()) {
+      current.push(line.replace(/\s+$/, ""));
+    } else if (current.length) {
+      blocks.push(current);
+      current = [];
+    }
+  }
+  if (current.length) blocks.push(current);
+  if (!blocks.length) return null;
+
+  return (
+    <div className={styles.status} data-divided={divided || undefined}>
+      <span className={styles.statusLabel}>Описание</span>
+      {blocks.map((block, b) => {
+        const width = Math.max(...block.map((l) => stripMc(l).length));
+        if (width <= ART_LINE) {
+          return block.map((l, i) => (
+            <span key={`${b}-${i}`} className={styles.statusText}>
+              <McText text={l.trim()} />
+            </span>
+          ));
+        }
+        return (
+          <div key={b} className={styles.art} style={{ "--cols": width } as React.CSSProperties}>
+            {block.map((l, i) => (
+              <div key={i}>
+                <McText text={l} />
+              </div>
+            ))}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Карточка автора сервиса: пара слов и описание персонажа. */
+function CreatorCard({ status }: { status?: string }) {
+  return (
+    <section className={`glass ${styles.creatorCard}`}>
+      <p className={styles.creatorText}>
+        👋 Это профиль того, кто сделал STALZONE INFO: рынок, флиппер, алерты и всё остальное. Увидел в Зоне — передай привет.
+      </p>
+      <div className="row" style={{ flexWrap: "wrap", gap: 6 }}>
+        <span className={`pill ${styles.creatorPill}`}>
+          <Icon name="sparkle" size={14} /> Автор сервиса
+        </span>
+        <Link href="/pro" className={`pill ${styles.creatorPill}`}>
+          <Icon name="star" size={14} /> Поддержать — Pro
+        </Link>
+      </div>
+      <Status status={status} divided />
+    </section>
   );
 }
 

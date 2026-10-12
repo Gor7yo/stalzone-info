@@ -76,23 +76,32 @@ export function UpgradeDial({
   const prices = picked.map((l) => l.best).filter((p): p is number => p !== null);
   const best = prices.length ? Math.min(...prices) : null;
   const label = upgradeLabel({ upgrade: null, upgrades: value });
+  // много разрозненных уровней в строку не влезут — коротко «8 уровней» (какие — видно по подсвеченным столбикам)
+  const short =
+    upgradeRuns(value).length > 2 ? `${value.length} ${plural(value.length, ["уровень", "уровня", "уровней"])}` : label;
 
   return (
     <div className={styles.dial}>
       <div className={styles.readout} aria-live="polite">
-        <span className={styles.label}>Заточка</span>
-        {!value.length ? (
-          <span className={styles.value}>любая · тапай или проведи</span>
-        ) : (
-          <>
-            <b className={`mono ${styles.picked}`}>{label}</b>
+        {/* слева: «Заточка», под ней — цена и число лотов выбранных уровней */}
+        <span className={styles.head}>
+          <span className={styles.label}>Заточка</span>
+          {value.length > 0 && (
             <span className={styles.value}>
               {best ? `от ${formatShort(best)}` : "нет лотов"}
               {count ? ` · ${count} ${plural(count, ["лот", "лота", "лотов"])}` : ""}
             </span>
-            <button type="button" className={styles.reset} onClick={() => set([])}>
+          )}
+        </span>
+        {!value.length ? (
+          <span className={styles.value}>любая · тапай или проведи</span>
+        ) : (
+          <>
+            <b className={`mono ${styles.picked}`} title={label}>
+              {short}
+            </b>
+            <button type="button" className={styles.reset} onClick={() => set([])} aria-label="Очистить заточку" title="Очистить">
               <Icon name="close" size={12} />
-              Очистить
             </button>
           </>
         )}

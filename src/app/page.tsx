@@ -13,6 +13,7 @@ import { RegionSwitch } from "@/components/ui/RegionSwitch";
 import { SearchField } from "@/components/ui/SearchField";
 import { useBestPrice } from "@/features/auction";
 import { allianceOf } from "@/features/alliances";
+import { CRAFT_ENABLED, LOOT_ENABLED } from "@/lib/flags";
 import { emissionState, useEmission } from "@/features/emission";
 import { searchItems, useItems, type Item } from "@/features/items";
 import { formatPrice } from "@/lib/format";
@@ -20,14 +21,16 @@ import { useApp, type Region } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
 import styles from "./home.module.css";
 
-const TILES: { href: string; title: string; text: string; icon: IconName; accent: string }[] = [
+type Tile = { href: string; title: string; text: string; icon: IconName; accent: string };
+
+const TILES = ([
   { href: "/auction", title: "Рынок", text: "Цены, графики и выгодные лоты", icon: "market", accent: "#5aa9ff" },
   { href: "/craft", title: "Крафт", text: "Что фармить и сколько это стоит", icon: "sparkle", accent: "var(--acc)" },
   { href: "/character", title: "Сталкеры", text: "Профили и статистика", icon: "user", accent: "var(--cyan)" },
   { href: "/clans", title: "Кланы", text: "Рейтинг и составы", icon: "shield", accent: "#c08bff" },
   { href: "/emission", title: "Выбросы", text: "Все регионы онлайн", icon: "radiation", accent: "var(--ember)" },
   { href: "/loot", title: "Рюкзак", text: "Сколько стоит лут", icon: "bag", accent: "#ffc94a" },
-];
+] satisfies Tile[]).filter((t) => (CRAFT_ENABLED || t.href !== "/craft") && (LOOT_ENABLED || t.href !== "/loot"));
 
 export default function HomePage() {
   const region = useApp((s) => s.region);
@@ -132,7 +135,7 @@ function UniversalSearch({ region, wantIndex }: { region: Region; wantIndex: boo
   const { data: index } = useItems(focused || wantIndex || query.length > 0);
 
   const items = index && deferred.length >= 2 ? searchItems(index, deferred, undefined, 5) : [];
-  const looksLikeNick = /^[\w.-]{3,20}$/.test(deferred);
+  const looksLikeNick = /^[\p{L}\p{N}_.-]{3,32}$/u.test(deferred);
 
   return (
     <section className={styles.search}>

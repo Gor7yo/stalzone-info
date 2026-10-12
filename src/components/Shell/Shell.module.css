@@ -187,3 +187,24 @@
 .back:active {
   transform: scale(0.94);
 }
+
+/* подпись автора внизу каждой страницы: заходит в нижний отступ .page, над доком */
+.credit {
+  position: relative;
+  z-index: 1;
+  margin-top: calc(-1 * (var(--dock-h) + var(--safe-bottom) + 24px));
+  padding-bottom: calc(var(--dock-h) + var(--safe-bottom) + 28px);
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--text-3);
+}
+
+.credit a {
+  color: var(--text-2);
+  text-decoration: underline;
+  text-decoration-color: rgb(var(--acc-rgb) / 0.5);
+  text-underline-offset: 3px;
+}

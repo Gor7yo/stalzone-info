@@ -47,7 +47,7 @@
 }
 
 .name {
-  font-size: clamp(26px, 8vw, 38px);
+  font-size: clamp(26px, 8vw, 29px);
   font-weight: 700;
   overflow-wrap: anywhere;
 }
@@ -175,4 +175,182 @@
   font-weight: 700;
   text-align: right;
   white-space: nowrap;
+}
+
+/* ---------- профиль создателя ---------- */
+
+@property --spin {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+/* вращающаяся золото-кислотная рамка вокруг карточки */
+.hero[data-creator] {
+  --ally: #ffc94a;
+  border-color: transparent;
+}
+
+.hero[data-creator]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  padding: 1.5px;
+  border-radius: inherit;
+  background: conic-gradient(from var(--spin), #ffc94a, var(--acc), #45e0ff, #ff7a2f, #ffc94a);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: creator-spin 6s linear infinite;
+  pointer-events: none;
+}
+
+.hero[data-creator]::before {
+  background:
+    radial-gradient(70% 80% at 50% 0%, rgb(255 201 74 / 0.3), transparent 70%),
+    radial-gradient(50% 60% at 100% 100%, rgb(var(--acc-rgb) / 0.12), transparent 70%),
+    repeating-linear-gradient(0deg, transparent 0 3px, rgb(255 255 255 / 0.018) 3px 4px);
+}
+
+.hero[data-creator] .name {
+  /* длинный ник — в одну строку, без переноса посреди слова */
+  font-size: clamp(18px, 6.2vw, 38px);
+  white-space: nowrap;
+  background: linear-gradient(135deg, #fff3c4, #ffc94a 45%, #ff9f3a);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 4px 18px rgb(255 201 74 / 0.35));
+}
+
+@keyframes creator-spin {
+  to {
+    --spin: 360deg;
+  }
+}
+
+.creatorBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ffd96a, #ff9f3a);
+  color: #241500;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: 0 6px 24px -6px rgb(255 159 58 / 0.7);
+}
+
+.creatorNick {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #ffc94a;
+}
+
+.creatorCard {
+  display: grid;
+  gap: 12px;
+  margin-top: 10px;
+  padding: 16px;
+}
+
+.creatorText {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+
+.creatorPill {
+  color: #ffc94a;
+  background: rgb(255 201 74 / 0.1);
+  border-color: rgb(255 201 74 / 0.3);
+}
+
+.status {
+  display: grid;
+  gap: 6px;
+}
+
+.status[data-divided] {
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+/* ---------- медиа-партнёр EXBO ---------- */
+
+.hero[data-media] {
+  --ally: var(--media);
+  border-color: color-mix(in srgb, var(--media) 45%, transparent);
+  box-shadow: 0 18px 50px -18px color-mix(in srgb, var(--media) 60%, transparent);
+}
+
+.hero[data-media="base"] {
+  --media: #45e0ff;
+}
+
+.hero[data-media="advanced"] {
+  --media: #b47cff;
+}
+
+.mediaBadge {
+  --media: #45e0ff;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--media) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--media) 45%, transparent);
+  color: var(--media);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mediaBadge[data-tier="advanced"] {
+  --media: #b47cff;
+}
+
+.statusLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.statusText {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* арт: моноширинный символ ≈ 0,6em, шрифт подгоняется так, чтобы самая длинная строка (--cols) влезла в карточку */
+.art {
+  container-type: inline-size;
+  margin-top: 4px;
+  padding: 10px;
+  border-radius: 12px;
+  background: rgb(0 0 0 / 0.35);
+  overflow: hidden;
+}
+
+.art > div {
+  font-family: var(--font-mono);
+  font-size: min(13px, calc(100cqw / (var(--cols) * 0.61)));
+  line-height: 1.2;
+  font-weight: 800;
+  white-space: pre;
 }

@@ -31,10 +31,13 @@ export function McText({ text }: { text: string }) {
       if (part) nodes.push(part);
       return;
     }
-    const code = part[0]?.toLowerCase();
-    const rest = part.slice(1);
+    // §#00EFE8 — произвольный цвет (новый формат игры)
+    const hex = /^#[0-9a-f]{6}/i.exec(part)?.[0];
+    const code = hex ? "#" : part[0]?.toLowerCase();
+    const rest = part.slice(hex ? 7 : 1);
 
-    if (code && COLORS[code]) style = { color: COLORS[code] };
+    if (hex) style = { color: hex };
+    else if (code && COLORS[code]) style = { color: COLORS[code] };
     else if (code === "l") style = { ...style, fontWeight: 800 };
     else if (code === "o") style = { ...style, fontStyle: "italic" };
     else if (code === "n") style = { ...style, textDecoration: "underline" };
@@ -47,4 +50,4 @@ export function McText({ text }: { text: string }) {
   return <>{nodes}</>;
 }
 
-export const stripMc = (text: string) => text.replace(/§[0-9a-fk-or]/gi, "");
+export const stripMc = (text: string) => text.replace(/§(#[0-9a-f]{6}|[0-9a-fk-or])/gi, "");

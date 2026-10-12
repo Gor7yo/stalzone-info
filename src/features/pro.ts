@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useIsTelegram } from "@/lib/telegram";
 import { useTgSession } from "@/lib/tgSession";
 import { authed } from "./alerts";
@@ -10,6 +10,22 @@ export interface ProStatus {
   /** до какого момента действует (ISO); null — не оформлен */
   proUntil: string | null;
   limits: { priceAlerts: number };
+  /** можно взять пробный период */
+  trialAvailable: boolean;
+}
+
+/** Страница оплаты Pro в Tribute; Pro выдаётся вебхуком на Telegram покупателя. */
+export const PRO_BUY_URL = "https://web.tribute.tg/p/GMr";
+/** Пробный Pro на 3 дня (один раз на Telegram). */
+export function useStartTrial() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => authed<ProStatus>("/api/me/trial", "POST"),
+    onSuccess: (status) => {
+      qc.setQueryData(["me"], status);
+      qc.invalidateQueries({ queryKey: ["alerts"] });
+    },
+  });
 }
 
 /** Что даёт Pro — для экрана подписки и заглушек. */

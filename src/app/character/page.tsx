@@ -18,7 +18,8 @@ export default function CharacterSearchPage() {
   const recents = useApp((s) => s.recentCharacters);
   const [name, setName] = useState("");
 
-  const valid = /^[\w.-]{2,24}$/.test(name.trim());
+  // как на сервере: любые буквы (в т.ч. кириллица), цифры, _ . -
+  const valid = /^[\p{L}\p{N}_.-]{2,32}$/u.test(name.trim());
 
   const open = () => {
     if (!valid) return;

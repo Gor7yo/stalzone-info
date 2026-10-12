@@ -4,12 +4,13 @@ import { Icon } from "@/components/Icon";
 import { TelegramLink } from "@/components/PriceAlert/TelegramLink";
 import { ProBadge } from "@/components/Pro/Pro";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { PRO_FEATURES, usePro } from "@/features/pro";
+import { PRO_BUY_URL, PRO_FEATURES, usePro, useStartTrial } from "@/features/pro";
 import { formatDate } from "@/lib/format";
 import styles from "./pro.module.css";
 
 export default function ProPage() {
   const pro = usePro();
+  const trial = useStartTrial();
 
   return (
     <main className="page">
@@ -51,10 +52,26 @@ export default function ProPage() {
           <TelegramLink text="Pro привязывается к вашему Telegram — так он работает и в мини-приложении, и на сайте. Привяжите Telegram, чтобы оформить." />
         ) : pro.isPro ? null : (
           <div className={`glass ${styles.buy}`}>
-            <button type="button" className="btn primary" disabled>
-              Оформить Pro
-            </button>
-            <span className="dim">Приём оплаты подключаем — кнопка заработает совсем скоро.</span>
+            {pro.data?.trialAvailable && (
+              <>
+                <button type="button" className="btn primary" disabled={trial.isPending} onClick={() => trial.mutate()}>
+                  {trial.isPending ? "Включаем…" : "Попробовать 3 дня бесплатно"}
+                </button>
+                {trial.error && <span className="dim">{trial.error.message}</span>}
+              </>
+            )}
+            <a
+              href={PRO_BUY_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={pro.data?.trialAvailable ? "btn" : "btn primary"}
+              onClick={() => setTimeout(() => pro.refetch(), 30_000)}
+            >
+              Оформить Pro — 199 ₽ / 30 дней
+            </a>
+            <span className="dim">
+              Оплата через Tribute картой или Telegram Stars. Pro включится на этом Telegram сразу после оплаты, бот пришлёт подтверждение.
+            </span>
           </div>
         )}
       </section>

@@ -3,10 +3,13 @@
 import { useState } from "react";
 import { useAlerts, useCreatePriceAlert, useDeletePriceAlert, type PriceAlert } from "@/features/alerts";
 import { hasUpgradeFilter, pickedQualities, qualityLabel, upgradeLabel, type LotFilter } from "@/features/auction";
+import { usePro } from "@/features/pro";
+import { isProRequired } from "@/lib/api";
 import { formatShort, parseGamePrice } from "@/lib/format";
 import { REGIONS, type Region } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
 import { Icon } from "../Icon";
+import { ProTeaser } from "../Pro/Pro";
 import styles from "./PriceAlert.module.css";
 import { LinkedAs, TelegramLink } from "./TelegramLink";
 
@@ -33,6 +36,7 @@ export const variantLabel = (a: {
 /** «Сообщи в Telegram, когда этот предмет будет дешевле N». */
 export function PriceAlertPanel({ itemId, itemName, region, filter, bestPrice, median }: Props) {
   const alerts = useAlerts();
+  const { isPro } = usePro();
   const create = useCreatePriceAlert();
   const remove = useDeletePriceAlert();
   const [input, setInput] = useState("");
@@ -116,9 +120,17 @@ export function PriceAlertPanel({ itemId, itemName, region, filter, bestPrice, m
       )}
 
       {!pickedQualities(filter).length && !hasUpgradeFilter(filter) && (
-        <p className={styles.hint}>Без фильтра сработает на любой вариант. Качество и заточку выберите в фильтре выше.</p>
+        <p className={styles.hint}>
+          {isPro
+            ? "Без фильтра сработает на любой вариант. Качество и заточку выберите в фильтре выше."
+            : "Сработает на любое качество и заточку. Точный вариант и до 20 алертов — в Pro."}
+        </p>
       )}
-      {create.error && <p className={styles.error}>{create.error.message}</p>}
+      {isProRequired(create.error) ? (
+        <ProTeaser compact title="Больше алертов" text={create.error!.message} />
+      ) : (
+        create.error && <p className={styles.error}>{create.error.message}</p>
+      )}
 
       {alerts.linkedAs && <LinkedAs session={alerts.linkedAs} />}
 
