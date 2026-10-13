@@ -26,9 +26,9 @@ const SORTS: Record<FlipSettings["sort"], (a: Offer, b: Offer) => number> = {
   fast: (a, b) => b.best.perDay - a.best.perDay || b.best.profit - a.best.profit,
 };
 
-const MIN_PROFIT = [50_000, 100_000, 250_000, 500_000, 1_000_000];
+const MIN_PROFIT = [20_000, 50_000, 100_000, 250_000, 500_000, 1_000_000];
 const BUDGET = [0, 500_000, 1_000_000, 5_000_000, 10_000_000];
-const DEFAULTS: FlipSettings = { sort: "profit", minConfidence: "medium", minProfit: 50_000, budget: 0, group: null };
+const DEFAULTS: FlipSettings = { sort: "profit", minConfidence: "medium", minProfit: 20_000, budget: 0, group: null };
 /** У этих групп есть заточка — в ссылку на предмет передаём и её. */
 const UPGRADABLE = new Set(["artefact", "weapon", "armor"]);
 const STEP = 20;

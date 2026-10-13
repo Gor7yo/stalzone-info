@@ -69,7 +69,7 @@ const initial: AppState = {
   recentCharacters: [],
   loot: [],
   plan: [],
-  flips: { sort: "profit", minConfidence: "medium", minProfit: 50_000, budget: 0, group: null },
+  flips: { sort: "profit", minConfidence: "medium", minProfit: 20_000, budget: 0, group: null },
 };
 
 function load(): AppState {
