@@ -43,14 +43,9 @@ export function useClans(region: Region, page: number) {
   });
 }
 
-/** Клан из поиска: сервер ищет по своей копии списка EXBO и знает место в рейтинге. */
-export interface ClanHit extends Clan {
-  rank: number;
-}
-
 export interface ClanSearch {
   total: number;
-  data: ClanHit[];
+  data: Clan[];
   /** когда сервер последний раз обновил список кланов региона; null — ещё не загрузил */
   syncedAt: string | null;
 }
@@ -63,7 +58,12 @@ export function useClanSearch(region: Region, query: string) {
   return useQuery({
     enabled: query.length > 0,
     queryKey: ["clan-search", region, query],
-    queryFn: () => api<ClanSearch>("/api/clan/search", { region, q: query, limit: CLAN_SEARCH_LIMIT }),
+    queryFn: () =>
+      api<ClanSearch>("/api/clan/search", {
+        region,
+        q: query,
+        limit: CLAN_SEARCH_LIMIT,
+      }),
     placeholderData: keepPreviousData,
     staleTime: 60_000,
   });
@@ -96,3 +96,110 @@ export const RANKS: Record<string, string> = {
   COLONEL: "Полковник",
   LEADER: "Лидер",
 };
+
+// ---------- метрики кланов (история с нашего сервера: снимки раз в час) ----------
+
+export type ClanPeriod = "week" | "month" | "all";
+
+export interface ClanWindow {
+  key: "day" | "week" | "month";
+  days: number;
+  /** с какого момента считаем; null — истории нет */
+  since: string | null;
+  /** история покрывает окно целиком (иначе — с начала истории) */
+  full: boolean;
+  /** изменение числа бойцов */
+  members: number | null;
+}
+
+export interface ClanMetrics {
+  id: string;
+  region: Region;
+  /** false — клана нет в нашей копии (регион ещё не загружен) */
+  available: boolean;
+  updatedAt?: string;
+  /** когда клан пропал из списка EXBO (распущен) */
+  gone?: string | null;
+  historyFrom?: string | null;
+  current?: { memberCount: number; level: number };
+  /** место по числу бойцов среди кланов региона */
+  sizePlace?: { place: number; of: number };
+  windows?: ClanWindow[];
+  peak?: { memberCount: number; at: string };
+  /** когда взят текущий уровень; null — уровень был с начала истории */
+  levelSince?: string | null;
+  period?: ClanPeriod;
+  series?: { t: number; memberCount: number; level: number }[];
+}
+
+export function useClanMetrics(region: Region, id: string, period: ClanPeriod) {
+  return useQuery({
+    queryKey: ["clan-metrics", region, id, period],
+    queryFn: () =>
+      api<ClanMetrics>("/api/clan/metrics", { region, id, period }),
+    placeholderData: keepPreviousData,
+    staleTime: 5 * 60_000,
+  });
+}
+
+/** Клан в списках сводки. */
+export interface ClanBrief {
+  id: string;
+  tag: string;
+  name: string;
+  alliance: string | null;
+  level: number;
+  memberCount: number;
+  /** изменение бойцов за окно списка */
+  delta?: number;
+  /** дней с основания */
+  ageDays?: number;
+  /** уровень неделю назад */
+  fromLevel?: number;
+  /** когда распущен */
+  goneAt?: string;
+}
+
+export interface ClanAnalytics {
+  region: Region;
+  updatedAt: string;
+  historyFrom: string | null;
+  windows: Record<"day" | "week", { since: string | null; full: boolean }>;
+  totals: {
+    clans: number;
+    members: number;
+    avgMembers: number;
+    medianMembers: number;
+    medianAgeDays: number;
+    membersDay: number;
+    membersWeek: number;
+    joinedWeek: number;
+    leftWeek: number;
+    changedWeek: number;
+  };
+  growth: { day: ClanBrief[]; week: ClanBrief[] };
+  decline: ClanBrief[];
+  alliances: {
+    alliance: string;
+    clans: number;
+    members: number;
+    membersWeek: number;
+    avgMembers: number;
+    share: number;
+  }[];
+  newClans: { count: number; list: ClanBrief[] };
+  levelUps: { count: number; list: ClanBrief[] };
+  disbanded: { count: number; list: ClanBrief[] };
+  levels: { level: number; clans: number; members: number }[];
+  sizes: { label: string; clans: number }[];
+  ages: { label: string; clans: number }[];
+}
+
+export function useClanAnalytics(region: Region) {
+  return useQuery({
+    queryKey: ["clan-analytics", region],
+    queryFn: () => api<ClanAnalytics>("/api/clan/analytics", { region }),
+    placeholderData: keepPreviousData,
+    staleTime: 5 * 60_000,
+  });
+}

@@ -88,3 +88,6 @@ export function parseGamePrice(input: string): number | null {
   const value = Math.round(Number(m[1]) * mult);
   return value > 0 && value <= 2_000_000_000 ? value : null;
 }
+
+/** Изменение со знаком: «+3», «−2», «0». */
+export const formatSigned = (n: number) => (n > 0 ? `+${formatNumber(n)}` : n < 0 ? `−${formatNumber(-n)}` : "0");

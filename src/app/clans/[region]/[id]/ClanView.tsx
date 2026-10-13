@@ -9,6 +9,7 @@ import { StatTile } from "@/components/ui/PageHeader";
 import { EmptyState, ErrorState } from "@/components/ui/States";
 import { allianceOf } from "@/features/alliances";
 import { useClan } from "@/features/clans";
+import { ClanMetrics } from "./ClanMetrics";
 import { isNotFound } from "@/lib/api";
 import { formatNumber, formatRelative, formatShortDate } from "@/lib/format";
 import { McText, stripMc } from "@/lib/mcText";
@@ -103,6 +104,8 @@ export function ClanView({ region, id }: { region: Region; id: string }) {
               <span className="pill">Уровень {clan.level}</span>
             </div>
           </Tilt>
+
+          <ClanMetrics region={region} id={clan.id} />
         </div>
         <div className="desk-side">
           <section className={`${styles.stats} stagger`}>
@@ -111,10 +114,7 @@ export function ClanView({ region, id }: { region: Region; id: string }) {
               tone="acc"
               value={formatNumber(clan.memberCount)}
             />
-            <StatTile
-              label="Очки уровня"
-              value={formatNumber(clan.levelPoints)}
-            />
+            <StatTile label="Уровень" value={formatNumber(clan.level)} />
             <StatTile
               label="Основан"
               value={

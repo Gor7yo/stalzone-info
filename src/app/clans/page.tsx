@@ -33,7 +33,6 @@ export default function ClansPage() {
   const serverSearch = searching && search.data?.syncedAt !== null;
   const lq = q.toLowerCase();
   const pageClans = (data?.data ?? [])
-    .map((clan, i) => ({ ...clan, rank: page * CLANS_PAGE + i + 1 }))
     .filter(
       (c) =>
         !searching ||
@@ -83,6 +82,30 @@ export default function ClansPage() {
         </section>
       )}
 
+      <Link href="/clans/analytics" className="list-row" style={{ marginBottom: 12 }} onClick={() => haptic.tap()}>
+        <span
+          style={{
+            display: "grid",
+            placeItems: "center",
+            width: 40,
+            height: 40,
+            borderRadius: 13,
+            background: "rgb(var(--acc-rgb) / 0.12)",
+            color: "var(--acc)",
+            flex: "none",
+          }}
+        >
+          <Icon name="market" size={20} />
+        </span>
+        <span style={{ flex: 1, minWidth: 0 }}>
+          <strong style={{ fontSize: 14 }}>Аналитика кланов</strong>
+          <span className="dim" style={{ display: "block", fontSize: 12, fontWeight: 600 }}>
+            Кто растёт и теряет бойцов, группировки, новые и распущенные
+          </span>
+        </span>
+        <Icon name="chevron" size={18} className="dim" />
+      </Link>
+
       <SearchField value={filter} onChange={setFilter} placeholder="Название, тег или ник лидера" aria-label="Поиск клана" />
 
       <section className="section" style={{ marginTop: 16 }}>
@@ -106,7 +129,7 @@ export default function ClansPage() {
         ) : clans.length ? (
           <div className="stack stagger desk-grid" style={{ gap: 8, opacity: state.isPlaceholderData ? 0.5 : 1, transition: "opacity 200ms" }}>
             {clans.map((clan) => (
-              <ClanRow key={clan.id} clan={clan} region={region} rank={clan.rank} />
+              <ClanRow key={clan.id} clan={clan} region={region} />
             ))}
           </div>
         ) : (
@@ -140,7 +163,7 @@ export default function ClansPage() {
   );
 }
 
-function ClanRow({ clan, region, rank }: { clan: Clan; region: Region; rank: number }) {
+function ClanRow({ clan, region }: { clan: Clan; region: Region }) {
   const isFav = useApp((s) => s.favClans.some((c) => c.id === clan.id));
 
   return (
@@ -148,9 +171,6 @@ function ClanRow({ clan, region, rank }: { clan: Clan; region: Region; rank: num
       <ClanEmblem alliance={clan.alliance} tag={clan.tag} />
       <span style={{ flex: 1, minWidth: 0, display: "grid", gap: 2 }}>
         <strong className="truncate">
-          <span className="mono dim" style={{ fontSize: 12 }}>
-            #{rank}{" "}
-          </span>
           [{stripMc(clan.tag)}] {stripMc(clan.name)}
         </strong>
         <span className="dim truncate" style={{ fontSize: 12, fontWeight: 600 }}>

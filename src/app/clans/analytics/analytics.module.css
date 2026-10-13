@@ -1,0 +1,207 @@
+.notice {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text-2);
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+/* заголовок с переключателем «Сутки / Неделя» справа — списки соседних колонок начинаются вровень */
+.titleWithSwitch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: -6px 0 6px;
+}
+
+.titleWithSwitch :global(.section-title) {
+  margin: 0;
+}
+
+
+.row {
+  gap: 10px;
+  padding: 8px 12px 8px 8px;
+}
+
+.row[data-gone] {
+  opacity: 0.7;
+}
+
+.rowBody {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  font-size: 14px;
+}
+
+.rowBody .dim {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.delta {
+  flex: none;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.delta[data-tone="up"],
+.allianceStats [data-tone="up"] {
+  color: var(--green);
+}
+
+.delta[data-tone="down"],
+.allianceStats [data-tone="down"] {
+  color: #ff5b79;
+}
+
+.aside {
+  flex: none;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-3);
+}
+
+.aside b {
+  color: var(--acc);
+}
+
+.empty {
+  margin: 0;
+  padding: 14px;
+  border-radius: 14px;
+  font-size: 13px;
+  color: var(--text-3);
+  background: var(--surface);
+  border: 1px dashed var(--line);
+}
+
+/* ---------- группировки ---------- */
+
+.alliances {
+  display: grid;
+  gap: 8px;
+}
+
+.alliance {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.allianceHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.allianceHead strong {
+  flex: 1;
+}
+
+.allianceHead .mono {
+  font-weight: 700;
+  color: var(--c);
+}
+
+.allianceStats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-3);
+}
+
+.track {
+  position: relative;
+  display: block;
+  height: 8px;
+  border-radius: 99px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.track > span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: var(--c, var(--acc));
+  box-shadow: 0 0 10px color-mix(in srgb, var(--c, var(--acc)) 50%, transparent);
+  transition: width 600ms var(--ease);
+}
+
+/* ---------- распределения ---------- */
+
+.dists {
+  display: grid;
+  gap: 10px;
+}
+
+.dist {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.dist h3 {
+  margin: 0 0 2px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-2);
+}
+
+.distRow {
+  display: grid;
+  grid-template-columns: 74px minmax(0, 1fr) 48px;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.distRow .mono {
+  text-align: right;
+}
+
+.distLabel {
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+@media (min-width: 640px) {
+  .tiles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .tiles {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .alliances {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dists {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
