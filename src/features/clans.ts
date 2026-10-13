@@ -24,7 +24,8 @@ interface ClanList {
   data: Clan[];
 }
 
-export const CLANS_PAGE = 20;
+/** Кратно 2 и 3 — на широком экране сетка в 2–3 колонки заполняется ровными рядами. */
+export const CLANS_PAGE = 24;
 
 export function useClans(region: Region, page: number) {
   return useQuery({

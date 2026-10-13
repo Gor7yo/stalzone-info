@@ -31,7 +31,8 @@ const BUDGET = [0, 500_000, 1_000_000, 5_000_000, 10_000_000];
 const DEFAULTS: FlipSettings = { sort: "profit", minConfidence: "medium", minProfit: 20_000, budget: 0, group: null };
 /** У этих групп есть заточка — в ссылку на предмет передаём и её. */
 const UPGRADABLE = new Set(["artefact", "weapon", "armor"]);
-const STEP = 20;
+/** Кратно 2 и 3: на широком экране карточки — сеткой в 2–3 колонки. */
+const STEP = 24;
 
 /** Одинаковые лоты (предмет + качество + заточка) — одна карточка с самым выгодным лотом. */
 interface Offer {
