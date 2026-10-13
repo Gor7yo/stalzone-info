@@ -44,7 +44,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 12px 8px 8px;
+  padding: 10px 16px 10px 8px;
   border-radius: 14px;
   background: var(--surface);
   border: 1px solid var(--line);
@@ -107,7 +107,12 @@
 .skeleton {
   height: 220px;
   border-radius: 16px;
-  background: linear-gradient(90deg, var(--surface), var(--surface-2), var(--surface));
+  background: linear-gradient(
+    90deg,
+    var(--surface),
+    var(--surface-2),
+    var(--surface)
+  );
   background-size: 200% 100%;
   animation: shimmer 1.4s linear infinite;
 }
@@ -115,5 +120,48 @@
 @keyframes shimmer {
   to {
     background-position: -200% 0;
+  }
+}
+
+/* свёрнутый список: первые 5 позиций (SHOWN в MarketRadar.tsx) */
+.list[data-collapsed] li:nth-child(n + 6) {
+  display: none;
+}
+
+.more {
+  width: 100%;
+  margin-top: 8px;
+}
+
+/* ---------- широкий экран: радар во всю высоту колонки, список прокручивается ---------- */
+
+@media (min-width: 1024px) {
+  .radar[data-fill] {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .radar[data-fill] .list {
+    flex: 1;
+    min-height: 200px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 6px;
+    margin-right: -6px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-2) transparent;
+    /* строки уходят под нижний край плавно */
+    mask-image: linear-gradient(#000 calc(100% - 24px), transparent);
+    padding-bottom: 16px;
+  }
+
+  .radar[data-fill] .list li {
+    display: block;
+  }
+
+  .radar[data-fill] .more {
+    display: none;
   }
 }

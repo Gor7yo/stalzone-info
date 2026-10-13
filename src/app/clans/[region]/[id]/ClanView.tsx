@@ -37,7 +37,11 @@ export function ClanView({ region, id }: { region: Region; id: string }) {
         {error && !isNotFound(error) ? (
           <ErrorState onRetry={() => refetch()} />
         ) : (
-          <EmptyState icon="shield" title="Клан не найден" text="Возможно, он распущен или находится в другом регионе.">
+          <EmptyState
+            icon="shield"
+            title="Клан не найден"
+            text="Возможно, он распущен или находится в другом регионе."
+          >
             <Link href="/clans" className="btn">
               К списку кланов
             </Link>
@@ -54,72 +58,122 @@ export function ClanView({ region, id }: { region: Region; id: string }) {
       <div className={styles.toolbar}>
         <span className="pill dim">{region.toUpperCase()}</span>
         <div className="row" style={{ gap: 8 }}>
-          <ShareButton text={`Клан [${stripMc(clan.tag)}] ${stripMc(clan.name)}`} />
+          <ShareButton
+            text={`Клан [${stripMc(clan.tag)}] ${stripMc(clan.name)}`}
+          />
           <FavButton
             active={isFav}
             onToggle={() =>
-              actions.toggleFavClan({ region, id: clan.id, name: stripMc(clan.name), tag: stripMc(clan.tag), alliance: clan.alliance })
+              actions.toggleFavClan({
+                region,
+                id: clan.id,
+                name: stripMc(clan.name),
+                tag: stripMc(clan.tag),
+                alliance: clan.alliance,
+              })
             }
           />
         </div>
       </div>
 
-      <Tilt className={`glass ${styles.hero}`} style={{ "--ally": alliance.color } as React.CSSProperties} max={7}>
-        <span className="depth">
-          <ClanEmblem alliance={clan.alliance} tag={clan.tag} size={92} />
-        </span>
-        <span className={`mono ${styles.tag}`}>
-          [<McText text={clan.tag} />]
-        </span>
-        <h1 className={`display ${styles.name}`}>
-          <McText text={clan.name} />
-        </h1>
-        <div className="row" style={{ gap: 6, flexWrap: "wrap", justifyContent: "center" }}>
-          <span className="pill" style={{ color: alliance.color }}>
-            <span className="dot" />
-            {alliance.label}
-          </span>
-          <span className="pill">Уровень {clan.level}</span>
-        </div>
-      </Tilt>
-
-      <section className={`${styles.stats} stagger`}>
-        <StatTile label="Бойцов" tone="acc" value={formatNumber(clan.memberCount)} />
-        <StatTile label="Очки уровня" value={formatNumber(clan.levelPoints)} />
-        <StatTile
-          label="Основан"
-          value={clan.registrationTime ? formatShortDate(clan.registrationTime) : "—"}
-          hint={clan.registrationTime && now ? formatRelative(clan.registrationTime, now) : undefined}
-        />
-        <StatTile label="ID" value={<span style={{ fontSize: 13 }}>{clan.id}</span>} />
-      </section>
-
-      {clan.leader && (
-        <Link href={`/character/${region}/${encodeURIComponent(clan.leader)}`} className={`list-row ${styles.leader}`} onClick={() => haptic.tap()}>
-          <span className={styles.crown}>
-            <Icon name="trophy" size={20} />
-          </span>
-          <span style={{ flex: 1, minWidth: 0, display: "grid", gap: 2 }}>
-            <span className="dim" style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em" }}>
-              Лидер
+      <div className="desk-split">
+        <div className="desk-main">
+          <Tilt
+            className={`glass ${styles.hero}`}
+            style={{ "--ally": alliance.color } as React.CSSProperties}
+            max={7}
+          >
+            <span className="depth">
+              <ClanEmblem alliance={clan.alliance} tag={clan.tag} size={92} />
             </span>
-            <strong className="truncate">{clan.leader}</strong>
-          </span>
-          <span className="dim" style={{ fontSize: 12, fontWeight: 700 }}>
-            Досье
-          </span>
-          <Icon name="chevron" size={18} className="dim" />
-        </Link>
-      )}
+            <span className={`mono ${styles.tag}`}>
+              [<McText text={clan.tag} />]
+            </span>
+            <h1 className={`display ${styles.name}`}>
+              <McText text={clan.name} />
+            </h1>
+            <div
+              className="row"
+              style={{ gap: 6, flexWrap: "wrap", justifyContent: "center" }}
+            >
+              <span className="pill" style={{ color: alliance.color }}>
+                <span className="dot" />
+                {alliance.label}
+              </span>
+              <span className="pill">Уровень {clan.level}</span>
+            </div>
+          </Tilt>
+        </div>
+        <div className="desk-side">
+          <section className={`${styles.stats} stagger`}>
+            <StatTile
+              label="Бойцов"
+              tone="acc"
+              value={formatNumber(clan.memberCount)}
+            />
+            <StatTile
+              label="Очки уровня"
+              value={formatNumber(clan.levelPoints)}
+            />
+            <StatTile
+              label="Основан"
+              value={
+                clan.registrationTime
+                  ? formatShortDate(clan.registrationTime)
+                  : "—"
+              }
+              hint={
+                clan.registrationTime && now
+                  ? formatRelative(clan.registrationTime, now)
+                  : undefined
+              }
+            />
+            <StatTile
+              label="ID"
+              value={<span style={{ fontSize: 13 }}>{clan.id}</span>}
+            />
+          </section>
 
-      {clan.description && (
-        <section className="section">
-          <h2 className="section-title">Описание</h2>
-          <div className={styles.description}>
-            <McText text={clan.description} />
-          </div>
-        </section>
-      )}
+          {clan.leader && (
+            <Link
+              href={`/character/${region}/${encodeURIComponent(clan.leader)}`}
+              className={`list-row ${styles.leader}`}
+              onClick={() => haptic.tap()}
+            >
+              <span className={styles.crown}>
+                <Icon name="trophy" size={20} />
+              </span>
+              <span style={{ flex: 1, minWidth: 0, display: "grid", gap: 2 }}>
+                <span
+                  className="dim"
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 800,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                  }}
+                >
+                  Лидер
+                </span>
+                <strong className="truncate">{clan.leader}</strong>
+              </span>
+              <span className="dim" style={{ fontSize: 12, fontWeight: 700 }}>
+                Досье
+              </span>
+              <Icon name="chevron" size={18} className="dim" />
+            </Link>
+          )}
+
+          {clan.description && (
+            <section className="section">
+              <h2 className="section-title">Описание</h2>
+              <div className={styles.description}>
+                <McText text={clan.description} />
+              </div>
+            </section>
+          )}
+        </div>
+      </div>
     </main>
   );
 }

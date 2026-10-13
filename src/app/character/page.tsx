@@ -76,7 +76,7 @@ function People({ title, people, action }: { title: string; people: CharacterRef
         {title}
         {action}
       </h2>
-      <div className="stack stagger" style={{ gap: 8 }}>
+      <div className="stack stagger desk-grid" style={{ gap: 8 }}>
         {people.map((p) => (
           <Link
             key={`${p.region}-${p.name}`}

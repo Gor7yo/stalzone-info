@@ -37,6 +37,8 @@
   --safe-top: max(env(safe-area-inset-top), var(--tg-viewport-content-safe-area-inset-top, 0px));
   --safe-bottom: env(safe-area-inset-bottom);
   --dock-h: 68px;
+  /* ширина боковой панели навигации (только на широком экране) */
+  --side-w: 0px;
 
   --font-display: var(--font-unbounded), "Arial Black", sans-serif;
   --font-body: var(--font-manrope), system-ui, -apple-system, sans-serif;
@@ -435,6 +437,75 @@ img {
 
 .depth {
   transform: translateZ(28px);
+}
+
+/* ---------- широкий экран ----------
+   Навигация — боковая панель слева (Shell), контент шире, страницы раскладываются колонками.
+   Колонки страниц: .desk-split (основная + боковая), .desk-cols (две равные). На телефоне — обычный поток. */
+
+.desk-split,
+.desk-cols {
+  display: flow-root;
+}
+
+.desk-main,
+.desk-side {
+  min-width: 0;
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --side-w: 232px;
+  }
+
+  body {
+    padding-left: var(--side-w);
+  }
+
+  .page {
+    width: min(100% - 64px, 1180px);
+    padding: 28px 0 48px;
+  }
+
+  .desk-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    gap: 28px;
+    align-items: start;
+  }
+
+  .desk-cols {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 28px;
+    align-items: start;
+  }
+
+  /* первая секция колонки — без верхнего отступа, чтобы колонки начинались вровень */
+  .desk-main > .section:first-child,
+  .desk-side > .section:first-child {
+    margin-top: 0;
+  }
+
+  /* чипы: на телефоне листаются вбок, на широком экране — переносятся */
+  .chips {
+    flex-wrap: wrap;
+    overflow: visible;
+    margin: 0;
+    padding: 2px 0;
+  }
+
+  .item-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 8px;
+  }
+
+  /* список карточек (вместе со .stack): на телефоне — колонка, здесь — сетка */
+  .desk-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    align-items: start;
+  }
 }
 
 /* ---------- анимации ---------- */

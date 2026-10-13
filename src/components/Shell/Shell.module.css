@@ -219,3 +219,118 @@
   text-decoration-color: rgb(var(--acc-rgb) / 0.5);
   text-underline-offset: 3px;
 }
+
+/* ---------- логотип боковой панели (на телефоне скрыт) ---------- */
+
+.brand {
+  display: none;
+}
+
+/* на телефоне обёртка вкладок не участвует в раскладке: вкладки — ячейки сетки дока */
+.tabs {
+  display: contents;
+}
+
+/* ---------- широкий экран: док → боковая панель слева ---------- */
+
+@media (min-width: 1024px) {
+  .dock {
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: var(--side-w);
+    height: auto;
+    padding: 24px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    transform: none;
+    border-radius: 0;
+    border: 0;
+    border-right: 1px solid var(--line);
+    background: rgb(10 12 14 / 0.6);
+    box-shadow: none;
+    animation: side-in 600ms var(--ease) both;
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 10px;
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+  }
+
+  .brandMark {
+    width: 22px;
+    height: 22px;
+    border-radius: 7px;
+    flex: none;
+    background:
+      radial-gradient(circle at 35% 30%, #fff8, transparent 40%),
+      conic-gradient(from 200deg, var(--acc), #1ec8a0, var(--acc));
+    box-shadow: 0 0 18px rgb(var(--acc-rgb) / 0.5);
+  }
+
+  .tabs {
+    position: relative;
+    display: grid;
+    grid-auto-rows: 46px;
+    gap: 4px;
+  }
+
+  .indicator {
+    top: 0;
+    bottom: auto;
+    left: 0;
+    width: 100%;
+    height: 46px;
+    border-radius: 14px;
+    transform: translateY(calc(50px * var(--index)));
+  }
+
+  .tab {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 0 12px;
+    border-radius: 14px;
+    transition:
+      color 250ms,
+      background 200ms;
+  }
+
+  .tab:hover:not([aria-current="page"]) {
+    color: var(--text-2);
+    background: var(--surface);
+  }
+
+  .tabLabel {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0;
+  }
+
+  .back {
+    left: 14px;
+    bottom: 20px;
+    width: calc(var(--side-w) - 28px);
+    justify-content: center;
+  }
+
+  .credit {
+    margin-top: 0;
+    padding-bottom: 28px;
+  }
+}
+
+@keyframes side-in {
+  from {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+}

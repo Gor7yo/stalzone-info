@@ -185,3 +185,11 @@
 .switch:disabled {
   opacity: 0.5;
 }
+
+/* широкий экран: регионы — колонка справа от радара */
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: 1fr;
+    margin-top: 0;
+  }
+}

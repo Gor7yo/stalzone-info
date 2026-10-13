@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useDeferredValue, useState } from "react";
+import { useState } from "react";
 import { ClanEmblem } from "@/components/ClanEmblem";
 import { Icon } from "@/components/Icon";
 import { FavButton } from "@/components/ui/Buttons";
@@ -9,7 +9,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { RegionSwitch } from "@/components/ui/RegionSwitch";
 import { SearchField } from "@/components/ui/SearchField";
 import { EmptyState, ErrorState, RowSkeleton } from "@/components/ui/States";
-import { CLANS_PAGE, useClans, type Clan } from "@/features/clans";
+import { CLANS_PAGE, useClans, useClanSearch, useDebounced, type Clan } from "@/features/clans";
 import { formatNumber, plural } from "@/lib/format";
 import { stripMc } from "@/lib/mcText";
 import { actions, useApp, type Region } from "@/lib/store";
@@ -20,14 +20,30 @@ export default function ClansPage() {
   const favClans = useApp((s) => s.favClans);
   const [page, setPage] = useState(0);
   const [filter, setFilter] = useState("");
-  const q = useDeferredValue(filter.trim().toLowerCase());
+  const q = useDebounced(filter.trim());
 
   const { data, isLoading, isError, refetch, isPlaceholderData } = useClans(region, page);
   const total = data?.totalClans ?? 0;
   const pages = Math.max(1, Math.ceil(total / CLANS_PAGE));
-  const clans = (data?.data ?? []).filter(
-    (c) => !q || stripMc(c.name).toLowerCase().includes(q) || stripMc(c.tag).toLowerCase().includes(q) || c.leader?.toLowerCase().includes(q),
-  );
+
+  // поиск по всем кланам региона — на сервере; пока сервер не загрузил список (сразу после деплоя),
+  // фильтруем открытую страницу, как раньше
+  const search = useClanSearch(region, q);
+  const searching = q.length > 0;
+  const serverSearch = searching && search.data?.syncedAt !== null;
+  const lq = q.toLowerCase();
+  const pageClans = (data?.data ?? [])
+    .map((clan, i) => ({ ...clan, rank: page * CLANS_PAGE + i + 1 }))
+    .filter(
+      (c) =>
+        !searching ||
+        stripMc(c.name).toLowerCase().includes(lq) ||
+        stripMc(c.tag).toLowerCase().includes(lq) ||
+        c.leader?.toLowerCase().includes(lq),
+    );
+  const clans = serverSearch ? (search.data?.data ?? []) : pageClans;
+  const state = serverSearch ? search : { isLoading, isError, refetch, isPlaceholderData };
+  const found = search.data?.total ?? 0;
 
   const go = (p: number) => {
     haptic.select();
@@ -67,24 +83,46 @@ export default function ClansPage() {
         </section>
       )}
 
-      <SearchField value={filter} onChange={setFilter} placeholder="Фильтр по названию, тегу, лидеру" aria-label="Фильтр кланов" />
+      <SearchField value={filter} onChange={setFilter} placeholder="Название, тег или ник лидера" aria-label="Поиск клана" />
 
       <section className="section" style={{ marginTop: 16 }}>
-        {isError ? (
-          <ErrorState onRetry={() => refetch()} />
-        ) : isLoading ? (
+        {serverSearch && search.data && (
+          <p className="dim" style={{ fontSize: 13, fontWeight: 600, margin: "0 2px 10px" }}>
+            {found
+              ? `Найдено ${formatNumber(found)} ${plural(found, ["клан", "клана", "кланов"])}${found > clans.length ? ` · показаны первые ${clans.length}, уточните запрос` : ""}`
+              : null}
+          </p>
+        )}
+        {searching && !serverSearch && search.data && (
+          <p className="dim" style={{ fontSize: 13, fontWeight: 600, margin: "0 2px 10px" }}>
+            Список кланов ещё загружается на сервер - пока ищем только на этой странице.
+          </p>
+        )}
+
+        {state.isError ? (
+          <ErrorState onRetry={() => state.refetch()} />
+        ) : state.isLoading ? (
           <RowSkeleton count={8} />
         ) : clans.length ? (
-          <div className="stack stagger" style={{ gap: 8, opacity: isPlaceholderData ? 0.5 : 1, transition: "opacity 200ms" }}>
-            {clans.map((clan, i) => (
-              <ClanRow key={clan.id} clan={clan} region={region} rank={page * CLANS_PAGE + (data?.data.indexOf(clan) ?? i) + 1} />
+          <div className="stack stagger desk-grid" style={{ gap: 8, opacity: state.isPlaceholderData ? 0.5 : 1, transition: "opacity 200ms" }}>
+            {clans.map((clan) => (
+              <ClanRow key={clan.id} clan={clan} region={region} rank={clan.rank} />
             ))}
           </div>
         ) : (
-          <EmptyState title="Кланов не найдено" text={q ? "На этой странице нет совпадений — попробуйте другие страницы." : undefined} />
+          <EmptyState
+            title="Кланов не найдено"
+            text={
+              serverSearch
+                ? "Проверьте название или тег. Ищем по всем кланам региона, раскладка не важна."
+                : searching
+                  ? "На этой странице нет совпадений — попробуйте другие страницы."
+                  : undefined
+            }
+          />
         )}
 
-        {pages > 1 && !isError && (
+        {!serverSearch && pages > 1 && !isError && (
           <nav className="row" style={{ marginTop: 16, justifyContent: "space-between" }} aria-label="Страницы">
             <button type="button" className="btn" disabled={page === 0} onClick={() => go(page - 1)} aria-label="Назад">
               <Icon name="back" size={18} />

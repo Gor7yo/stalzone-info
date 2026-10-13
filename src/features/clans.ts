@@ -1,6 +1,7 @@
 "use client";
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import type { Region } from "@/lib/store";
 
@@ -39,6 +40,42 @@ export function useClans(region: Region, page: number) {
     placeholderData: keepPreviousData,
     staleTime: 5 * 60_000,
   });
+}
+
+/** Клан из поиска: сервер ищет по своей копии списка EXBO и знает место в рейтинге. */
+export interface ClanHit extends Clan {
+  rank: number;
+}
+
+export interface ClanSearch {
+  total: number;
+  data: ClanHit[];
+  /** когда сервер последний раз обновил список кланов региона; null — ещё не загрузил */
+  syncedAt: string | null;
+}
+
+/** Сколько кланов показываем в результатах поиска. */
+export const CLAN_SEARCH_LIMIT = 50;
+
+/** Поиск по названию, тегу и нику лидера среди всех кланов региона. */
+export function useClanSearch(region: Region, query: string) {
+  return useQuery({
+    enabled: query.length > 0,
+    queryKey: ["clan-search", region, query],
+    queryFn: () => api<ClanSearch>("/api/clan/search", { region, q: query, limit: CLAN_SEARCH_LIMIT }),
+    placeholderData: keepPreviousData,
+    staleTime: 60_000,
+  });
+}
+
+/** Значение, которое меняется не чаще чем раз в ms: не дёргаем сервер на каждую букву. */
+export function useDebounced<T>(value: T, ms = 250) {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(value), ms);
+    return () => clearTimeout(t);
+  }, [value, ms]);
+  return debounced;
 }
 
 export function useClan(region: Region, id: string) {

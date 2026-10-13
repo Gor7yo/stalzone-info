@@ -246,7 +246,7 @@ function FlipsFeed() {
           <RowSkeleton />
         ) : offers.length ? (
           <>
-            <div className="stack" style={{ gap: 10 }}>
+            <div className="stack desk-grid" style={{ gap: 10 }}>
               {offers.slice(0, limit).map((o) => (
                 <OfferCard key={o.key} offer={o} item={index?.byId.get(o.best.itemId)} />
               ))}

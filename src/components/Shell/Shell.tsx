@@ -46,7 +46,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const [trail, setTrail] = useState<string[]>([pathname]);
   // обновляем при рендере, а не в эффекте — без лишнего перерендера
   if (trail[trail.length - 1] !== pathname) {
-    setTrail(trail[trail.length - 2] === pathname ? trail.slice(0, -1) : [...trail.slice(-49), pathname]);
+    setTrail(
+      trail[trail.length - 2] === pathname
+        ? trail.slice(0, -1)
+        : [...trail.slice(-49), pathname],
+    );
   }
   const inTelegram = useIsTelegram();
   const canGoBack = !inTelegram && trail.length > 1;
@@ -58,7 +62,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <div className={styles.backdrop} data-alert={emissionActive || undefined} aria-hidden>
+      <div
+        className={styles.backdrop}
+        data-alert={emissionActive || undefined}
+        aria-hidden
+      >
         <span className={styles.aurora} />
         <span className={styles.grid} />
         <span className={styles.noise} />
@@ -71,7 +79,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
         <Link href={creatorHref} onClick={() => haptic.tap()}>
           {CREATOR.nick}
         </Link>
-        <span className={styles.disclaimer}>Неофициальный фан-проект · данные STALZONE API · EXBO</span>
+        <span className={styles.disclaimer}>
+          Неофициальный фан-проект · данные STALZONE API · EXBO
+        </span>
       </footer>
 
       {canGoBack && (
@@ -95,23 +105,44 @@ export function Shell({ children }: { children: React.ReactNode }) {
         </button>
       )}
 
-      <nav className={styles.dock} aria-label="Навигация" style={{ "--index": active } as React.CSSProperties}>
-        <span className={styles.indicator} aria-hidden />
-        {TABS.map((tab, i) => (
-          <Link
-            key={tab.href}
-            href={tab.href}
-            className={styles.tab}
-            aria-current={i === active ? "page" : undefined}
-            onClick={() => i !== active && haptic.select()}
-          >
-            <span className={styles.tabIcon}>
-              <Icon name={tab.icon} size={21} strokeWidth={i === active ? 2.2 : 1.8} />
-              {tab.href === "/emission" && emissionActive && <span className={styles.alert} />}
-            </span>
-            <span className={styles.tabLabel}>{tab.label}</span>
-          </Link>
-        ))}
+      <nav
+        className={styles.dock}
+        aria-label="Навигация"
+        style={{ "--index": active } as React.CSSProperties}
+      >
+        {/* логотип — только в боковой панели широкого экрана */}
+        <Link
+          href="/"
+          className={styles.brand}
+          aria-label="STALZONE INFO — на главную"
+        >
+          <span className={styles.brandMark} />
+          STALZONE <span style={{ color: "var(--acc)" }}>INFO</span>
+        </Link>
+        <div className={styles.tabs}>
+          <span className={styles.indicator} aria-hidden />
+          {TABS.map((tab, i) => (
+            <Link
+              key={tab.href}
+              href={tab.href}
+              className={styles.tab}
+              aria-current={i === active ? "page" : undefined}
+              onClick={() => i !== active && haptic.select()}
+            >
+              <span className={styles.tabIcon}>
+                <Icon
+                  name={tab.icon}
+                  size={21}
+                  strokeWidth={i === active ? 2.2 : 1.8}
+                />
+                {tab.href === "/emission" && emissionActive && (
+                  <span className={styles.alert} />
+                )}
+              </span>
+              <span className={styles.tabLabel}>{tab.label}</span>
+            </Link>
+          ))}
+        </div>
       </nav>
     </>
   );

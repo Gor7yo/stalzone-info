@@ -28,7 +28,11 @@ function hrefOf(r: RadarRow) {
 const pct = (x: number) => `${x > 0 ? "+" : x < 0 ? "−" : ""}${Math.abs(x).toLocaleString("ru-RU", { maximumFractionDigits: 1 })} %`;
 
 /** Радар рынка на главной: что подорожало, подешевело и где больше всего сделок за сутки. */
-export function MarketRadar({ region }: { region: Region }) {
+/**
+ * fill — на широком экране занять всю высоту колонки: показываем все позиции,
+ * список прокручивается внутри (высоту задаёт соседняя колонка).
+ */
+export function MarketRadar({ region, fill = false }: { region: Region; fill?: boolean }) {
   const { data, isLoading, isError } = useRadar(region);
   const { data: index } = useItems();
   const [tab, setTab] = useState<Tab>("up");
@@ -39,7 +43,7 @@ export function MarketRadar({ region }: { region: Region }) {
   const empty = data && !data.up.length && !data.down.length && !data.volume.length;
 
   return (
-    <section className="section">
+    <section className={`section ${styles.radar}`} data-fill={fill || undefined}>
       <h2 className="section-title">
         Радар рынка <small>за сутки · {region.toUpperCase()}</small>
       </h2>
@@ -70,8 +74,9 @@ export function MarketRadar({ region }: { region: Region }) {
       {empty && <p className="dim" style={{ fontSize: 13 }}>Для этого региона пока мало сделок — радар появится, когда сборщик накопит историю.</p>}
       {data && !empty && !rows.length && <p className="dim" style={{ fontSize: 13 }}>Сейчас таких позиций нет.</p>}
 
-      <ul className={styles.list}>
-        {(all ? rows : rows.slice(0, SHOWN)).map((r) => {
+      {/* все позиции в разметке: на телефоне лишние скрыты до «Ещё», на широком экране с fill — прокрутка */}
+      <ul className={styles.list} data-collapsed={!all || undefined}>
+        {rows.map((r) => {
           const item = index?.byId.get(r.itemId);
           const q = QUALITY[r.quality];
           return (
@@ -116,7 +121,7 @@ export function MarketRadar({ region }: { region: Region }) {
       </ul>
 
       {rows.length > SHOWN && (
-        <button type="button" className="btn" style={{ width: "100%", marginTop: 8 }} onClick={() => setAll((v) => !v)}>
+        <button type="button" className={`btn ${styles.more}`} onClick={() => setAll((v) => !v)}>
           {all ? "Свернуть" : `Ещё ${rows.length - SHOWN}`}
         </button>
       )}

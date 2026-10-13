@@ -32,7 +32,7 @@ export default function ProPage() {
 
       <section className="section">
         <h2 className="section-title">Что входит</h2>
-        <div className="stack" style={{ gap: 8 }}>
+        <div className="stack desk-grid" style={{ gap: 8 }}>
           {PRO_FEATURES.map((f) => (
             <div key={f.title} className={styles.feature}>
               <span className={styles.featureIcon}>

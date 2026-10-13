@@ -263,3 +263,49 @@
     opacity: 0.85;
   }
 }
+
+/* ---------- широкий экран: логотип уже в боковой панели ---------- */
+
+@media (min-width: 1024px) {
+  .logo {
+    visibility: hidden;
+  }
+
+  .hero {
+    min-height: 260px;
+  }
+}
+
+@media (min-width: 1024px) {
+  /* все разделы — сеткой 2×2: левая колонка не длиннее радара */
+  .tile[data-wide] {
+    grid-column: auto;
+    min-height: 138px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tile[data-wide] .tileBody {
+    margin-top: auto;
+    flex: none;
+  }
+
+  .tile[data-wide] .tileBody strong {
+    font-size: 19px;
+  }
+
+  .tile[data-wide] .tileArrow {
+    position: absolute;
+  }
+}
+
+/* правая колонка главной: высоту задаёт левая (contain: size — своё содержимое высоту не растягивает),
+   радар занимает остаток и прокручивается внутри */
+@media (min-width: 1024px) {
+  .side {
+    contain: size;
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+  }
+}

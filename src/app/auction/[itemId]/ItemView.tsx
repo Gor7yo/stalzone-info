@@ -8,7 +8,10 @@ import { PriceAlertPanel } from "@/components/PriceAlert/PriceAlertPanel";
 import { PriceChart } from "@/components/PriceChart/PriceChart";
 import { SellHelper } from "@/components/SellHelper/SellHelper";
 import { SwipePager } from "@/components/Pager/SwipePager";
-import { LotFilters, type DealFilter } from "@/components/LotFilters/LotFilters";
+import {
+  LotFilters,
+  type DealFilter,
+} from "@/components/LotFilters/LotFilters";
 import { Tilt } from "@/components/Tilt/Tilt";
 import { FavButton, RefreshButton, ShareButton } from "@/components/ui/Buttons";
 import { ItemIcon } from "@/components/ui/ItemIcon";
@@ -52,7 +55,14 @@ import { useAlerts } from "@/features/alerts";
 import { usePro } from "@/features/pro";
 import { useBarter } from "@/features/barter";
 import { categoryLabel, rarityOf, useItem } from "@/features/items";
-import { formatCompact, formatDuration, formatNumber, formatPrice, formatRelative, plural } from "@/lib/format";
+import {
+  formatCompact,
+  formatDuration,
+  formatNumber,
+  formatPrice,
+  formatRelative,
+  plural,
+} from "@/lib/format";
 import { actions, useApp } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
 import { useNow } from "@/lib/useNow";
@@ -78,7 +88,15 @@ const QUALITY_LOTS_MAX = 1000;
  * quality / upgrade — открыть сразу с фильтром по ним (переход из флиппера);
  * null — без фильтра (у артефакта по умолчанию «Обычный»).
  */
-export function ItemView({ id, quality = null, upgrade = null }: { id: string; quality?: number | null; upgrade?: number | null }) {
+export function ItemView({
+  id,
+  quality = null,
+  upgrade = null,
+}: {
+  id: string;
+  quality?: number | null;
+  upgrade?: number | null;
+}) {
   const region = useApp((s) => s.region);
   const isFav = useApp((s) => s.favItems.includes(id));
   const { item, isLoading: itemLoading } = useItem(id);
@@ -119,20 +137,34 @@ export function ItemView({ id, quality = null, upgrade = null }: { id: string; q
   const tradable = barter ? !barter.farm.has(id) : false;
 
   // у артефактов и модулей у каждого лота своё качество — цены разных качеств несравнимы
-  const qualityItem = item?.group === "artefact" || item?.group === "weapon_modules";
+  const qualityItem =
+    item?.group === "artefact" || item?.group === "weapon_modules";
   // фильтр «клетки» карты цен: качество × ступень заточки
   // артефакт по умолчанию открывается на «Обычном»: без фильтра график — «пила» из смеси качеств
-  const filter = !isPro ? ALL : (userFilter ?? (item?.group === "artefact" ? { quality: null, qualities: [0], upgrade: null } : ALL));
+  const filter = !isPro
+    ? ALL
+    : (userFilter ??
+      (item?.group === "artefact"
+        ? { quality: null, qualities: [0], upgrade: null }
+        : ALL));
   const qualities = pickedQualities(filter);
   const filtered = qualities.length > 0 || hasUpgradeFilter(filter);
   // у артефакта без одного выбранного качества медиана и тренд смешивают дешёвые и дорогие варианты
   const mixed = qualityItem && qualities.length !== 1;
 
   const history = useHistory(region, id, period, tradable);
-  const lots = useLots(region, id, sort.sort, sort.order, tradable, qualityItem ? 200 : undefined);
+  const lots = useLots(
+    region,
+    id,
+    sort.sort,
+    sort.order,
+    tradable,
+    qualityItem ? 200 : undefined,
+  );
   // артефакт с сортировкой «Дешевле» и так грузит 200 самых дешёвых лотов — лучшая цена
   // считается из них, отдельный запрос не нужен
-  const bestFromLots = qualityItem && sort.sort === "buyout_price" && sort.order === "asc";
+  const bestFromLots =
+    qualityItem && sort.sort === "buyout_price" && sort.order === "asc";
   const bestQuery = useBestPrice(region, id, tradable && !bestFromLots);
   const lotsBest = useMemo(() => {
     if (!bestFromLots || !lots.data) return undefined;
@@ -145,31 +177,44 @@ export function ItemView({ id, quality = null, upgrade = null }: { id: string; q
       total: lots.data.pages[0]?.total ?? 0,
     };
   }, [bestFromLots, lots.data]);
-  const best = bestFromLots ? { data: lotsBest, isLoading: lots.isLoading, refetch: lots.refetch } : bestQuery;
+  const best = bestFromLots
+    ? { data: lotsBest, isLoading: lots.isLoading, refetch: lots.refetch }
+    : bestQuery;
 
   const sales = history.data?.prices ?? [];
-  const stats = history.data ? priceStats(sales, filter, periodMeta.days) : null;
+  const stats = history.data
+    ? priceStats(sales, filter, periodMeta.days)
+    : null;
 
   useEffect(() => actions.pushRecentItem(id), [id]);
 
   const rarity = item ? rarityOf(item.rarity) : null;
   // у артефакта подсветка карточки — цвет выбранного качества (из нескольких — самого высокого)
-  const pickedQualityList = qualityItem ? qualities.map((q) => QUALITY[q]).filter(Boolean) : [];
-  const accent = pickedQualityList[pickedQualityList.length - 1]?.color ?? rarity?.color ?? "var(--text-3)";
+  const pickedQualityList = qualityItem
+    ? qualities.map((q) => QUALITY[q]).filter(Boolean)
+    : [];
+  const accent =
+    pickedQualityList[pickedQualityList.length - 1]?.color ??
+    rarity?.color ??
+    "var(--text-3)";
   const allLots = lots.data?.pages.flatMap((p) => p.lots) ?? [];
   const totalLots = lots.data?.pages[0]?.total ?? 0;
-  const hasQuality = qualityItem || allLots.some((l) => qualityOf(l.additional) !== null);
+  const hasQuality =
+    qualityItem || allLots.some((l) => qualityOf(l.additional) !== null);
 
   // лот сравниваем с такими же по качеству и заточке; не с чем сравнить — без оценки
   const medians = new Map<string, number | undefined>();
   const lotMedian = (lot: Lot) => {
     if (!hasQuality) return stats?.median;
     const key = `${qualityOf(lot.additional)}:${upgradeOf(lot.additional)}`;
-    if (!medians.has(key)) medians.set(key, comparableMedian(sales, lot.additional));
+    if (!medians.has(key))
+      medians.set(key, comparableMedian(sales, lot.additional));
     return medians.get(key);
   };
 
-  const lotsInFilter = filtered ? allLots.filter((l) => matchesFilter(l.additional, filter)) : allLots;
+  const lotsInFilter = filtered
+    ? allLots.filter((l) => matchesFilter(l.additional, filter))
+    : allLots;
   const dealKind = (lot: Lot) => dealOf(lot, lotMedian(lot))?.kind;
   const isGood = (lot: Lot) => ["hot", "good"].includes(dealKind(lot) ?? "");
   const isBad = (lot: Lot) => dealKind(lot) === "high";
@@ -177,10 +222,21 @@ export function ItemView({ id, quality = null, upgrade = null }: { id: string; q
     good: lotsInFilter.filter(isGood).length,
     bad: lotsInFilter.filter(isBad).length,
   };
-  const lotsShown = dealFilter === "good" ? lotsInFilter.filter(isGood) : dealFilter === "bad" ? lotsInFilter.filter(isBad) : lotsInFilter;
+  const lotsShown =
+    dealFilter === "good"
+      ? lotsInFilter.filter(isGood)
+      : dealFilter === "bad"
+        ? lotsInFilter.filter(isBad)
+        : lotsInFilter;
   // пагинация лотов: по LOTS_PAGE на страницу, листается свайпом
   const narrowed = filtered || dealFilter !== "all";
-  const pages = Math.max(1, Math.ceil((narrowed ? lotsShown.length : Math.max(totalLots, lotsShown.length)) / LOTS_PAGE));
+  const pages = Math.max(
+    1,
+    Math.ceil(
+      (narrowed ? lotsShown.length : Math.max(totalLots, lotsShown.length)) /
+        LOTS_PAGE,
+    ),
+  );
   const page = Math.min(view.value.page, pages - 1);
   const pageLots = lotsShown.slice(page * LOTS_PAGE, (page + 1) * LOTS_PAGE);
   // без фильтра страниц столько, сколько лотов на рынке — недостающие догружаем.
@@ -190,18 +246,35 @@ export function ItemView({ id, quality = null, upgrade = null }: { id: string; q
     (qualityItem && allLots.length < Math.min(totalLots, QUALITY_LOTS_MAX)) ||
     (!narrowed && pageLots.length < LOTS_PAGE && allLots.length < totalLots);
   useEffect(() => {
-    if (needMore && lots.hasNextPage && !lots.isFetchingNextPage) lots.fetchNextPage();
+    if (needMore && lots.hasNextPage && !lots.isFetchingNextPage)
+      lots.fetchNextPage();
   }, [needMore, lots]);
 
-  const salesShown = filtered ? sales.filter((s) => matchesFilter(s.additional, filter)) : sales;
+  const salesShown = filtered
+    ? sales.filter((s) => matchesFilter(s.additional, filter))
+    : sales;
 
   // «лучшая цена» с фильтром считается по загруженным лотам этой клетки
-  const cellBest = filtered ? Math.min(...lotsInFilter.map(lotUnitPrice).filter((p) => p > 0)) : null;
-  const bestPrice = filtered ? (Number.isFinite(cellBest) ? cellBest : null) : best.data?.price;
+  const cellBest = filtered
+    ? Math.min(...lotsInFilter.map(lotUnitPrice).filter((p) => p > 0))
+    : null;
+  const bestPrice = filtered
+    ? Number.isFinite(cellBest)
+      ? cellBest
+      : null
+    : best.data?.price;
   const latest = lastSale(sales, filter);
-  const filterLabel = [qualityLabel(filter), upgradeLabel(filter)].filter(Boolean).join(" ");
+  const filterLabel = [qualityLabel(filter), upgradeLabel(filter)]
+    .filter(Boolean)
+    .join(" ");
   // нет ни лотов, ни свежих сделок — предмет сейчас не торгуется (или вообще не продаётся)
-  const inactive = !lots.isLoading && !history.isLoading && !lots.isError && !history.isError && totalLots === 0 && !stats;
+  const inactive =
+    !lots.isLoading &&
+    !history.isLoading &&
+    !lots.isError &&
+    !history.isError &&
+    totalLots === 0 &&
+    !stats;
 
   return (
     <main className="page">
@@ -241,333 +314,419 @@ export function ItemView({ id, quality = null, upgrade = null }: { id: string; q
               <Icon name="bell" size={19} filled={hasAlert} />
             </button>
           )}
-          <ShareButton text={`${item?.name ?? "Предмет"} — цены на рынке STALZONE`} />
-          <FavButton active={isFav} onToggle={() => actions.toggleFavItem(id)} />
+          <ShareButton
+            text={`${item?.name ?? "Предмет"} — цены на рынке STALZONE`}
+          />
+          <FavButton
+            active={isFav}
+            onToggle={() => actions.toggleFavItem(id)}
+          />
         </div>
       </div>
 
-      <Tilt className={`glass ${styles.hero}`} style={{ "--rarity": accent } as React.CSSProperties} max={8}>
-        <span className={`${styles.heroIcon} depth`}>
-          <ItemIcon item={item} size={72} />
-        </span>
-        <div className={styles.heroText}>
-          {itemLoading ? (
-            <span className="skeleton" style={{ height: 26, width: "70%" }} />
-          ) : (
-            <h1 className="display">{item?.name ?? `Предмет ${id}`}</h1>
-          )}
-          {item && rarity && (
-            <div className="row" style={{ flexWrap: "wrap", gap: 6 }}>
-              {pickedQualityList.map((q) => (
-                <span key={q.label} className="pill" style={{ color: q.color }}>
-                  <span className="dot" />
-                  {q.label}
-                </span>
-              ))}
-              {item.rarity !== "DEFAULT" && (
-                <span className="pill" style={{ color: rarity.color }}>
-                  <span className="dot" />
-                  {rarity.label}
+      <div className="desk-split">
+        <div className="desk-main">
+          <Tilt
+            className={`glass ${styles.hero}`}
+            style={{ "--rarity": accent } as React.CSSProperties}
+            max={8}
+          >
+            <span className={`${styles.heroIcon} depth`}>
+              <ItemIcon item={item} size={72} />
+            </span>
+            <div className={styles.heroText}>
+              {itemLoading ? (
+                <span
+                  className="skeleton"
+                  style={{ height: 26, width: "70%" }}
+                />
+              ) : (
+                <h1 className="display">{item?.name ?? `Предмет ${id}`}</h1>
+              )}
+              {item && rarity && (
+                <div className="row" style={{ flexWrap: "wrap", gap: 6 }}>
+                  {pickedQualityList.map((q) => (
+                    <span
+                      key={q.label}
+                      className="pill"
+                      style={{ color: q.color }}
+                    >
+                      <span className="dot" />
+                      {q.label}
+                    </span>
+                  ))}
+                  {item.rarity !== "DEFAULT" && (
+                    <span className="pill" style={{ color: rarity.color }}>
+                      <span className="dot" />
+                      {rarity.label}
+                    </span>
+                  )}
+                  <span className="pill dim">
+                    {categoryLabel(item.category)}
+                  </span>
+                </div>
+              )}
+              {item?.nameEn && (
+                <span className="dim" style={{ fontSize: 12, fontWeight: 600 }}>
+                  {item.nameEn}
                 </span>
               )}
-              <span className="pill dim">{categoryLabel(item.category)}</span>
             </div>
-          )}
-          {item?.nameEn && (
-            <span className="dim" style={{ fontSize: 12, fontWeight: 600 }}>
-              {item.nameEn}
-            </span>
-          )}
-        </div>
-      </Tilt>
+          </Tilt>
 
-      {tradable && alertOpen && (
-        <PriceAlertPanel
-          itemId={id}
-          itemName={item?.name ?? id}
-          region={region}
-          filter={filter}
-          bestPrice={bestPrice}
-          median={stats?.median}
-        />
-      )}
-
-      {tradable && sellOpen && (
-        <SellHelper
-          itemId={id}
-          region={region}
-          hasQuality={qualityItem}
-          hasUpgrade={hasQuality || allLots.some((l) => upgradeOf(l.additional) > 0)}
-          stackable={allLots.some((l) => l.amount > 1)}
-          initialQuality={qualities.length === 1 ? qualities[0] : null}
-          initialUpgrade={filter.upgrades?.length === 1 ? filter.upgrades[0] : (filter.upgrade ?? null)}
-        />
-      )}
-
-      {tradable && (
-        <>
-          {isPro && hasQuality && allLots.length > 0 && (
-            <section style={{ marginTop: 14 }}>
-              <LotFilters
-                lots={allLots}
-                filter={filter}
-                onFilter={(f) => view.set({ filter: f, page: 0 })}
-                deal={dealFilter}
-                onDeal={(d) => view.set({ deal: d, page: 0 })}
-                dealCounts={dealCounts}
-              />
-            </section>
+          {tradable && alertOpen && (
+            <PriceAlertPanel
+              itemId={id}
+              itemName={item?.name ?? id}
+              region={region}
+              filter={filter}
+              bestPrice={bestPrice}
+              median={stats?.median}
+            />
           )}
 
-          {inactive && (
-            <section className="section">
-              <EmptyState
-                icon="market"
-                title="Сейчас не торгуется"
-                text={
-                  latest
-                    ? `Лотов нет, сделок ${periodMeta.title} не было. Последняя продажа — ${formatRelative(latest.t)} за ${formatPrice(latest.price)}.`
-                    : "Лотов нет и продаж на аукционе этого региона не было."
-                }
-              />
-            </section>
+          {tradable && sellOpen && (
+            <SellHelper
+              itemId={id}
+              region={region}
+              hasQuality={qualityItem}
+              hasUpgrade={
+                hasQuality || allLots.some((l) => upgradeOf(l.additional) > 0)
+              }
+              stackable={allLots.some((l) => l.amount > 1)}
+              initialQuality={qualities.length === 1 ? qualities[0] : null}
+              initialUpgrade={
+                filter.upgrades?.length === 1
+                  ? filter.upgrades[0]
+                  : (filter.upgrade ?? null)
+              }
+            />
           )}
 
-          {!inactive && (
+          {tradable && (
             <>
-              {isPro && (
-                <section className={`${styles.stats} stagger`}>
-                  <StatTile
-                    label="Лучшая цена"
-                    tone="acc"
-                    value={best.isLoading ? "…" : formatPrice(bestPrice)}
-                    hint={
-                      filtered
-                        ? `${formatNumber(lotsInFilter.length)} ${plural(lotsInFilter.length, ["лот", "лота", "лотов"])} «${filterLabel}»`
-                        : best.data
-                          ? `${formatNumber(best.data.total)} лотов`
-                          : undefined
-                    }
-                  />
-                  <StatTile
-                    label={`Медиана · ${periodMeta.title}`}
-                    value={history.isLoading ? "…" : formatPrice(stats?.median)}
-                    hint={
-                      mixed
-                        ? isPro
-                          ? "смесь качеств — выбери качество"
-                          : "все качества вместе"
-                        : stats
-                          ? `${formatCompact(stats.p25)} – ${formatCompact(stats.p75)}`
-                          : undefined
-                    }
-                  />
-                  <StatTile
-                    label="Тренд"
-                    tone={stats?.trend == null ? undefined : stats.trend >= 0 ? "up" : "down"}
-                    value={stats?.trend == null ? "—" : `${stats.trend > 0 ? "+" : ""}${stats.trend.toFixed(1)}%`}
-                    hint={mixed ? "по всем качествам" : "новые vs старые сделки"}
-                  />
-                  <StatTile
-                    label="Сделок за 24ч"
-                    value={stats ? formatNumber(stats.sales24h) : "—"}
-                    hint={stats ? `мин ${formatCompact(stats.min)} · макс ${formatCompact(stats.max)}` : undefined}
+              {isPro && hasQuality && allLots.length > 0 && (
+                <section style={{ marginTop: 14 }}>
+                  <LotFilters
+                    lots={allLots}
+                    filter={filter}
+                    onFilter={(f) => view.set({ filter: f, page: 0 })}
+                    deal={dealFilter}
+                    onDeal={(d) => view.set({ deal: d, page: 0 })}
+                    dealCounts={dealCounts}
                   />
                 </section>
               )}
 
-              {!isPro && (
-                <ProTeaser
-                  compact
-                  title="Аналитика цены"
-                  text={
-                    hasQuality
-                      ? "Лучшая цена, медиана, тренд, сделки за сутки, график, фильтр по качеству и заточке, оценка «выгодно / дорого»"
-                      : "Лучшая цена, медиана, тренд, сделки за сутки и график цены за день и неделю"
-                  }
-                />
+              {inactive && (
+                <section className="section">
+                  <EmptyState
+                    icon="market"
+                    title="Сейчас не торгуется"
+                    text={
+                      latest
+                        ? `Лотов нет, сделок ${periodMeta.title} не было. Последняя продажа — ${formatRelative(latest.t)} за ${formatPrice(latest.price)}.`
+                        : "Лотов нет и продаж на аукционе этого региона не было."
+                    }
+                  />
+                </section>
               )}
 
-              {isPro && (
-                <section className="section">
-                  <div className={styles.chartHead}>
-                    <h2 className="section-title">
-                      История цены <small>за штуку</small>
-                    </h2>
-                  </div>
-                  <div className={styles.periodBar}>
-                    <Segmented
-                      size="sm"
-                      label="Период истории"
-                      value={period}
-                      onChange={(p) => view.set({ period: p })}
-                      options={PERIODS.map((p) => ({
-                        value: p.value,
-                        label: p.label,
-                      }))}
-                    />
-                    {history.data?.sampled && (
-                      <span className={styles.sampled} title="Сделок за период слишком много — график и медиана по равномерной выборке">
-                        выборка · ≈{formatCompact(history.data.total)} сделок
-                      </span>
-                    )}
-                  </div>
-                  {history.isLoading ? (
-                    <div className="skeleton" style={{ height: 260, borderRadius: 22 }} />
-                  ) : stats ? (
-                    <div
-                      style={{
-                        opacity: history.isPlaceholderData ? 0.5 : 1,
-                        transition: "opacity 200ms",
-                      }}
-                    >
-                      <PriceChart points={bucketPoints(stats.points, periodMeta.bucketMs)} median={stats.median} />
-                    </div>
-                  ) : (
-                    <EmptyState
-                      icon="market"
-                      title={`Мало сделок ${periodMeta.title}`}
+              {!inactive && (
+                <>
+                  {isPro && (
+                    <section className={`${styles.stats} stagger`}>
+                      <StatTile
+                        label="Лучшая цена"
+                        tone="acc"
+                        value={best.isLoading ? "…" : formatPrice(bestPrice)}
+                        hint={
+                          filtered
+                            ? `${formatNumber(lotsInFilter.length)} ${plural(lotsInFilter.length, ["лот", "лота", "лотов"])} «${filterLabel}»`
+                            : best.data
+                              ? `${formatNumber(best.data.total)} лотов`
+                              : undefined
+                        }
+                      />
+                      <StatTile
+                        label={`Медиана · ${periodMeta.title}`}
+                        value={
+                          history.isLoading ? "…" : formatPrice(stats?.median)
+                        }
+                        hint={
+                          mixed
+                            ? isPro
+                              ? "смесь качеств — выбери качество"
+                              : "все качества вместе"
+                            : stats
+                              ? `${formatCompact(stats.p25)} – ${formatCompact(stats.p75)}`
+                              : undefined
+                        }
+                      />
+                      <StatTile
+                        label="Тренд"
+                        tone={
+                          stats?.trend == null
+                            ? undefined
+                            : stats.trend >= 0
+                              ? "up"
+                              : "down"
+                        }
+                        value={
+                          stats?.trend == null
+                            ? "—"
+                            : `${stats.trend > 0 ? "+" : ""}${stats.trend.toFixed(1)}%`
+                        }
+                        hint={
+                          mixed ? "по всем качествам" : "новые vs старые сделки"
+                        }
+                      />
+                      <StatTile
+                        label="Сделок за 24ч"
+                        value={stats ? formatNumber(stats.sales24h) : "—"}
+                        hint={
+                          stats
+                            ? `мин ${formatCompact(stats.min)} · макс ${formatCompact(stats.max)}`
+                            : undefined
+                        }
+                      />
+                    </section>
+                  )}
+
+                  {!isPro && (
+                    <ProTeaser
+                      compact
+                      title="Аналитика цены"
                       text={
-                        latest
-                          ? `Последняя продажа${filtered ? ` «${filterLabel}»` : ""} — ${formatRelative(latest.t)} за ${formatPrice(latest.price)}.`
-                          : "Продаж не было."
+                        hasQuality
+                          ? "Лучшая цена, медиана, тренд, сделки за сутки, график, фильтр по качеству и заточке, оценка «выгодно / дорого»"
+                          : "Лучшая цена, медиана, тренд, сделки за сутки и график цены за день и неделю"
                       }
                     />
                   )}
-                </section>
-              )}
-            </>
-          )}
-        </>
-      )}
 
-      {CRAFT_ENABLED && <BarterSection itemId={id} region={region} marketPrice={best.data?.price} />}
-
-      {tradable && !(inactive && !latest) && (
-        <>
-          <section className="section">
-            <Segmented
-              label="Раздел"
-              value={tab}
-              onChange={(t) => view.set({ tab: t })}
-              options={[
-                {
-                  value: "lots",
-                  label: `Лоты${filtered || dealFilter !== "all" ? ` · ${formatNumber(lotsShown.length)}` : totalLots ? ` · ${formatNumber(totalLots)}` : ""}`,
-                },
-                {
-                  value: "history",
-                  label: isPro ? "Продажи" : "Продажи · месяц",
-                },
-              ]}
-            />
-
-            {tab === "lots" ? (
-              <div style={{ marginTop: 12 }}>
-                <div className={styles.lotsBar}>
-                  <div className={`chips ${styles.sorts}`}>
-                    {SORTS.map((s) => (
-                      <button
-                        key={s.value}
-                        type="button"
-                        className="chip"
-                        aria-pressed={s.value === sortKey}
-                        onClick={() => view.set({ sortKey: s.value, page: 0 })}
-                      >
-                        {s.label}
-                      </button>
-                    ))}
-                  </div>
-                  {view.canUndo && (
-                    <button
-                      type="button"
-                      className={`icon-btn ${styles.undo}`}
-                      aria-label="Отменить (Ctrl+Z)"
-                      title="Отменить (Ctrl+Z)"
-                      onClick={() => {
-                        haptic.tap();
-                        view.undo();
-                      }}
-                    >
-                      <Icon name="undo" size={18} />
-                    </button>
-                  )}
-                  <RefreshButton
-                    onRefresh={() => {
-                      requestFresh(region, id);
-                      return Promise.all([lots.refetch(), history.refetch(), best.refetch()]);
-                    }}
-                  />
-                </div>
-
-                {lots.isError ? (
-                  <ErrorState onRetry={() => lots.refetch()} />
-                ) : lots.isLoading ? (
-                  <RowSkeleton count={5} />
-                ) : lotsShown.length ? (
-                  <>
-                    <SwipePager page={page} pages={pages} onPage={(p) => view.set({ page: p })}>
-                      {pageLots.length ? (
+                  {isPro && (
+                    <section className="section">
+                      <div className={styles.chartHead}>
+                        <h2 className="section-title">
+                          История цены <small>за штуку</small>
+                        </h2>
+                      </div>
+                      <div className={styles.periodBar}>
+                        <Segmented
+                          size="sm"
+                          label="Период истории"
+                          value={period}
+                          onChange={(p) => view.set({ period: p })}
+                          options={PERIODS.map((p) => ({
+                            value: p.value,
+                            label: p.label,
+                          }))}
+                        />
+                        {history.data?.sampled && (
+                          <span
+                            className={styles.sampled}
+                            title="Сделок за период слишком много — график и медиана по равномерной выборке"
+                          >
+                            выборка · ≈{formatCompact(history.data.total)}{" "}
+                            сделок
+                          </span>
+                        )}
+                      </div>
+                      {history.isLoading ? (
                         <div
-                          className="stack"
+                          className="skeleton"
+                          style={{ height: 260, borderRadius: 22 }}
+                        />
+                      ) : stats ? (
+                        <div
                           style={{
-                            gap: 8,
-                            opacity: lots.isPlaceholderData ? 0.5 : 1,
+                            opacity: history.isPlaceholderData ? 0.5 : 1,
                             transition: "opacity 200ms",
                           }}
                         >
-                          {pageLots.map((lot, i) => (
-                            <LotRow key={`${lot.startTime}-${lot.buyoutPrice}-${i}`} lot={lot} median={isPro ? lotMedian(lot) : undefined} />
-                          ))}
+                          <PriceChart
+                            points={bucketPoints(
+                              stats.points,
+                              periodMeta.bucketMs,
+                            )}
+                            median={stats.median}
+                          />
                         </div>
                       ) : (
-                        <RowSkeleton count={5} />
+                        <EmptyState
+                          icon="market"
+                          title={`Мало сделок ${periodMeta.title}`}
+                          text={
+                            latest
+                              ? `Последняя продажа${filtered ? ` «${filterLabel}»` : ""} — ${formatRelative(latest.t)} за ${formatPrice(latest.price)}.`
+                              : "Продаж не было."
+                          }
+                        />
                       )}
-                    </SwipePager>
-                    {narrowed && page === pages - 1 && lots.hasNextPage && (
-                      <button
-                        type="button"
-                        className="btn"
-                        style={{ width: "100%", marginTop: 12 }}
-                        disabled={lots.isFetchingNextPage}
-                        onClick={() => lots.fetchNextPage()}
-                      >
-                        {lots.isFetchingNextPage ? "Загрузка…" : `Ещё лоты · осталось ${formatNumber(totalLots - allLots.length)}`}
-                      </button>
+                    </section>
+                  )}
+                </>
+              )}
+            </>
+          )}
+
+          {CRAFT_ENABLED && (
+            <BarterSection
+              itemId={id}
+              region={region}
+              marketPrice={best.data?.price}
+            />
+          )}
+        </div>
+        <div className="desk-side">
+          {tradable && !(inactive && !latest) && (
+            <>
+              <section className="section">
+                <Segmented
+                  label="Раздел"
+                  value={tab}
+                  onChange={(t) => view.set({ tab: t })}
+                  options={[
+                    {
+                      value: "lots",
+                      label: `Лоты${filtered || dealFilter !== "all" ? ` · ${formatNumber(lotsShown.length)}` : totalLots ? ` · ${formatNumber(totalLots)}` : ""}`,
+                    },
+                    {
+                      value: "history",
+                      label: isPro ? "Продажи" : "Продажи · месяц",
+                    },
+                  ]}
+                />
+
+                {tab === "lots" ? (
+                  <div style={{ marginTop: 12 }}>
+                    <div className={styles.lotsBar}>
+                      <div className={`chips ${styles.sorts}`}>
+                        {SORTS.map((s) => (
+                          <button
+                            key={s.value}
+                            type="button"
+                            className="chip"
+                            aria-pressed={s.value === sortKey}
+                            onClick={() =>
+                              view.set({ sortKey: s.value, page: 0 })
+                            }
+                          >
+                            {s.label}
+                          </button>
+                        ))}
+                      </div>
+                      {view.canUndo && (
+                        <button
+                          type="button"
+                          className={`icon-btn ${styles.undo}`}
+                          aria-label="Отменить (Ctrl+Z)"
+                          title="Отменить (Ctrl+Z)"
+                          onClick={() => {
+                            haptic.tap();
+                            view.undo();
+                          }}
+                        >
+                          <Icon name="undo" size={18} />
+                        </button>
+                      )}
+                      <RefreshButton
+                        onRefresh={() => {
+                          requestFresh(region, id);
+                          return Promise.all([
+                            lots.refetch(),
+                            history.refetch(),
+                            best.refetch(),
+                          ]);
+                        }}
+                      />
+                    </div>
+
+                    {lots.isError ? (
+                      <ErrorState onRetry={() => lots.refetch()} />
+                    ) : lots.isLoading ? (
+                      <RowSkeleton count={5} />
+                    ) : lotsShown.length ? (
+                      <>
+                        <SwipePager
+                          page={page}
+                          pages={pages}
+                          onPage={(p) => view.set({ page: p })}
+                        >
+                          {pageLots.length ? (
+                            <div
+                              className="stack"
+                              style={{
+                                gap: 8,
+                                opacity: lots.isPlaceholderData ? 0.5 : 1,
+                                transition: "opacity 200ms",
+                              }}
+                            >
+                              {pageLots.map((lot, i) => (
+                                <LotRow
+                                  key={`${lot.startTime}-${lot.buyoutPrice}-${i}`}
+                                  lot={lot}
+                                  median={isPro ? lotMedian(lot) : undefined}
+                                />
+                              ))}
+                            </div>
+                          ) : (
+                            <RowSkeleton count={5} />
+                          )}
+                        </SwipePager>
+                        {narrowed && page === pages - 1 && lots.hasNextPage && (
+                          <button
+                            type="button"
+                            className="btn"
+                            style={{ width: "100%", marginTop: 12 }}
+                            disabled={lots.isFetchingNextPage}
+                            onClick={() => lots.fetchNextPage()}
+                          >
+                            {lots.isFetchingNextPage
+                              ? "Загрузка…"
+                              : `Ещё лоты · осталось ${formatNumber(totalLots - allLots.length)}`}
+                          </button>
+                        )}
+                      </>
+                    ) : (
+                      <EmptyState
+                        icon="market"
+                        title="Лотов нет"
+                        text={
+                          dealFilter !== "all"
+                            ? dealFilter === "good"
+                              ? "Выгодных лотов сейчас нет."
+                              : "Дорогих лотов нет."
+                            : filtered
+                              ? `Лотов «${filterLabel}» сейчас нет.`
+                              : "Сейчас этот предмет никто не продаёт. Загляните позже."
+                        }
+                      />
                     )}
-                  </>
+                  </div>
                 ) : (
-                  <EmptyState
-                    icon="market"
-                    title="Лотов нет"
-                    text={
-                      dealFilter !== "all"
-                        ? dealFilter === "good"
-                          ? "Выгодных лотов сейчас нет."
-                          : "Дорогих лотов нет."
-                        : filtered
-                          ? `Лотов «${filterLabel}» сейчас нет.`
-                          : "Сейчас этот предмет никто не продаёт. Загляните позже."
-                    }
-                  />
+                  <div className="stack" style={{ gap: 8, marginTop: 12 }}>
+                    {history.isError ? (
+                      <ErrorState onRetry={() => history.refetch()} />
+                    ) : history.isLoading ? (
+                      <RowSkeleton count={5} />
+                    ) : salesShown.length ? (
+                      salesShown
+                        .slice(0, 60)
+                        .map((sale, i) => (
+                          <SaleRow key={`${sale.time}-${i}`} sale={sale} />
+                        ))
+                    ) : (
+                      <EmptyState icon="clock" title="Продаж не было" />
+                    )}
+                  </div>
                 )}
-              </div>
-            ) : (
-              <div className="stack" style={{ gap: 8, marginTop: 12 }}>
-                {history.isError ? (
-                  <ErrorState onRetry={() => history.refetch()} />
-                ) : history.isLoading ? (
-                  <RowSkeleton count={5} />
-                ) : salesShown.length ? (
-                  salesShown.slice(0, 60).map((sale, i) => <SaleRow key={`${sale.time}-${i}`} sale={sale} />)
-                ) : (
-                  <EmptyState icon="clock" title="Продаж не было" />
-                )}
-              </div>
-            )}
-          </section>
-        </>
-      )}
+              </section>
+            </>
+          )}
+        </div>
+      </div>
     </main>
   );
 }
@@ -592,7 +751,10 @@ function Quality({ additional }: { additional?: Additional }) {
   const up = upgradeOf(additional);
   return (
     <>
-      <span className={`pill ${styles.qualityPill}`} style={{ color: q.color, height: 22, fontSize: 11 }}>
+      <span
+        className={`pill ${styles.qualityPill}`}
+        style={{ color: q.color, height: 22, fontSize: 11 }}
+      >
         {q.label}
       </span>
       <span
@@ -623,7 +785,11 @@ function LotRow({ lot, median }: { lot: Lot; median?: number }) {
   const t = tint(lot.additional);
 
   return (
-    <article className={`list-row ${styles.lot} ${t.className}`} style={t.style} data-deal={deal?.kind}>
+    <article
+      className={`list-row ${styles.lot} ${t.className}`}
+      style={t.style}
+      data-deal={deal?.kind}
+    >
       <div className={styles.lotMain}>
         <div className="row" style={{ gap: 6, flexWrap: "wrap" }}>
           <span className="pill mono" style={{ height: 22, fontSize: 11 }}>
@@ -642,8 +808,12 @@ function LotRow({ lot, median }: { lot: Lot; median?: number }) {
           {now > 0 && (
             <>
               {" · "}
-              <span style={{ color: left < 3_600_000 ? "var(--ember)" : undefined }}>
-                {left > 0 ? `${formatDuration(left, left < 3_600_000)} осталось` : "завершён"}
+              <span
+                style={{ color: left < 3_600_000 ? "var(--ember)" : undefined }}
+              >
+                {left > 0
+                  ? `${formatDuration(left, left < 3_600_000)} осталось`
+                  : "завершён"}
               </span>
             </>
           )}
@@ -651,7 +821,9 @@ function LotRow({ lot, median }: { lot: Lot; median?: number }) {
       </div>
       <div className={styles.lotPrice}>
         <strong className="mono">{unit ? formatPrice(unit) : "—"}</strong>
-        {lot.amount > 1 && lot.buyoutPrice > 0 && <span className="mono dim">{formatPrice(lot.buyoutPrice)} всего</span>}
+        {lot.amount > 1 && lot.buyoutPrice > 0 && (
+          <span className="mono dim">{formatPrice(lot.buyoutPrice)} всего</span>
+        )}
         {!lot.buyoutPrice && <span className="dim">без выкупа</span>}
       </div>
     </article>
@@ -677,7 +849,9 @@ function SaleRow({ sale }: { sale: Sale }) {
       </div>
       <div className={styles.lotPrice}>
         <strong className="mono">{formatPrice(sale.price / amount)}</strong>
-        {amount > 1 && <span className="mono dim">{formatPrice(sale.price)} всего</span>}
+        {amount > 1 && (
+          <span className="mono dim">{formatPrice(sale.price)} всего</span>
+        )}
       </div>
     </article>
   );
