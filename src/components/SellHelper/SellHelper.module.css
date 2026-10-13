@@ -1,0 +1,203 @@
+.panel {
+  display: grid;
+  /* minmax(0, …) — иначе прокручиваемые чипы раздувают колонку шире экрана */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  margin-top: 12px;
+  padding: 14px;
+  animation: rise 300ms var(--ease);
+}
+
+.panel :global(.chips) {
+  margin: 0 -14px;
+  padding: 2px 14px;
+  scroll-padding: 14px;
+}
+
+.head {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.head svg {
+  flex: none;
+  color: var(--acc);
+  margin-top: 1px;
+}
+
+/* заточка и количество */
+.params {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.stepper,
+.amount {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.stepper button {
+  width: 40px;
+  height: 100%;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-2);
+}
+
+.stepper button:disabled {
+  opacity: 0.3;
+}
+
+.stepper span {
+  min-width: 36px;
+  text-align: center;
+  font-weight: 700;
+}
+
+.amount {
+  gap: 8px;
+  padding: 0 4px 0 12px;
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+.amount input {
+  width: 80px;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 16px; /* меньше 16px — iOS зумит страницу при фокусе */
+  color: var(--text);
+}
+
+.list {
+  display: grid;
+  gap: 6px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  text-align: left;
+  transition: border-color 200ms;
+}
+
+.row:not(:disabled):active {
+  border-color: rgb(var(--acc-rgb) / 0.5);
+}
+
+.list li:first-child .row {
+  border-color: rgb(var(--acc-rgb) / 0.3);
+}
+
+.rowLabel {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  font-size: 14px;
+}
+
+.rowLabel span {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-3);
+}
+
+.rowPrice {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+}
+
+.rowPrice strong {
+  font-size: 15px;
+}
+
+.rowPrice span {
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.rowNone {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-3);
+}
+
+.mine {
+  display: flex;
+  margin-top: 10px;
+}
+
+.mine input {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  font-size: 16px;
+  transition: border-color 200ms;
+}
+
+.mine input:focus {
+  border-color: rgb(var(--acc-rgb) / 0.6);
+}
+
+.mine input[data-invalid] {
+  border-color: rgb(var(--red-rgb) / 0.6);
+}
+
+.verdict {
+  margin: 8px 2px 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: rgb(var(--acc-rgb));
+}
+
+.verdict[data-bad] {
+  color: var(--ember);
+}
+
+.hint {
+  margin: 10px 2px 0;
+  font-size: 12px;
+  color: var(--text-3);
+  line-height: 1.45;
+}
+
+.note {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-2);
+}
+
+.error {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgb(var(--red-rgb));
+}

@@ -6,6 +6,7 @@ import { CRAFT_ENABLED } from "@/lib/flags";
 import { Icon } from "@/components/Icon";
 import { PriceAlertPanel } from "@/components/PriceAlert/PriceAlertPanel";
 import { PriceChart } from "@/components/PriceChart/PriceChart";
+import { SellHelper } from "@/components/SellHelper/SellHelper";
 import { SwipePager } from "@/components/Pager/SwipePager";
 import { LotFilters, type DealFilter } from "@/components/LotFilters/LotFilters";
 import { Tilt } from "@/components/Tilt/Tilt";
@@ -108,6 +109,7 @@ export function ItemView({ id, quality = null, upgrade = null }: { id: string; q
   const dealFilter: DealFilter = isPro ? view.value.deal : "all";
   const periodMeta = periodInfo(period);
   const [alertOpen, setAlertOpen] = useState(false);
+  const [sellOpen, setSellOpen] = useState(false);
   const alerts = useAlerts();
   const hasAlert = alerts.data?.price.some((a) => a.itemId === id) ?? false;
   const sort = SORTS.find((s) => s.value === sortKey)!;
@@ -210,12 +212,30 @@ export function ItemView({ id, quality = null, upgrade = null }: { id: string; q
             <button
               type="button"
               className={`icon-btn ${styles.bell}`}
+              data-active={sellOpen || undefined}
+              aria-pressed={sellOpen}
+              aria-label="По какой цене продать"
+              title="По какой цене продать"
+              onClick={() => {
+                haptic.tap();
+                setSellOpen((v) => !v);
+                setAlertOpen(false);
+              }}
+            >
+              <Icon name="tag" size={19} />
+            </button>
+          )}
+          {tradable && (
+            <button
+              type="button"
+              className={`icon-btn ${styles.bell}`}
               data-active={hasAlert || alertOpen || undefined}
               aria-pressed={alertOpen}
               aria-label="Уведомить о цене"
               onClick={() => {
                 haptic.tap();
                 setAlertOpen((v) => !v);
+                setSellOpen(false);
               }}
             >
               <Icon name="bell" size={19} filled={hasAlert} />
@@ -269,6 +289,18 @@ export function ItemView({ id, quality = null, upgrade = null }: { id: string; q
           filter={filter}
           bestPrice={bestPrice}
           median={stats?.median}
+        />
+      )}
+
+      {tradable && sellOpen && (
+        <SellHelper
+          itemId={id}
+          region={region}
+          hasQuality={qualityItem}
+          hasUpgrade={hasQuality || allLots.some((l) => upgradeOf(l.additional) > 0)}
+          stackable={allLots.some((l) => l.amount > 1)}
+          initialQuality={qualities.length === 1 ? qualities[0] : null}
+          initialUpgrade={filter.upgrades?.length === 1 ? filter.upgrades[0] : (filter.upgrade ?? null)}
         />
       )}
 

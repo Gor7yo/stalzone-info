@@ -7,6 +7,7 @@ import { Anomaly } from "@/components/Anomaly/Anomaly";
 import { EmissionStatus } from "@/components/Emission/EmissionStatus";
 import { Icon, type IconName } from "@/components/Icon";
 import { ItemRow } from "@/components/ItemRow";
+import { MarketRadar } from "@/components/MarketRadar/MarketRadar";
 import { Tilt } from "@/components/Tilt/Tilt";
 import { ItemIcon } from "@/components/ui/ItemIcon";
 import { RegionSwitch } from "@/components/ui/RegionSwitch";
@@ -100,6 +101,8 @@ export default function HomePage() {
           <Icon name="chevron" size={18} className="dim" />
         </Link>
       )}
+
+      <MarketRadar region={region} />
 
       {favItems.length > 0 && (
         <section className="section">

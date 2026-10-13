@@ -31,9 +31,10 @@ export function useStartTrial() {
 }
 
 /** Что даёт Pro — для экрана подписки и заглушек. */
-export const PRO_FEATURES: { icon: "bolt" | "bell" | "market" | "sparkle" | "star"; title: string; text: string }[] = [
+export const PRO_FEATURES: { icon: "bolt" | "bell" | "market" | "sparkle" | "star" | "tag"; title: string; text: string }[] = [
   { icon: "bolt", title: "Флиппер", text: "Лоты дешевле рынка в реальном времени — выкупай и перепродавай с прибылью" },
   { icon: "bell", title: "Флип-алерты в Telegram", text: "Бот сам пришлёт выгодный лот, пока его не выкупили другие" },
+  { icon: "tag", title: "Помощник продажи", text: "По какой цене выставить лот, чтобы он ушёл за час, 6 часов или сутки" },
   { icon: "market", title: "Графики цен", text: "История цены за день и неделю, медиана, тренд и подсказки по каждой сделке" },
   { icon: "sparkle", title: "Качество и заточка", text: "Фильтр лотов и сделок по качеству артефакта и уровню заточки, оценка «выгодно / дорого»" },
   { icon: "star", title: "20 ценовых алертов", text: "Вместо одного — и с точным качеством и заточкой" },
