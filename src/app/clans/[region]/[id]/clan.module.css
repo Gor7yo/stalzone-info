@@ -80,16 +80,10 @@
   }
 }
 
-/* ---------- динамика (метрики по нашей истории) ---------- */
-
-.metrics {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-}
+/* ---------- график бойцов (по нашей истории) ---------- */
 
 .periodBar {
-  margin: 14px 0 12px;
+  margin: 0 0 12px;
 }
 
 .note {
@@ -99,19 +93,3 @@
   color: var(--text-3);
 }
 
-.gone {
-  margin: 0 0 12px;
-  padding: 10px 12px;
-  border-radius: 14px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ember);
-  background: rgb(255 122 47 / 0.08);
-  border: 1px solid rgb(255 122 47 / 0.25);
-}
-
-@media (max-width: 420px) {
-  .metrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}

@@ -1,0 +1,282 @@
+/* ---------- общая карточка графика ---------- */
+
+.card {
+  padding: 14px 16px 12px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.empty {
+  margin: 0;
+  padding: 40px 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+/* ---------- легенда-переключатели ---------- */
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-2);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  transition: opacity 200ms;
+}
+
+.legendItem :global(.mono) {
+  color: var(--text);
+}
+
+.legendItem[aria-pressed="false"] {
+  opacity: 0.4;
+}
+
+.legendItem[aria-pressed="false"] .swatch {
+  background: transparent !important;
+  box-shadow: inset 0 0 0 1.5px var(--text-3);
+}
+
+.swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex: none;
+}
+
+/* ---------- линии ---------- */
+
+.plot {
+  position: relative;
+  /* слева — подписи сетки, справа — подписи у концов линий */
+  margin: 0 64px 0 44px;
+  touch-action: pan-y;
+  cursor: crosshair;
+}
+
+.svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.line {
+  fill: none;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.grid {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px dashed var(--line);
+  pointer-events: none;
+}
+
+.grid :global(.mono) {
+  position: absolute;
+  right: calc(100% + 8px);
+  top: 0;
+  transform: translateY(-50%);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+
+.endLabel {
+  position: absolute;
+  left: calc(100% + 8px);
+  transform: translateY(-50%);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-2);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.crosshair {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--line-2);
+  pointer-events: none;
+}
+
+.dot {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--bg);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.tooltip {
+  position: absolute;
+  top: 6px;
+  z-index: 2;
+  display: grid;
+  gap: 4px;
+  min-width: 130px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgb(14 16 19 / 0.94);
+  border: 1px solid var(--line-2);
+  box-shadow: 0 12px 30px -10px rgb(0 0 0 / 0.8);
+  transform: translateX(12px);
+  pointer-events: none;
+  font-size: 12px;
+}
+
+.tooltip[data-flip] {
+  transform: translateX(calc(-100% - 12px));
+}
+
+.tooltipTime {
+  font-weight: 600;
+  color: var(--text-3);
+}
+
+.tooltipRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-2);
+  font-weight: 600;
+}
+
+.tooltipRow strong {
+  margin-left: auto;
+  padding-left: 10px;
+  color: var(--text);
+}
+
+.axis {
+  display: flex;
+  justify-content: space-between;
+  margin: 8px 64px 0 44px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3);
+}
+
+/* ---------- столбцы ---------- */
+
+.barWrap {
+  display: grid;
+  gap: 6px;
+}
+
+.bars {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around; /* мало столбцов — не растягиваем их во всю ширину */
+  gap: 2px; /* зазор между столбцами */
+  padding-top: 14px;
+  margin-left: 36px; /* поле под подписи сетки */
+}
+
+.barHit {
+  position: relative;
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  min-width: 0;
+  max-width: 72px;
+  padding: 0;
+  cursor: pointer;
+}
+
+.bar {
+  width: 100%;
+  min-height: 2px;
+  border-radius: 4px 4px 1px 1px;
+  transition:
+    opacity 150ms,
+    height 500ms var(--ease);
+}
+
+.barHit[data-dim] .bar {
+  opacity: 0.35;
+}
+
+.barTip {
+  position: absolute;
+  /* у верхнего края графика: над высоким столбцом подсказка не вылезает за карточку */
+  top: 0;
+  left: 50%;
+  z-index: 2;
+  display: grid;
+  gap: 2px;
+  padding: 6px 9px;
+  border-radius: 10px;
+  background: rgb(14 16 19 / 0.94);
+  border: 1px solid var(--line-2);
+  box-shadow: 0 12px 30px -10px rgb(0 0 0 / 0.8);
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-2);
+  pointer-events: none;
+}
+
+.barTip[data-edge="left"] {
+  left: 0;
+  transform: none;
+}
+
+.barTip[data-edge="right"] {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
+.barTip strong {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.barLabels {
+  display: flex;
+  margin-left: 36px;
+  justify-content: space-around;
+  gap: 2px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-3);
+}
+
+.barLabels span {
+  flex: 1;
+  min-width: 0;
+  max-width: 72px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: visible;
+}

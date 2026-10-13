@@ -47,7 +47,7 @@
   font-size: 14px;
 }
 
-.rowBody .dim {
+.rowBody :global(.dim) {
   font-size: 12px;
   font-weight: 600;
 }
@@ -116,9 +116,9 @@
   flex: 1;
 }
 
-.allianceHead .mono {
+.allianceHead :global(.mono) {
   font-weight: 700;
-  color: var(--c);
+  color: var(--text);
 }
 
 .allianceStats {
@@ -148,44 +148,6 @@
   transition: width 600ms var(--ease);
 }
 
-/* ---------- распределения ---------- */
-
-.dists {
-  display: grid;
-  gap: 10px;
-}
-
-.dist {
-  display: grid;
-  gap: 8px;
-  padding: 14px;
-}
-
-.dist h3 {
-  margin: 0 0 2px;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text-2);
-}
-
-.distRow {
-  display: grid;
-  grid-template-columns: 74px minmax(0, 1fr) 48px;
-  align-items: center;
-  gap: 10px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.distRow .mono {
-  text-align: right;
-}
-
-.distLabel {
-  color: var(--text-2);
-  white-space: nowrap;
-}
-
 @media (min-width: 640px) {
   .tiles {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -201,7 +163,26 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .dists {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
+}
+
+.swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex: none;
+}
+
+/* переключатели графика динамики: в одну строку над графиком, переносятся на узком экране */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.chartCard {
+  padding: 14px 16px 12px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--line);
 }

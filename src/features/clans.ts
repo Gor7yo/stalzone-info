@@ -101,33 +101,22 @@ export const RANKS: Record<string, string> = {
 
 export type ClanPeriod = "week" | "month" | "all";
 
-export interface ClanWindow {
-  key: "day" | "week" | "month";
-  days: number;
-  /** с какого момента считаем; null — истории нет */
-  since: string | null;
-  /** история покрывает окно целиком (иначе — с начала истории) */
-  full: boolean;
-  /** изменение числа бойцов */
-  members: number | null;
-}
+export const CLAN_PERIODS: { value: ClanPeriod; label: string }[] = [
+  { value: "week", label: "Неделя" },
+  { value: "month", label: "Месяц" },
+  { value: "all", label: "Всё время" },
+];
 
+/** Больше бойцов в клане не бывает (ограничение игры). */
+export const MAX_MEMBERS = 35;
+
+/** График бойцов клана. */
 export interface ClanMetrics {
   id: string;
   region: Region;
   /** false — клана нет в нашей копии (регион ещё не загружен) */
   available: boolean;
-  updatedAt?: string;
-  /** когда клан пропал из списка EXBO (распущен) */
-  gone?: string | null;
   historyFrom?: string | null;
-  current?: { memberCount: number; level: number };
-  /** место по числу бойцов среди кланов региона */
-  sizePlace?: { place: number; of: number };
-  windows?: ClanWindow[];
-  peak?: { memberCount: number; at: string };
-  /** когда взят текущий уровень; null — уровень был с начала истории */
-  levelSince?: string | null;
   period?: ClanPeriod;
   series?: { t: number; memberCount: number; level: number }[];
 }
@@ -135,8 +124,7 @@ export interface ClanMetrics {
 export function useClanMetrics(region: Region, id: string, period: ClanPeriod) {
   return useQuery({
     queryKey: ["clan-metrics", region, id, period],
-    queryFn: () =>
-      api<ClanMetrics>("/api/clan/metrics", { region, id, period }),
+    queryFn: () => api<ClanMetrics>("/api/clan/metrics", { region, id, period }),
     placeholderData: keepPreviousData,
     staleTime: 5 * 60_000,
   });
@@ -154,8 +142,6 @@ export interface ClanBrief {
   delta?: number;
   /** дней с основания */
   ageDays?: number;
-  /** уровень неделю назад */
-  fromLevel?: number;
   /** когда распущен */
   goneAt?: string;
 }
@@ -170,6 +156,8 @@ export interface ClanAnalytics {
     members: number;
     avgMembers: number;
     medianMembers: number;
+    /** кланов с полным составом (35) */
+    full: number;
     medianAgeDays: number;
     membersDay: number;
     membersWeek: number;
@@ -179,19 +167,13 @@ export interface ClanAnalytics {
   };
   growth: { day: ClanBrief[]; week: ClanBrief[] };
   decline: ClanBrief[];
-  alliances: {
-    alliance: string;
-    clans: number;
-    members: number;
-    membersWeek: number;
-    avgMembers: number;
-    share: number;
-  }[];
+  /** только кланы с группировкой */
+  alliances: { alliance: string; clans: number; members: number; membersWeek: number; avgMembers: number; share: number }[];
   newClans: { count: number; list: ClanBrief[] };
-  levelUps: { count: number; list: ClanBrief[] };
   disbanded: { count: number; list: ClanBrief[] };
   levels: { level: number; clans: number; members: number }[];
-  sizes: { label: string; clans: number }[];
+  /** сколько кланов с 1, 2 … 35 бойцами */
+  sizes: { members: number; clans: number }[];
   ages: { label: string; clans: number }[];
 }
 
@@ -199,6 +181,23 @@ export function useClanAnalytics(region: Region) {
   return useQuery({
     queryKey: ["clan-analytics", region],
     queryFn: () => api<ClanAnalytics>("/api/clan/analytics", { region }),
+    placeholderData: keepPreviousData,
+    staleTime: 5 * 60_000,
+  });
+}
+
+/** Бойцы и кланы региона во времени: всего и по группировкам. */
+export interface ClanTrend {
+  region: Region;
+  period: ClanPeriod;
+  historyFrom: string | null;
+  points: { t: number; members: number; clans: number; alliances: Record<string, number> }[];
+}
+
+export function useClanTrend(region: Region, period: ClanPeriod) {
+  return useQuery({
+    queryKey: ["clan-trend", region, period],
+    queryFn: () => api<ClanTrend>("/api/clan/analytics/trend", { region, period }),
     placeholderData: keepPreviousData,
     staleTime: 5 * 60_000,
   });
