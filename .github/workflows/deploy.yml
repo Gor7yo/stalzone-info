@@ -17,6 +17,22 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      - name: Check settings
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_TG_APP_URL: ${{ vars.NEXT_PUBLIC_TG_APP_URL }}
+        run: |
+          ok=1
+          for name in DEPLOY_HOST DEPLOY_SSH_KEY; do
+            [ -n "$(printenv $name)" ] || { echo "::error::Нет секрета $name (Settings → Secrets and variables → Actions → Secrets → Repository secrets)"; ok=0; }
+          done
+          for name in NEXT_PUBLIC_API_URL NEXT_PUBLIC_TG_APP_URL; do
+            [ -n "$(printenv $name)" ] || { echo "::error::Нет переменной $name (Settings → Secrets and variables → Actions → Variables → Repository variables)"; ok=0; }
+          done
+          [ $ok = 1 ]
+
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
@@ -45,7 +61,9 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           install -m 600 /dev/null ~/deploy_key
-          echo "$KEY" > ~/deploy_key
+          # ключ, вставленный из Windows, приходит с \r - чистим
+          printf '%s\n' "$KEY" | tr -d '\r' > ~/deploy_key
+          ssh-keygen -y -f ~/deploy_key > /dev/null || { echo "::error::DEPLOY_SSH_KEY повреждён: вставьте файл ключа целиком, от -----BEGIN до -----END"; exit 1; }
           ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts
           SSH="ssh -i $HOME/deploy_key -o BatchMode=yes deploy@$HOST"
           scp -i ~/deploy_key -o BatchMode=yes front.tar.gz "deploy@$HOST:/tmp/front-$GITHUB_SHA.tar.gz"
