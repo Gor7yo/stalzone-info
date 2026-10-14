@@ -1,0 +1,20 @@
+[Unit]
+Description=STALZONE INFO frontend (Next.js)
+After=network.target
+
+[Service]
+User=stalzone
+WorkingDirectory=/opt/stalzone/front/current
+ExecStart=/usr/bin/node server.js
+Environment=NODE_ENV=production
+Environment=HOSTNAME=127.0.0.1
+Environment=PORT=3000
+# сервер маленький: держим фронт в узде, чтобы не теснить API и Postgres
+Environment=NODE_OPTIONS=--max-old-space-size=192
+MemoryHigh=250M
+MemoryMax=350M
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

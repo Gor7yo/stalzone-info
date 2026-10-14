@@ -76,11 +76,7 @@ const TILES = (
       accent: "#ffc94a",
     },
   ] satisfies Tile[]
-).filter(
-  (t) =>
-    (CRAFT_ENABLED || t.href !== "/craft") &&
-    (LOOT_ENABLED || t.href !== "/loot"),
-);
+).filter((t) => (CRAFT_ENABLED || t.href !== "/craft") && (LOOT_ENABLED || t.href !== "/loot"));
 
 export default function HomePage() {
   const region = useApp((s) => s.region);
@@ -106,24 +102,14 @@ export default function HomePage() {
         <div className="desk-main">
           <section className={`glass ${styles.hero}`} data-phase={phase}>
             <div className={styles.heroText}>
-              <EmissionStatus
-                data={emission.data}
-                isLoading={emission.isLoading}
-                isError={emission.isError}
-              />
+              <EmissionStatus data={emission.data} isLoading={emission.isLoading} isError={emission.isError} />
               <Link href="/emission" className={styles.heroLink}>
                 Все регионы <Icon name="chevron" size={14} />
               </Link>
             </div>
             <Anomaly
               className={styles.orb}
-              mode={
-                phase === "active"
-                  ? "active"
-                  : phase === "unknown" && !emission.isLoading
-                    ? "idle"
-                    : "calm"
-              }
+              mode={phase === "active" ? "active" : phase === "unknown" && !emission.isLoading ? "idle" : "calm"}
               onTap={() => haptic.tap("heavy")}
               label="Аномалия: состояние Зоны"
             />
@@ -155,12 +141,7 @@ export default function HomePage() {
           </section>
 
           {isAdmin && (
-            <Link
-              href="/admin"
-              className="list-row"
-              style={{ marginTop: 12 }}
-              onClick={() => haptic.tap()}
-            >
+            <Link href="/admin" className="list-row" style={{ marginTop: 12 }} onClick={() => haptic.tap()}>
               <Icon name="shield" size={20} />
               <strong style={{ flex: 1, fontSize: 14 }}>Админка</strong>
               <Icon name="chevron" size={18} className="dim" />
@@ -185,26 +166,14 @@ export default function HomePage() {
               <h2 className="section-title">Избранное</h2>
               <div className="chips">
                 {favCharacters.map((c) => (
-                  <Link
-                    key={`c-${c.region}-${c.name}`}
-                    href={`/character/${c.region}/${encodeURIComponent(c.name)}`}
-                    className="chip"
-                  >
+                  <Link key={`c-${c.region}-${c.name}`} href={`/character/${c.region}/${encodeURIComponent(c.name)}`} className="chip">
                     <Icon name="user" size={15} /> {c.name}
                     <span className="dim">{c.region.toUpperCase()}</span>
                   </Link>
                 ))}
                 {favClans.map((c) => (
-                  <Link
-                    key={`k-${c.id}`}
-                    href={`/clans/${c.region}/${c.id}`}
-                    className="chip"
-                  >
-                    <span
-                      className="dot"
-                      style={{ color: allianceOf(c.alliance).color }}
-                    />
-                    [{c.tag}] {c.name}
+                  <Link key={`k-${c.id}`} href={`/clans/${c.region}/${c.id}`} className="chip">
+                    <span className="dot" style={{ color: allianceOf(c.alliance).color }} />[{c.tag}] {c.name}
                   </Link>
                 ))}
               </div>
@@ -221,23 +190,14 @@ export default function HomePage() {
   );
 }
 
-function UniversalSearch({
-  region,
-  wantIndex,
-}: {
-  region: Region;
-  wantIndex: boolean;
-}) {
+function UniversalSearch({ region, wantIndex }: { region: Region; wantIndex: boolean }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
   const deferred = useDeferredValue(query.trim());
   const { data: index } = useItems(focused || wantIndex || query.length > 0);
 
-  const items =
-    index && deferred.length >= 2
-      ? searchItems(index, deferred, undefined, 5)
-      : [];
+  const items = index && deferred.length >= 2 ? searchItems(index, deferred, undefined, 5) : [];
   const looksLikeNick = /^[\p{L}\p{N}_.-]{3,32}$/u.test(deferred);
 
   return (
@@ -250,8 +210,7 @@ function UniversalSearch({
         aria-label="Поиск по Зоне"
         onSubmit={() => {
           if (items[0]) router.push(`/auction/${items[0].id}`);
-          else if (looksLikeNick)
-            router.push(`/character/${region}/${encodeURIComponent(deferred)}`);
+          else if (looksLikeNick) router.push(`/character/${region}/${encodeURIComponent(deferred)}`);
         }}
       />
 
@@ -261,20 +220,13 @@ function UniversalSearch({
             <ItemRow key={item.id} item={item} />
           ))}
           {looksLikeNick && (
-            <Link
-              href={`/character/${region}/${encodeURIComponent(deferred)}`}
-              className="list-row"
-              onClick={() => haptic.tap()}
-            >
+            <Link href={`/character/${region}/${encodeURIComponent(deferred)}`} className="list-row" onClick={() => haptic.tap()}>
               <span className={styles.resultIcon}>
                 <Icon name="user" size={20} />
               </span>
               <span style={{ flex: 1, minWidth: 0 }}>
                 <strong className="truncate">Игрок «{deferred}»</strong>
-                <span
-                  className="dim"
-                  style={{ display: "block", fontSize: 12, fontWeight: 600 }}
-                >
+                <span className="dim" style={{ display: "block", fontSize: 12, fontWeight: 600 }}>
                   Открыть профиль · {region.toUpperCase()}
                 </span>
               </span>
@@ -298,34 +250,17 @@ function Watchlist({ ids, region }: { ids: string[]; region: Region }) {
   return (
     <div className={`chips ${styles.watchlist}`}>
       {ids.map((id) => (
-        <WatchCard
-          key={id}
-          item={index?.byId.get(id)}
-          id={id}
-          region={region}
-        />
+        <WatchCard key={id} item={index?.byId.get(id)} id={id} region={region} />
       ))}
     </div>
   );
 }
 
-function WatchCard({
-  item,
-  id,
-  region,
-}: {
-  item?: Item;
-  id: string;
-  region: Region;
-}) {
+function WatchCard({ item, id, region }: { item?: Item; id: string; region: Region }) {
   const { data, isLoading } = useBestPrice(region, id);
 
   return (
-    <Link
-      href={`/auction/${id}`}
-      className={`glass ${styles.watch}`}
-      onClick={() => haptic.tap()}
-    >
+    <Link href={`/auction/${id}`} className={`glass ${styles.watch}`} onClick={() => haptic.tap()}>
       <ItemIcon item={item} size={40} />
       <span className="truncate" style={{ fontSize: 13, fontWeight: 700 }}>
         {item?.name ?? id}

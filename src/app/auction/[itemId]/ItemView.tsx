@@ -8,10 +8,7 @@ import { PriceAlertPanel } from "@/components/PriceAlert/PriceAlertPanel";
 import { PriceChart } from "@/components/PriceChart/PriceChart";
 import { SellHelper } from "@/components/SellHelper/SellHelper";
 import { SwipePager } from "@/components/Pager/SwipePager";
-import {
-  LotFilters,
-  type DealFilter,
-} from "@/components/LotFilters/LotFilters";
+import { LotFilters, type DealFilter } from "@/components/LotFilters/LotFilters";
 import { Tilt } from "@/components/Tilt/Tilt";
 import { FavButton, RefreshButton, ShareButton } from "@/components/ui/Buttons";
 import { ItemIcon } from "@/components/ui/ItemIcon";
@@ -55,14 +52,7 @@ import { useAlerts } from "@/features/alerts";
 import { usePro } from "@/features/pro";
 import { useBarter } from "@/features/barter";
 import { categoryLabel, rarityOf, useItem } from "@/features/items";
-import {
-  formatCompact,
-  formatDuration,
-  formatNumber,
-  formatPrice,
-  formatRelative,
-  plural,
-} from "@/lib/format";
+import { formatCompact, formatDuration, formatNumber, formatPrice, formatRelative, plural } from "@/lib/format";
 import { actions, useApp } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
 import { useNow } from "@/lib/useNow";
@@ -88,15 +78,7 @@ const QUALITY_LOTS_MAX = 1000;
  * quality / upgrade — открыть сразу с фильтром по ним (переход из флиппера);
  * null — без фильтра (у артефакта по умолчанию «Обычный»).
  */
-export function ItemView({
-  id,
-  quality = null,
-  upgrade = null,
-}: {
-  id: string;
-  quality?: number | null;
-  upgrade?: number | null;
-}) {
+export function ItemView({ id, quality = null, upgrade = null }: { id: string; quality?: number | null; upgrade?: number | null }) {
   const region = useApp((s) => s.region);
   const isFav = useApp((s) => s.favItems.includes(id));
   const { item, isLoading: itemLoading } = useItem(id);
@@ -137,34 +119,20 @@ export function ItemView({
   const tradable = barter ? !barter.farm.has(id) : false;
 
   // у артефактов и модулей у каждого лота своё качество — цены разных качеств несравнимы
-  const qualityItem =
-    item?.group === "artefact" || item?.group === "weapon_modules";
+  const qualityItem = item?.group === "artefact" || item?.group === "weapon_modules";
   // фильтр «клетки» карты цен: качество × ступень заточки
   // артефакт по умолчанию открывается на «Обычном»: без фильтра график — «пила» из смеси качеств
-  const filter = !isPro
-    ? ALL
-    : (userFilter ??
-      (item?.group === "artefact"
-        ? { quality: null, qualities: [0], upgrade: null }
-        : ALL));
+  const filter = !isPro ? ALL : (userFilter ?? (item?.group === "artefact" ? { quality: null, qualities: [0], upgrade: null } : ALL));
   const qualities = pickedQualities(filter);
   const filtered = qualities.length > 0 || hasUpgradeFilter(filter);
   // у артефакта без одного выбранного качества медиана и тренд смешивают дешёвые и дорогие варианты
   const mixed = qualityItem && qualities.length !== 1;
 
   const history = useHistory(region, id, period, tradable);
-  const lots = useLots(
-    region,
-    id,
-    sort.sort,
-    sort.order,
-    tradable,
-    qualityItem ? 200 : undefined,
-  );
+  const lots = useLots(region, id, sort.sort, sort.order, tradable, qualityItem ? 200 : undefined);
   // артефакт с сортировкой «Дешевле» и так грузит 200 самых дешёвых лотов — лучшая цена
   // считается из них, отдельный запрос не нужен
-  const bestFromLots =
-    qualityItem && sort.sort === "buyout_price" && sort.order === "asc";
+  const bestFromLots = qualityItem && sort.sort === "buyout_price" && sort.order === "asc";
   const bestQuery = useBestPrice(region, id, tradable && !bestFromLots);
   const lotsBest = useMemo(() => {
     if (!bestFromLots || !lots.data) return undefined;
@@ -177,44 +145,31 @@ export function ItemView({
       total: lots.data.pages[0]?.total ?? 0,
     };
   }, [bestFromLots, lots.data]);
-  const best = bestFromLots
-    ? { data: lotsBest, isLoading: lots.isLoading, refetch: lots.refetch }
-    : bestQuery;
+  const best = bestFromLots ? { data: lotsBest, isLoading: lots.isLoading, refetch: lots.refetch } : bestQuery;
 
   const sales = history.data?.prices ?? [];
-  const stats = history.data
-    ? priceStats(sales, filter, periodMeta.days)
-    : null;
+  const stats = history.data ? priceStats(sales, filter, periodMeta.days) : null;
 
   useEffect(() => actions.pushRecentItem(id), [id]);
 
   const rarity = item ? rarityOf(item.rarity) : null;
   // у артефакта подсветка карточки — цвет выбранного качества (из нескольких — самого высокого)
-  const pickedQualityList = qualityItem
-    ? qualities.map((q) => QUALITY[q]).filter(Boolean)
-    : [];
-  const accent =
-    pickedQualityList[pickedQualityList.length - 1]?.color ??
-    rarity?.color ??
-    "var(--text-3)";
+  const pickedQualityList = qualityItem ? qualities.map((q) => QUALITY[q]).filter(Boolean) : [];
+  const accent = pickedQualityList[pickedQualityList.length - 1]?.color ?? rarity?.color ?? "var(--text-3)";
   const allLots = lots.data?.pages.flatMap((p) => p.lots) ?? [];
   const totalLots = lots.data?.pages[0]?.total ?? 0;
-  const hasQuality =
-    qualityItem || allLots.some((l) => qualityOf(l.additional) !== null);
+  const hasQuality = qualityItem || allLots.some((l) => qualityOf(l.additional) !== null);
 
   // лот сравниваем с такими же по качеству и заточке; не с чем сравнить — без оценки
   const medians = new Map<string, number | undefined>();
   const lotMedian = (lot: Lot) => {
     if (!hasQuality) return stats?.median;
     const key = `${qualityOf(lot.additional)}:${upgradeOf(lot.additional)}`;
-    if (!medians.has(key))
-      medians.set(key, comparableMedian(sales, lot.additional));
+    if (!medians.has(key)) medians.set(key, comparableMedian(sales, lot.additional));
     return medians.get(key);
   };
 
-  const lotsInFilter = filtered
-    ? allLots.filter((l) => matchesFilter(l.additional, filter))
-    : allLots;
+  const lotsInFilter = filtered ? allLots.filter((l) => matchesFilter(l.additional, filter)) : allLots;
   const dealKind = (lot: Lot) => dealOf(lot, lotMedian(lot))?.kind;
   const isGood = (lot: Lot) => ["hot", "good"].includes(dealKind(lot) ?? "");
   const isBad = (lot: Lot) => dealKind(lot) === "high";
@@ -222,21 +177,10 @@ export function ItemView({
     good: lotsInFilter.filter(isGood).length,
     bad: lotsInFilter.filter(isBad).length,
   };
-  const lotsShown =
-    dealFilter === "good"
-      ? lotsInFilter.filter(isGood)
-      : dealFilter === "bad"
-        ? lotsInFilter.filter(isBad)
-        : lotsInFilter;
+  const lotsShown = dealFilter === "good" ? lotsInFilter.filter(isGood) : dealFilter === "bad" ? lotsInFilter.filter(isBad) : lotsInFilter;
   // пагинация лотов: по LOTS_PAGE на страницу, листается свайпом
   const narrowed = filtered || dealFilter !== "all";
-  const pages = Math.max(
-    1,
-    Math.ceil(
-      (narrowed ? lotsShown.length : Math.max(totalLots, lotsShown.length)) /
-        LOTS_PAGE,
-    ),
-  );
+  const pages = Math.max(1, Math.ceil((narrowed ? lotsShown.length : Math.max(totalLots, lotsShown.length)) / LOTS_PAGE));
   const page = Math.min(view.value.page, pages - 1);
   const pageLots = lotsShown.slice(page * LOTS_PAGE, (page + 1) * LOTS_PAGE);
   // без фильтра страниц столько, сколько лотов на рынке — недостающие догружаем.
@@ -246,35 +190,18 @@ export function ItemView({
     (qualityItem && allLots.length < Math.min(totalLots, QUALITY_LOTS_MAX)) ||
     (!narrowed && pageLots.length < LOTS_PAGE && allLots.length < totalLots);
   useEffect(() => {
-    if (needMore && lots.hasNextPage && !lots.isFetchingNextPage)
-      lots.fetchNextPage();
+    if (needMore && lots.hasNextPage && !lots.isFetchingNextPage) lots.fetchNextPage();
   }, [needMore, lots]);
 
-  const salesShown = filtered
-    ? sales.filter((s) => matchesFilter(s.additional, filter))
-    : sales;
+  const salesShown = filtered ? sales.filter((s) => matchesFilter(s.additional, filter)) : sales;
 
   // «лучшая цена» с фильтром считается по загруженным лотам этой клетки
-  const cellBest = filtered
-    ? Math.min(...lotsInFilter.map(lotUnitPrice).filter((p) => p > 0))
-    : null;
-  const bestPrice = filtered
-    ? Number.isFinite(cellBest)
-      ? cellBest
-      : null
-    : best.data?.price;
+  const cellBest = filtered ? Math.min(...lotsInFilter.map(lotUnitPrice).filter((p) => p > 0)) : null;
+  const bestPrice = filtered ? (Number.isFinite(cellBest) ? cellBest : null) : best.data?.price;
   const latest = lastSale(sales, filter);
-  const filterLabel = [qualityLabel(filter), upgradeLabel(filter)]
-    .filter(Boolean)
-    .join(" ");
+  const filterLabel = [qualityLabel(filter), upgradeLabel(filter)].filter(Boolean).join(" ");
   // нет ни лотов, ни свежих сделок — предмет сейчас не торгуется (или вообще не продаётся)
-  const inactive =
-    !lots.isLoading &&
-    !history.isLoading &&
-    !lots.isError &&
-    !history.isError &&
-    totalLots === 0 &&
-    !stats;
+  const inactive = !lots.isLoading && !history.isLoading && !lots.isError && !history.isError && totalLots === 0 && !stats;
 
   return (
     <main className="page">
@@ -314,43 +241,27 @@ export function ItemView({
               <Icon name="bell" size={19} filled={hasAlert} />
             </button>
           )}
-          <ShareButton
-            text={`${item?.name ?? "Предмет"} — цены на рынке STALZONE`}
-          />
-          <FavButton
-            active={isFav}
-            onToggle={() => actions.toggleFavItem(id)}
-          />
+          <ShareButton text={`${item?.name ?? "Предмет"} — цены на рынке STALZONE`} />
+          <FavButton active={isFav} onToggle={() => actions.toggleFavItem(id)} />
         </div>
       </div>
 
       <div className="desk-split">
         <div className="desk-main">
-          <Tilt
-            className={`glass ${styles.hero}`}
-            style={{ "--rarity": accent } as React.CSSProperties}
-            max={8}
-          >
+          <Tilt className={`glass ${styles.hero}`} style={{ "--rarity": accent } as React.CSSProperties} max={8}>
             <span className={`${styles.heroIcon} depth`}>
               <ItemIcon item={item} size={72} />
             </span>
             <div className={styles.heroText}>
               {itemLoading ? (
-                <span
-                  className="skeleton"
-                  style={{ height: 26, width: "70%" }}
-                />
+                <span className="skeleton" style={{ height: 26, width: "70%" }} />
               ) : (
                 <h1 className="display">{item?.name ?? `Предмет ${id}`}</h1>
               )}
               {item && rarity && (
                 <div className="row" style={{ flexWrap: "wrap", gap: 6 }}>
                   {pickedQualityList.map((q) => (
-                    <span
-                      key={q.label}
-                      className="pill"
-                      style={{ color: q.color }}
-                    >
+                    <span key={q.label} className="pill" style={{ color: q.color }}>
                       <span className="dot" />
                       {q.label}
                     </span>
@@ -361,9 +272,7 @@ export function ItemView({
                       {rarity.label}
                     </span>
                   )}
-                  <span className="pill dim">
-                    {categoryLabel(item.category)}
-                  </span>
+                  <span className="pill dim">{categoryLabel(item.category)}</span>
                 </div>
               )}
               {item?.nameEn && (
@@ -390,16 +299,10 @@ export function ItemView({
               itemId={id}
               region={region}
               hasQuality={qualityItem}
-              hasUpgrade={
-                hasQuality || allLots.some((l) => upgradeOf(l.additional) > 0)
-              }
+              hasUpgrade={hasQuality || allLots.some((l) => upgradeOf(l.additional) > 0)}
               stackable={allLots.some((l) => l.amount > 1)}
               initialQuality={qualities.length === 1 ? qualities[0] : null}
-              initialUpgrade={
-                filter.upgrades?.length === 1
-                  ? filter.upgrades[0]
-                  : (filter.upgrade ?? null)
-              }
+              initialUpgrade={filter.upgrades?.length === 1 ? filter.upgrades[0] : (filter.upgrade ?? null)}
             />
           )}
 
@@ -450,9 +353,7 @@ export function ItemView({
                       />
                       <StatTile
                         label={`Медиана · ${periodMeta.title}`}
-                        value={
-                          history.isLoading ? "…" : formatPrice(stats?.median)
-                        }
+                        value={history.isLoading ? "…" : formatPrice(stats?.median)}
                         hint={
                           mixed
                             ? isPro
@@ -465,30 +366,14 @@ export function ItemView({
                       />
                       <StatTile
                         label="Тренд"
-                        tone={
-                          stats?.trend == null
-                            ? undefined
-                            : stats.trend >= 0
-                              ? "up"
-                              : "down"
-                        }
-                        value={
-                          stats?.trend == null
-                            ? "—"
-                            : `${stats.trend > 0 ? "+" : ""}${stats.trend.toFixed(1)}%`
-                        }
-                        hint={
-                          mixed ? "по всем качествам" : "новые vs старые сделки"
-                        }
+                        tone={stats?.trend == null ? undefined : stats.trend >= 0 ? "up" : "down"}
+                        value={stats?.trend == null ? "—" : `${stats.trend > 0 ? "+" : ""}${stats.trend.toFixed(1)}%`}
+                        hint={mixed ? "по всем качествам" : "новые vs старые сделки"}
                       />
                       <StatTile
                         label="Сделок за 24ч"
                         value={stats ? formatNumber(stats.sales24h) : "—"}
-                        hint={
-                          stats
-                            ? `мин ${formatCompact(stats.min)} · макс ${formatCompact(stats.max)}`
-                            : undefined
-                        }
+                        hint={stats ? `мин ${formatCompact(stats.min)} · макс ${formatCompact(stats.max)}` : undefined}
                       />
                     </section>
                   )}
@@ -524,20 +409,13 @@ export function ItemView({
                           }))}
                         />
                         {history.data?.sampled && (
-                          <span
-                            className={styles.sampled}
-                            title="Сделок за период слишком много — график и медиана по равномерной выборке"
-                          >
-                            выборка · ≈{formatCompact(history.data.total)}{" "}
-                            сделок
+                          <span className={styles.sampled} title="Сделок за период слишком много — график и медиана по равномерной выборке">
+                            выборка · ≈{formatCompact(history.data.total)} сделок
                           </span>
                         )}
                       </div>
                       {history.isLoading ? (
-                        <div
-                          className="skeleton"
-                          style={{ height: 260, borderRadius: 22 }}
-                        />
+                        <div className="skeleton" style={{ height: 260, borderRadius: 22 }} />
                       ) : stats ? (
                         <div
                           style={{
@@ -545,13 +423,7 @@ export function ItemView({
                             transition: "opacity 200ms",
                           }}
                         >
-                          <PriceChart
-                            points={bucketPoints(
-                              stats.points,
-                              periodMeta.bucketMs,
-                            )}
-                            median={stats.median}
-                          />
+                          <PriceChart points={bucketPoints(stats.points, periodMeta.bucketMs)} median={stats.median} />
                         </div>
                       ) : (
                         <EmptyState
@@ -571,13 +443,7 @@ export function ItemView({
             </>
           )}
 
-          {CRAFT_ENABLED && (
-            <BarterSection
-              itemId={id}
-              region={region}
-              marketPrice={best.data?.price}
-            />
-          )}
+          {CRAFT_ENABLED && <BarterSection itemId={id} region={region} marketPrice={best.data?.price} />}
         </div>
         <div className="desk-side">
           {tradable && !(inactive && !latest) && (
@@ -609,9 +475,7 @@ export function ItemView({
                             type="button"
                             className="chip"
                             aria-pressed={s.value === sortKey}
-                            onClick={() =>
-                              view.set({ sortKey: s.value, page: 0 })
-                            }
+                            onClick={() => view.set({ sortKey: s.value, page: 0 })}
                           >
                             {s.label}
                           </button>
@@ -634,11 +498,7 @@ export function ItemView({
                       <RefreshButton
                         onRefresh={() => {
                           requestFresh(region, id);
-                          return Promise.all([
-                            lots.refetch(),
-                            history.refetch(),
-                            best.refetch(),
-                          ]);
+                          return Promise.all([lots.refetch(), history.refetch(), best.refetch()]);
                         }}
                       />
                     </div>
@@ -649,11 +509,7 @@ export function ItemView({
                       <RowSkeleton count={5} />
                     ) : lotsShown.length ? (
                       <>
-                        <SwipePager
-                          page={page}
-                          pages={pages}
-                          onPage={(p) => view.set({ page: p })}
-                        >
+                        <SwipePager page={page} pages={pages} onPage={(p) => view.set({ page: p })}>
                           {pageLots.length ? (
                             <div
                               className="stack"
@@ -683,9 +539,7 @@ export function ItemView({
                             disabled={lots.isFetchingNextPage}
                             onClick={() => lots.fetchNextPage()}
                           >
-                            {lots.isFetchingNextPage
-                              ? "Загрузка…"
-                              : `Ещё лоты · осталось ${formatNumber(totalLots - allLots.length)}`}
+                            {lots.isFetchingNextPage ? "Загрузка…" : `Ещё лоты · осталось ${formatNumber(totalLots - allLots.length)}`}
                           </button>
                         )}
                       </>
@@ -712,11 +566,7 @@ export function ItemView({
                     ) : history.isLoading ? (
                       <RowSkeleton count={5} />
                     ) : salesShown.length ? (
-                      salesShown
-                        .slice(0, 60)
-                        .map((sale, i) => (
-                          <SaleRow key={`${sale.time}-${i}`} sale={sale} />
-                        ))
+                      salesShown.slice(0, 60).map((sale, i) => <SaleRow key={`${sale.time}-${i}`} sale={sale} />)
                     ) : (
                       <EmptyState icon="clock" title="Продаж не было" />
                     )}
@@ -751,10 +601,7 @@ function Quality({ additional }: { additional?: Additional }) {
   const up = upgradeOf(additional);
   return (
     <>
-      <span
-        className={`pill ${styles.qualityPill}`}
-        style={{ color: q.color, height: 22, fontSize: 11 }}
-      >
+      <span className={`pill ${styles.qualityPill}`} style={{ color: q.color, height: 22, fontSize: 11 }}>
         {q.label}
       </span>
       <span
@@ -785,11 +632,7 @@ function LotRow({ lot, median }: { lot: Lot; median?: number }) {
   const t = tint(lot.additional);
 
   return (
-    <article
-      className={`list-row ${styles.lot} ${t.className}`}
-      style={t.style}
-      data-deal={deal?.kind}
-    >
+    <article className={`list-row ${styles.lot} ${t.className}`} style={t.style} data-deal={deal?.kind}>
       <div className={styles.lotMain}>
         <div className="row" style={{ gap: 6, flexWrap: "wrap" }}>
           <span className="pill mono" style={{ height: 22, fontSize: 11 }}>
@@ -808,12 +651,8 @@ function LotRow({ lot, median }: { lot: Lot; median?: number }) {
           {now > 0 && (
             <>
               {" · "}
-              <span
-                style={{ color: left < 3_600_000 ? "var(--ember)" : undefined }}
-              >
-                {left > 0
-                  ? `${formatDuration(left, left < 3_600_000)} осталось`
-                  : "завершён"}
+              <span style={{ color: left < 3_600_000 ? "var(--ember)" : undefined }}>
+                {left > 0 ? `${formatDuration(left, left < 3_600_000)} осталось` : "завершён"}
               </span>
             </>
           )}
@@ -821,9 +660,7 @@ function LotRow({ lot, median }: { lot: Lot; median?: number }) {
       </div>
       <div className={styles.lotPrice}>
         <strong className="mono">{unit ? formatPrice(unit) : "—"}</strong>
-        {lot.amount > 1 && lot.buyoutPrice > 0 && (
-          <span className="mono dim">{formatPrice(lot.buyoutPrice)} всего</span>
-        )}
+        {lot.amount > 1 && lot.buyoutPrice > 0 && <span className="mono dim">{formatPrice(lot.buyoutPrice)} всего</span>}
         {!lot.buyoutPrice && <span className="dim">без выкупа</span>}
       </div>
     </article>
@@ -849,9 +686,7 @@ function SaleRow({ sale }: { sale: Sale }) {
       </div>
       <div className={styles.lotPrice}>
         <strong className="mono">{formatPrice(sale.price / amount)}</strong>
-        {amount > 1 && (
-          <span className="mono dim">{formatPrice(sale.price)} всего</span>
-        )}
+        {amount > 1 && <span className="mono dim">{formatPrice(sale.price)} всего</span>}
       </div>
     </article>
   );

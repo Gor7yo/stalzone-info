@@ -1,0 +1,10 @@
+# Добавить в /etc/caddy/Caddyfile рядом с блоком api.stalzone-info.ru
+
+stalzone-info.ru {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:3000
+}
+
+www.stalzone-info.ru {
+	redir https://stalzone-info.ru{uri} permanent
+}

@@ -1,0 +1,40 @@
+#!/bin/sh
+# Выкладка сборки фронта: распаковать в releases/<коммит>, переключить current, перезапустить.
+# Вызывается из GitHub Actions: sudo stalzone-front-release /tmp/front-<sha>.tar.gz <sha>
+# Откат: stalzone-front-release --rollback (на предыдущий релиз).
+set -eu
+
+ROOT=/opt/stalzone/front
+KEEP=3
+
+switch() {
+  ln -sfn "$1" "$ROOT/current.new"
+  mv -T "$ROOT/current.new" "$ROOT/current"
+  systemctl restart stalzone-front
+  sleep 2
+  systemctl is-active --quiet stalzone-front || { echo "stalzone-front не запустился: journalctl -u stalzone-front -n 50" >&2; exit 1; }
+  echo "Фронт: $(basename "$1")"
+}
+
+if [ "${1:-}" = "--rollback" ]; then
+  prev=$(ls -1dt "$ROOT"/releases/* | grep -v "$(readlink -f "$ROOT/current")" | head -1)
+  [ -n "$prev" ] || { echo "Нет предыдущего релиза" >&2; exit 1; }
+  switch "$prev"
+  exit 0
+fi
+
+ARCHIVE=$1
+SHA=$(echo "$2" | tr -cd 'a-f0-9' | cut -c1-12)
+[ -n "$SHA" ] || { echo "Неверный коммит" >&2; exit 1; }
+case "$ARCHIVE" in /tmp/front-*.tar.gz) ;; *) echo "Неверный архив" >&2; exit 1 ;; esac
+
+DIR="$ROOT/releases/$(date +%Y%m%d-%H%M%S)-$SHA"
+mkdir -p "$DIR"
+tar -xzf "$ARCHIVE" -C "$DIR"
+rm -f "$ARCHIVE"
+chown -R stalzone:stalzone "$DIR"
+
+switch "$DIR"
+
+# старые релизы
+ls -1dt "$ROOT"/releases/* | tail -n +$((KEEP + 1)) | xargs -r rm -rf

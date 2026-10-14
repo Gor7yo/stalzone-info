@@ -126,14 +126,16 @@ function Report({ data, region }: { data: ClanAnalytics; region: Region }) {
           Группировки <small>доля бойцов</small>
         </h2>
         <div className={styles.alliances}>
+          {/* только четыре игровые группировки — «none» и прочее не показываем */}
           {data.alliances.map((a) => {
             const meta = chartAlliance(a.alliance);
-            const color = meta?.color ?? "var(--text-3)";
+            if (!meta) return null;
+            const color = meta.color;
             return (
               <div key={a.alliance} className={styles.alliance} style={{ "--c": color } as React.CSSProperties}>
                 <div className={styles.allianceHead}>
                   <span className={styles.swatch} style={{ background: color }} />
-                  <strong>{meta?.label ?? a.alliance}</strong>
+                  <strong>{meta.label}</strong>
                   <span className="mono">{(a.share * 100).toFixed(1)} %</span>
                 </div>
                 <div className={styles.track}>
@@ -148,22 +150,6 @@ function Report({ data, region }: { data: ClanAnalytics; region: Region }) {
               </div>
             );
           })}
-        </div>
-      </section>
-
-      <section className="section">
-        <h2 className="section-title">
-          Размер кланов <small>сколько кланов с 1, 2 … {MAX_MEMBERS} бойцами</small>
-        </h2>
-        <div className={styles.chartCard}>
-          <BarChart
-            height={180}
-            bars={data.sizes.map((s) => ({
-              label: String(s.members),
-              value: s.clans,
-              tip: `${clansWord(s.clans)} по ${fighters(s.members)}`,
-            }))}
-          />
         </div>
       </section>
 

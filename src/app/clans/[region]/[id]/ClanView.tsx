@@ -38,11 +38,7 @@ export function ClanView({ region, id }: { region: Region; id: string }) {
         {error && !isNotFound(error) ? (
           <ErrorState onRetry={() => refetch()} />
         ) : (
-          <EmptyState
-            icon="shield"
-            title="Клан не найден"
-            text="Возможно, он распущен или находится в другом регионе."
-          >
+          <EmptyState icon="shield" title="Клан не найден" text="Возможно, он распущен или находится в другом регионе.">
             <Link href="/clans" className="btn">
               К списку кланов
             </Link>
@@ -59,9 +55,7 @@ export function ClanView({ region, id }: { region: Region; id: string }) {
       <div className={styles.toolbar}>
         <span className="pill dim">{region.toUpperCase()}</span>
         <div className="row" style={{ gap: 8 }}>
-          <ShareButton
-            text={`Клан [${stripMc(clan.tag)}] ${stripMc(clan.name)}`}
-          />
+          <ShareButton text={`Клан [${stripMc(clan.tag)}] ${stripMc(clan.name)}`} />
           <FavButton
             active={isFav}
             onToggle={() =>
@@ -79,11 +73,7 @@ export function ClanView({ region, id }: { region: Region; id: string }) {
 
       <div className="desk-split">
         <div className="desk-main">
-          <Tilt
-            className={`glass ${styles.hero}`}
-            style={{ "--ally": alliance.color } as React.CSSProperties}
-            max={7}
-          >
+          <Tilt className={`glass ${styles.hero}`} style={{ "--ally": alliance.color } as React.CSSProperties} max={7}>
             <span className="depth">
               <ClanEmblem alliance={clan.alliance} tag={clan.tag} size={92} />
             </span>
@@ -93,10 +83,7 @@ export function ClanView({ region, id }: { region: Region; id: string }) {
             <h1 className={`display ${styles.name}`}>
               <McText text={clan.name} />
             </h1>
-            <div
-              className="row"
-              style={{ gap: 6, flexWrap: "wrap", justifyContent: "center" }}
-            >
+            <div className="row" style={{ gap: 6, flexWrap: "wrap", justifyContent: "center" }}>
               <span className="pill" style={{ color: alliance.color }}>
                 <span className="dot" />
                 {alliance.label}
@@ -109,29 +96,14 @@ export function ClanView({ region, id }: { region: Region; id: string }) {
         </div>
         <div className="desk-side">
           <section className={`${styles.stats} stagger`}>
-            <StatTile
-              label="Бойцов"
-              tone="acc"
-              value={formatNumber(clan.memberCount)}
-            />
+            <StatTile label="Бойцов" tone="acc" value={formatNumber(clan.memberCount)} />
             <StatTile label="Уровень" value={formatNumber(clan.level)} />
             <StatTile
               label="Основан"
-              value={
-                clan.registrationTime
-                  ? formatShortDate(clan.registrationTime)
-                  : "—"
-              }
-              hint={
-                clan.registrationTime && now
-                  ? formatRelative(clan.registrationTime, now)
-                  : undefined
-              }
+              value={clan.registrationTime ? formatShortDate(clan.registrationTime) : "—"}
+              hint={clan.registrationTime && now ? formatRelative(clan.registrationTime, now) : undefined}
             />
-            <StatTile
-              label="ID"
-              value={<span style={{ fontSize: 13 }}>{clan.id}</span>}
-            />
+            <StatTile label="ID" value={<span style={{ fontSize: 13 }}>{clan.id}</span>} />
           </section>
 
           {clan.leader && (

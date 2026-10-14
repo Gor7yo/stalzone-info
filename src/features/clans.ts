@@ -172,8 +172,6 @@ export interface ClanAnalytics {
   newClans: { count: number; list: ClanBrief[] };
   disbanded: { count: number; list: ClanBrief[] };
   levels: { level: number; clans: number; members: number }[];
-  /** сколько кланов с 1, 2 … 35 бойцами */
-  sizes: { members: number; clans: number }[];
   ages: { label: string; clans: number }[];
 }
 

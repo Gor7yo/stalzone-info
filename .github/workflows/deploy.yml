@@ -1,0 +1,52 @@
+# Сборка на GitHub (серверу с 1 ГБ памяти next build не по силам) и выкладка на VPS.
+# Секреты репозитория: DEPLOY_HOST, DEPLOY_SSH_KEY (приватный ключ пользователя deploy).
+# Переменные репозитория: NEXT_PUBLIC_API_URL, NEXT_PUBLIC_TG_APP_URL.
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_TG_APP_URL: ${{ vars.NEXT_PUBLIC_TG_APP_URL }}
+
+      # standalone не включает статику - докладываем её рядом с server.js
+      - name: Pack
+        run: |
+          cp -r public .next/standalone/public
+          cp -r .next/static .next/standalone/.next/static
+          tar -czf front.tar.gz -C .next/standalone .
+
+      - name: Upload and release
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          install -m 600 /dev/null ~/deploy_key
+          echo "$KEY" > ~/deploy_key
+          ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts
+          SSH="ssh -i $HOME/deploy_key -o BatchMode=yes deploy@$HOST"
+          scp -i ~/deploy_key -o BatchMode=yes front.tar.gz "deploy@$HOST:/tmp/front-$GITHUB_SHA.tar.gz"
+          $SSH "sudo /usr/local/bin/stalzone-front-release /tmp/front-$GITHUB_SHA.tar.gz $GITHUB_SHA"

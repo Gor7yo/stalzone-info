@@ -45,7 +45,7 @@ npm run dev                     # http://localhost:3000
 | `NEXT_PUBLIC_API_URL` | адрес бэкенда, локально `http://localhost:3001`, на проде `https://api.stalzone-info.ru` |
 | `NEXT_PUBLIC_TG_APP_URL` | ссылка на мини-приложение `https://t.me/<бот>/<приложение>` - для диплинков |
 
-`NEXT_PUBLIC_*` вшиваются в сборку - после изменения нужен Redeploy на Vercel.
+`NEXT_PUBLIC_*` вшиваются в сборку - после изменения нужен перезапуск workflow `deploy` (Actions → deploy → Run workflow).
 
 Проверки: `npm run typecheck`, `npm run lint`.
 
@@ -70,7 +70,54 @@ public/         справочники (items.json, barter.json), иконки �
 
 ## Деплой
 
-Vercel: push в основную ветку → сборка. Домен `stalzone-info.ru` (DNS на Рег.ру: `A @` и `CNAME www` на Vercel).
+Фронт живёт на том же VPS, что и бэкенд (Vercel из России без VPN не открывается).
+Push в `main` → GitHub Actions (`.github/workflows/deploy.yml`) собирает `next build` в режиме `standalone`,
+заливает архив на сервер и вызывает `stalzone-front-release`: распаковка в `/opt/stalzone/front/releases/<дата>-<коммит>`,
+переключение ссылки `current`, рестарт службы `stalzone-front` (Node на `127.0.0.1:3000`, Caddy проксирует домен).
+Хранятся 3 последних релиза.
+
+```bash
+journalctl -u stalzone-front -f          # логи
+sudo stalzone-front-release --rollback   # откат на предыдущий релиз
+```
+
+Настройки репозитория (Settings → Secrets and variables → Actions):
+
+| | |
+|---|---|
+| секрет `DEPLOY_HOST` | IP сервера |
+| секрет `DEPLOY_SSH_KEY` | приватный ключ пользователя `deploy` |
+| переменная `NEXT_PUBLIC_API_URL` | `https://api.stalzone-info.ru` |
+| переменная `NEXT_PUBLIC_TG_APP_URL` | ссылка на мини-приложение |
+
+### Первая настройка сервера
+
+Файлы для сервера лежат в `deploy/`. С компьютера:
+
+```bash
+ssh-keygen -t ed25519 -f stalzone-deploy -N ""      # ключ для GitHub Actions
+scp deploy/* stalzone-deploy.pub root@<IP>:/tmp/
+```
+
+На сервере от root:
+
+```bash
+useradd -m -s /bin/bash deploy
+install -d -m 700 -o deploy -g deploy /home/deploy/.ssh
+install -m 600 -o deploy -g deploy /tmp/stalzone-deploy.pub /home/deploy/.ssh/authorized_keys
+echo 'deploy ALL=(root) NOPASSWD: /usr/local/bin/stalzone-front-release' > /etc/sudoers.d/stalzone-front
+chmod 440 /etc/sudoers.d/stalzone-front
+
+install -m 755 /tmp/stalzone-front-release /usr/local/bin/
+install -m 644 /tmp/stalzone-front.service /etc/systemd/system/
+install -d -o stalzone -g stalzone /opt/stalzone/front/releases
+systemctl daemon-reload && systemctl enable stalzone-front
+```
+
+Дальше: секреты в GitHub (содержимое файла `stalzone-deploy` - в `DEPLOY_SSH_KEY`) → Actions → deploy → Run workflow →
+проверить на сервере `curl -s localhost:3000 | head -c 200` → добавить в `/etc/caddy/Caddyfile` блок из
+`deploy/Caddyfile.snippet`, `systemctl reload caddy` → в DNS Рег.ру `A @` и `A www` на IP сервера (CNAME на Vercel удалить).
+Caddy сам выпустит сертификат, как только DNS обновится.
 
 ---
 

@@ -19,8 +19,7 @@ export default function EmissionPage() {
   return (
     <main className="page">
       <PageHeader eyebrow="Радар" title="Выбросы">
-        Состояние Зоны во всех регионах. Обновляется автоматически, во время
-        выброса — каждые 10 секунд.
+        Состояние Зоны во всех регионах. Обновляется автоматически, во время выброса — каждые 10 секунд.
       </PageHeader>
 
       <div className="desk-cols">
@@ -31,25 +30,13 @@ export default function EmissionPage() {
               <span className={styles.sweep} aria-hidden />
               <Anomaly
                 className={styles.orb}
-                mode={
-                  phase === "active"
-                    ? "active"
-                    : current.isError
-                      ? "idle"
-                      : "calm"
-                }
+                mode={phase === "active" ? "active" : current.isError ? "idle" : "calm"}
                 onTap={() => haptic.tap("heavy")}
               />
             </div>
             <div className={styles.radarText}>
-              <span className="pill">
-                {REGIONS.find((r) => r.value === region)?.name}
-              </span>
-              <EmissionStatus
-                data={current.data}
-                isLoading={current.isLoading}
-                isError={current.isError}
-              />
+              <span className="pill">{REGIONS.find((r) => r.value === region)?.name}</span>
+              <EmissionStatus data={current.data} isLoading={current.isLoading} isError={current.isError} />
             </div>
           </section>
 
@@ -58,12 +45,7 @@ export default function EmissionPage() {
 
         <section className={`desk-side ${styles.grid} stagger`}>
           {REGIONS.map((r) => (
-            <RegionCard
-              key={r.value}
-              region={r.value}
-              label={r.label}
-              active={r.value === region}
-            />
+            <RegionCard key={r.value} region={r.value} label={r.label} active={r.value === region} />
           ))}
         </section>
       </div>
@@ -89,9 +71,7 @@ function EmissionAlertToggle({ region }: { region: Region }) {
       <Icon name="bell" size={18} filled={on} />
       <span className={styles.notifyText}>
         Сообщить в Telegram, когда начнётся выброс на {label}
-        {toggle.error && (
-          <small className={styles.notifyError}>{toggle.error.message}</small>
-        )}
+        {toggle.error && <small className={styles.notifyError}>{toggle.error.message}</small>}
         {alerts.linkedAs && <LinkedAs session={alerts.linkedAs} />}
       </span>
       <button
@@ -110,15 +90,7 @@ function EmissionAlertToggle({ region }: { region: Region }) {
   );
 }
 
-function RegionCard({
-  region,
-  label,
-  active,
-}: {
-  region: Region;
-  label: string;
-  active: boolean;
-}) {
+function RegionCard({ region, label, active }: { region: Region; label: string; active: boolean }) {
   const { data, isLoading, isError } = useEmission(region);
   const phase = emissionState(data).phase;
 
@@ -134,12 +106,7 @@ function RegionCard({
       }}
     >
       <span className={`display ${styles.cardRegion}`}>{label}</span>
-      <EmissionStatus
-        data={data}
-        isLoading={isLoading}
-        isError={isError}
-        size="sm"
-      />
+      <EmissionStatus data={data} isLoading={isLoading} isError={isError} size="sm" />
     </button>
   );
 }

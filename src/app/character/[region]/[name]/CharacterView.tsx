@@ -20,17 +20,9 @@ import { actions, sameChar, useApp, type Region } from "@/lib/store";
 import { useNow } from "@/lib/useNow";
 import styles from "./character.module.css";
 
-export function CharacterView({
-  region,
-  name,
-}: {
-  region: Region;
-  name: string;
-}) {
+export function CharacterView({ region, name }: { region: Region; name: string }) {
   const { data, isLoading, error, refetch } = useCharacter(region, name);
-  const isFav = useApp((s) =>
-    s.favCharacters.some((c) => sameChar(c, { region, name })),
-  );
+  const isFav = useApp((s) => s.favCharacters.some((c) => sameChar(c, { region, name })));
   const { data: meta } = useMeta();
 
   useEffect(() => {
@@ -82,15 +74,7 @@ export function CharacterView({
   );
 }
 
-function Profile({
-  character: c,
-  region,
-  meta,
-}: {
-  character: Character;
-  region: Region;
-  meta?: Meta;
-}) {
+function Profile({ character: c, region, meta }: { character: Character; region: Region; meta?: Meta }) {
   const now = useNow(60_000);
   const alliance = allianceOf(c.alliance);
   const stat = (id: string) => {
@@ -125,10 +109,7 @@ function Profile({
             data-media={(!creator && media) || undefined}
           >
             {(creator || media) && (
-              <div
-                className="row"
-                style={{ flexWrap: "wrap", gap: 6, justifyContent: "center" }}
-              >
+              <div className="row" style={{ flexWrap: "wrap", gap: 6, justifyContent: "center" }}>
                 {creator && (
                   <span className={styles.creatorBadge}>
                     <Icon name="star" size={14} filled />
@@ -138,9 +119,7 @@ function Profile({
                 {media && (
                   <span className={styles.mediaBadge} data-tier={media}>
                     <Icon name="share" size={13} />
-                    {media === "advanced"
-                      ? "Медиа-партнёр · продвинутый"
-                      : "Медиа-партнёр"}
+                    {media === "advanced" ? "Медиа-партнёр · продвинутый" : "Медиа-партнёр"}
                   </span>
                 )}
               </div>
@@ -148,44 +127,23 @@ function Profile({
             <div className={`${styles.emblem} depth`}>
               {alliance.image ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={alliance.image}
-                  alt={alliance.label}
-                  width={72}
-                  height={72}
-                />
+                <img src={alliance.image} alt={alliance.label} width={72} height={72} />
               ) : (
-                <span className="display">
-                  {c.username.slice(0, 1).toUpperCase()}
-                </span>
+                <span className="display">{c.username.slice(0, 1).toUpperCase()}</span>
               )}
             </div>
             <h1 className={`display ${styles.name}`}>{c.username}</h1>
-            <div
-              className="row"
-              style={{ flexWrap: "wrap", gap: 6, justifyContent: "center" }}
-            >
+            <div className="row" style={{ flexWrap: "wrap", gap: 6, justifyContent: "center" }}>
               <span className="pill" style={{ color: alliance.color }}>
                 <span className="dot" />
                 {alliance.label}
               </span>
-              <span
-                className="pill"
-                style={{ color: online ? "var(--green)" : "var(--text-3)" }}
-              >
+              <span className="pill" style={{ color: online ? "var(--green)" : "var(--text-3)" }}>
                 <span className={`dot ${online ? "live" : ""}`} />
-                {online
-                  ? "В сети"
-                  : now && c.lastLogin
-                    ? `был ${formatRelative(c.lastLogin, now)}`
-                    : "Не в сети"}
+                {online ? "В сети" : now && c.lastLogin ? `был ${formatRelative(c.lastLogin, now)}` : "Не в сети"}
               </span>
             </div>
-            {creator && (
-              <span className={styles.creatorNick}>
-                автор сервиса · {CREATOR.nick}
-              </span>
-            )}
+            {creator && <span className={styles.creatorNick}>автор сервиса · {CREATOR.nick}</span>}
           </Tilt>
 
           {creator ? (
@@ -199,10 +157,7 @@ function Profile({
           )}
 
           {c.clan?.info && (
-            <Link
-              href={`/clans/${region}/${c.clan.info.id}`}
-              className={`list-row ${styles.clan}`}
-            >
+            <Link href={`/clans/${region}/${c.clan.info.id}`} className={`list-row ${styles.clan}`}>
               <span className={styles.clanTag}>{stripMc(c.clan.info.tag)}</span>
               <span style={{ flex: 1, minWidth: 0, display: "grid", gap: 2 }}>
                 <strong className="truncate">
@@ -210,8 +165,7 @@ function Profile({
                 </strong>
                 <span className="dim" style={{ fontSize: 12, fontWeight: 600 }}>
                   {RANKS[c.clan.member.rank] ?? c.clan.member.rank}
-                  {c.clan.member.joinTime &&
-                    ` · с ${formatDate(c.clan.member.joinTime)}`}
+                  {c.clan.member.joinTime && ` · с ${formatDate(c.clan.member.joinTime)}`}
                 </span>
               </span>
               <Icon name="chevron" size={18} className="dim" />
@@ -233,25 +187,16 @@ function Profile({
             <StatTile
               label="Точность"
               value={shots ? `${((hits / shots) * 100).toFixed(1)}%` : "—"}
-              hint={
-                hits
-                  ? `в голову ${((stat("sho-hea") / hits) * 100).toFixed(1)}%`
-                  : undefined
-              }
+              hint={hits ? `в голову ${((stat("sho-hea") / hits) * 100).toFixed(1)}%` : undefined}
             />
-            <StatTile
-              label="Макс. серия"
-              value={formatNumber(stat("max-kil-ser"))}
-              hint={`мутантов ${formatNumber(stat("mut-kil"))}`}
-            />
+            <StatTile label="Макс. серия" value={formatNumber(stat("max-kil-ser"))} hint={`мутантов ${formatNumber(stat("mut-kil"))}`} />
           </section>
         </div>
         <div className="desk-side">
           {c.displayedAchievements?.length > 0 && (
             <section className="section">
               <h2 className="section-title">
-                Витрина достижений{" "}
-                <small>{c.displayedAchievements.length}</small>
+                Витрина достижений <small>{c.displayedAchievements.length}</small>
               </h2>
               <div className={styles.achievements}>
                 {c.displayedAchievements.map((id) => {
@@ -280,20 +225,13 @@ function Profile({
 
 /** Строка длиннее этого в карточку не влезет — значит, это арт, а не текст. */
 const ART_LINE = 34;
-const hasStatus = (status?: string) =>
-  Boolean(status && stripMc(status).trim());
+const hasStatus = (status?: string) => Boolean(status && stripMc(status).trim());
 
 /**
  * Описание персонажа из игры. Разбиваем на блоки по пустым строкам: обычный текст — как есть,
  * блок с длинными строками (ASCII-арт, рамки) — моноширинно и с уменьшением под ширину карточки.
  */
-function Status({
-  status,
-  divided = false,
-}: {
-  status?: string;
-  divided?: boolean;
-}) {
+function Status({ status, divided = false }: { status?: string; divided?: boolean }) {
   const blocks: string[][] = [];
   let current: string[] = [];
   for (const line of (status ?? "").split("\n")) {
@@ -320,11 +258,7 @@ function Status({
           ));
         }
         return (
-          <div
-            key={b}
-            className={styles.art}
-            style={{ "--cols": width } as React.CSSProperties}
-          >
+          <div key={b} className={styles.art} style={{ "--cols": width } as React.CSSProperties}>
             {block.map((l, i) => (
               <div key={i}>
                 <McText text={l} />
@@ -342,8 +276,7 @@ function CreatorCard({ status }: { status?: string }) {
   return (
     <section className={`glass ${styles.creatorCard}`}>
       <p className={styles.creatorText}>
-        👋 Это профиль того, кто сделал STALZONE INFO: рынок, флиппер, алерты и
-        всё остальное. Увидел в Зоне — передай привет.
+        👋 Это профиль того, кто сделал STALZONE INFO: рынок, флиппер, алерты и всё остальное. Увидел в Зоне — передай привет.
       </p>
       <div className="row" style={{ flexWrap: "wrap", gap: 6 }}>
         <span className={`pill ${styles.creatorPill}`}>
@@ -393,19 +326,10 @@ function AllStats({ stats, meta }: { stats: Stat[]; meta?: Meta }) {
   return (
     <section className="section">
       <h2 className="section-title">Вся статистика</h2>
-      <SearchField
-        value={filter}
-        onChange={setFilter}
-        placeholder="Найти показатель"
-        aria-label="Фильтр статистики"
-      />
+      <SearchField value={filter} onChange={setFilter} placeholder="Найти показатель" aria-label="Фильтр статистики" />
       <div className="stack" style={{ marginTop: 12 }}>
         {[...groups].map(([category, list]) => (
-          <details
-            key={category}
-            className={styles.group}
-            open={!!q || category === "COMBAT" || category === "SURVIVAL"}
-          >
+          <details key={category} className={styles.group} open={!!q || category === "COMBAT" || category === "SURVIVAL"}>
             <summary>
               {STAT_CATEGORIES[category] ?? category}
               <span className="dim mono">{list.length}</span>

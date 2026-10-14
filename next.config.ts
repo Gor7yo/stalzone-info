@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Самодостаточная сборка для VPS: .next/standalone/server.js без node_modules
+  output: "standalone",
   reactCompiler: true,
   poweredByHeader: false,
   async headers() {
