@@ -1,8 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Самодостаточная сборка для VPS: .next/standalone/server.js без node_modules
-  output: "standalone",
+  // Самодостаточная сборка только для запасной выкладки на VPS (.github/workflows/deploy.yml);
+  // на Vercel standalone ломает сборку
+  output: process.env.NEXT_OUTPUT === "standalone" ? "standalone" : undefined,
   reactCompiler: true,
   poweredByHeader: false,
   async headers() {

@@ -43,6 +43,7 @@ jobs:
 
       - run: npm run build
         env:
+          NEXT_OUTPUT: standalone
           NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
           NEXT_PUBLIC_TG_APP_URL: ${{ vars.NEXT_PUBLIC_TG_APP_URL }}
 
