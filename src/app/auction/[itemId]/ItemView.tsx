@@ -147,7 +147,8 @@ export function ItemView({
   const mixed = qualityItem && (qualities.length !== 1 || (variantItem && filter.variant == null));
 
   const history = useHistory(region, id, period, tradable);
-  const lots = useLots(region, id, sort.sort, sort.order, tradable, qualityItem ? 200 : undefined);
+  // модули: ~4 тыс. лотов из снимка сборщика — по 1000 за запрос (4 запроса вместо 20)
+  const lots = useLots(region, id, sort.sort, sort.order, tradable, variantItem ? 1000 : qualityItem ? 200 : undefined);
   // артефакт с сортировкой «Дешевле» и так грузит 200 самых дешёвых лотов — лучшая цена
   // считается из них, отдельный запрос не нужен
   const bestFromLots = qualityItem && sort.sort === "buyout_price" && sort.order === "asc";
