@@ -53,7 +53,7 @@ import { useAlerts } from "@/features/alerts";
 import { usePro } from "@/features/pro";
 import { useBarter } from "@/features/barter";
 import { categoryLabel, rarityOf, useItem } from "@/features/items";
-import { moduleAttrs, variantLabel, variantOf, variantsOf } from "@/features/modules";
+import { moduleAttr, moduleAttrs, variantLabel, variantOf, variantsOf } from "@/features/modules";
 import { formatCompact, formatDuration, formatNumber, formatPrice, formatRelative, plural } from "@/lib/format";
 import { actions, useApp } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
@@ -75,6 +75,8 @@ const SORTS: {
 const LOTS_PAGE = 10;
 /** Сколько лотов предмета с качеством грузим целиком (столько же снимает сборщик: 5 страниц по 200). */
 const QUALITY_LOTS_MAX = 1000;
+/** Модулей на рынке ~4 тыс., редкие с нужной характеристикой — в самом конце по цене */
+const MODULE_LOTS_MAX = 5000;
 
 /**
  * quality / upgrade — открыть сразу с фильтром по ним (переход из флиппера);
@@ -203,7 +205,7 @@ export function ItemView({
   // У предметов с качеством догружаем весь рынок (до QUALITY_LOTS_MAX): дорогие редкие и легендарные
   // лоты лежат после 200 самых дешёвых, иначе фильтр качества их не видит
   const needMore =
-    (qualityItem && allLots.length < Math.min(totalLots, QUALITY_LOTS_MAX)) ||
+    (qualityItem && allLots.length < Math.min(totalLots, variantItem ? MODULE_LOTS_MAX : QUALITY_LOTS_MAX)) ||
     (!narrowed && pageLots.length < LOTS_PAGE && allLots.length < totalLots);
   useEffect(() => {
     if (needMore && lots.hasNextPage && !lots.isFetchingNextPage) lots.fetchNextPage();
@@ -325,7 +327,7 @@ export function ItemView({
               stackable={allLots.some((l) => l.amount > 1)}
               initialQuality={qualities.length === 1 ? qualities[0] : null}
               initialUpgrade={filter.upgrades?.length === 1 ? filter.upgrades[0] : (filter.upgrade ?? null)}
-              variants={variantItem ? variantsOf(allLots, sales) : []}
+              variants={variantItem ? variantsOf(allLots, sales).filter((v) => moduleAttr(v)) : []}
               initialVariant={filter.variant ?? null}
             />
           )}

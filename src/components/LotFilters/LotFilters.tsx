@@ -1,7 +1,7 @@
 "use client";
 
 import { lotUnitPrice, MAX_UPGRADE, pickedQualities, qualityOf, QUALITY, upgradeOf, type Lot, type LotFilter } from "@/features/auction";
-import { variantOf, variantsOf } from "@/features/modules";
+import { isUniqueKey, variantOf, variantsOf } from "@/features/modules";
 import { haptic } from "@/lib/telegram";
 import { ModuleStatPicker } from "../ModuleStat/ModuleStat";
 import styles from "./LotFilters.module.css";
@@ -51,12 +51,16 @@ export function LotFilters({
     return { count: list.length, best: prices.length ? Math.min(...prices) : null };
   });
   const qualityCount = (q: number) => lots.filter((l) => qualityOf(l.additional) === q).length;
-  // ключевые характеристики модуля в лотах — самые частые первыми
-  const variants = variantsOf(lots);
+  // ключевые характеристики модуля в лотах; число — лотов выбранного качества
+  const allVariants = variantsOf(lots);
+  // в меню — только уникальные ключевые (без простых статов вроде «Стрелка»)
+  const variants = allVariants.filter(isUniqueKey);
   const variantCounts: Record<string, number> = {};
   for (const l of lots) {
     const v = variantOf(l.additional);
-    if (v) variantCounts[v] = (variantCounts[v] ?? 0) + 1;
+    if (v && (!qualities.length || qualities.includes(qualityOf(l.additional) ?? -1))) {
+      variantCounts[v] = (variantCounts[v] ?? 0) + 1;
+    }
   }
 
   return (
@@ -97,7 +101,7 @@ export function LotFilters({
       </div>
 
       {/* у модулей заточки нет — вместо неё ключевая характеристика (ряд выше) */}
-      {!variants.length && (
+      {!allVariants.length && (
         <UpgradeDial
           levels={byLevel}
           value={filter.upgrades ?? []}

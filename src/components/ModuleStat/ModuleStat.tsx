@@ -139,11 +139,15 @@ export function ModuleStatBadge({
   /** sm — в строках лотов, md — рядом с обычными плашками (.pill) */
   size?: "sm" | "md";
 }) {
-  const pre = attrs?.find((a) => a.slot === "pre");
-  const suf = attrs?.find((a) => a.slot === "suf");
+  // атрибуты без названия в справочнике не показываем (английский id из EXBO ничего не скажет)
+  const known = attrs?.filter((a) => moduleAttr(a.id));
+  const pre = known?.find((a) => a.slot === "pre");
+  const suf = known?.find((a) => a.slot === "suf");
+  const key = moduleAttr(id) ? id : null;
   const ref = useRef<HTMLButtonElement>(null);
   const pointer = useRef("");
   const pop = useStatPopover(ref);
+  if (!key && !pre && !suf) return null;
 
   return (
     <>
@@ -153,7 +157,10 @@ export function ModuleStatBadge({
         className={styles.badge}
         data-size={size}
         aria-expanded={pop.openId !== null}
-        aria-label={`${variantName(id)} - что даёт`}
+        aria-label={`${[pre?.id, suf?.id, key ?? undefined]
+          .filter((x): x is string => Boolean(x))
+          .map(variantName)
+          .join(" ")} - что даёт`}
         onPointerDown={(e) => (pointer.current = e.pointerType)}
         onPointerEnter={(e) => e.pointerType === "mouse" && pop.show(id, e.currentTarget)}
         onPointerLeave={(e) => e.pointerType === "mouse" && pop.hide()}
@@ -171,9 +178,9 @@ export function ModuleStatBadge({
       >
         {pre && <span className={styles.pre}>{variantName(pre.id)}</span>}
         {suf && <span className={styles.suf}>{variantName(suf.id)}</span>}
-        {variantLabel(id)}
+        {key && variantLabel(key)}
       </button>
-      {pop.render(quality, attrs)}
+      {pop.render(quality, known)}
     </>
   );
 }
@@ -200,6 +207,10 @@ export function ModuleStatPicker({
   const ref = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const pop = useStatPopover(ref);
+  // только известные характеристики; с числами — без нулевых (кроме выбранной) и по убыванию
+  const shown = variants
+    .filter((v) => moduleAttr(v) && (!counts || counts[v] || v === value))
+    .sort((a, b) => (counts ? (counts[b] ?? 0) - (counts[a] ?? 0) : 0));
 
   const pick = (v: string | null) => {
     haptic.select();
@@ -233,7 +244,7 @@ export function ModuleStatPicker({
               Любая
             </button>
           )}
-          {variants.map((v) => (
+          {shown.map((v) => (
             <button
               key={v}
               type="button"

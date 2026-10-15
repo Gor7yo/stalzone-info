@@ -36,6 +36,12 @@ export interface ModuleAttrInfo {
 export const moduleAttr = (id: string): ModuleAttrInfo | undefined => MODULE_ATTRS[id];
 
 /**
+ * Уникальная ключевая (Снайпер, Охотник…), а не простой стат вроде «Стрелка» (*_aff):
+ * те лишь усиливают один стат, как приставка, — в фильтре лотов их не показываем.
+ */
+export const isUniqueKey = (id: string) => moduleAttr(id)?.slot === "key" && !id.endsWith("_aff");
+
+/**
  * У каждого атрибута свой процент качества (в игре — «91,72%»): ранг attributes[].quality задаёт
  * ступень по порогам ниже, statsRandom — место внутри неё: процент = порог + ширина × (0,5 + r/4),
  * не выходя за ступень. Сверено с игрой: Особый, r = −0,128 → 51,63%; r = 1,70 → 62,75%;
