@@ -2,7 +2,7 @@
 
 .card {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .cardHead {
@@ -10,26 +10,28 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 8px;
-  font-size: 14px;
+  font-size: 13px;
 }
 
-.cardQuality {
+.cardHead span {
   font-size: 11px;
   font-weight: 700;
-  color: var(--text-3);
-  white-space: nowrap;
 }
 
-.description {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.4;
-  color: var(--text-2);
+/* атрибут лота: название с процентом и его эффекты; между атрибутами — тонкая линия */
+.attr {
+  display: grid;
+  gap: 3px;
+}
+
+.attr + .attr {
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
 }
 
 .effects {
   display: grid;
-  gap: 4px;
+  gap: 3px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -39,41 +41,61 @@
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  padding: 6px 8px;
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--red) 10%, transparent);
   font-size: 12px;
   line-height: 1.35;
+  color: var(--text-2);
 }
 
 .effects li b {
+  font-weight: 700;
   color: var(--red);
-  white-space: nowrap;
 }
 
-.effects li[data-good] {
-  background: color-mix(in srgb, var(--green) 10%, transparent);
+/* число — одной строкой, переносится подпись */
+.effects li b:global(.mono) {
+  flex: none;
+  white-space: nowrap;
 }
 
 .effects li[data-good] b {
   color: var(--green);
 }
 
-/* ---------- бейдж с подсказкой ---------- */
+.empty {
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+/* ---------- бейдж ---------- */
 
 .badge {
   display: inline-flex;
   align-items: center;
+  gap: 4px;
   height: 22px;
   padding: 0 9px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--acc) 16%, transparent);
-  border: 1px solid color-mix(in srgb, var(--acc) 45%, transparent);
+  background: var(--surface-2);
+  border: 1px solid color-mix(in srgb, var(--acc) 40%, transparent);
   color: var(--text);
   font-size: 11px;
   font-weight: 800;
   white-space: nowrap;
   cursor: help;
+}
+
+/* приставка (баф) и суффикс (дебаф) — тише ключевой, цветом подсказывают знак */
+.pre,
+.suf {
+  font-weight: 700;
+}
+
+.pre {
+  color: color-mix(in srgb, var(--green) 75%, var(--text-2));
+}
+
+.suf {
+  color: color-mix(in srgb, var(--red) 75%, var(--text-2));
 }
 
 .badge[data-size="md"] {
@@ -83,33 +105,31 @@
 }
 
 .badge[aria-expanded="true"] {
-  background: color-mix(in srgb, var(--acc) 28%, transparent);
+  background: color-mix(in srgb, var(--acc) 18%, transparent);
 }
 
 .pop {
   position: fixed;
   z-index: 100;
   max-width: calc(100vw - 16px);
-  padding: 12px;
-  border-radius: 14px;
+  padding: 10px 12px;
+  border-radius: 12px;
   background: var(--bg-2);
   border: 1px solid var(--line-2);
-  box-shadow: 0 12px 32px rgb(0 0 0 / 0.35);
+  box-shadow: 0 10px 28px rgb(0 0 0 / 0.35);
   pointer-events: none;
-  animation: pop 140ms var(--ease);
+  animation: fade 120ms var(--ease);
 }
 
-@keyframes pop {
+@keyframes fade {
   from {
     opacity: 0;
-    transform: translateY(-4px);
   }
 }
 
 /* ---------- выдвижное меню ---------- */
 
 .picker {
-  container: module-picker / inline-size;
   display: grid;
   gap: 6px;
 }
@@ -119,26 +139,30 @@
   align-items: center;
   gap: 8px;
   width: 100%;
-  min-height: 44px;
+  height: 40px;
   padding: 0 12px;
   border-radius: 12px;
-  background: color-mix(in srgb, var(--acc) 10%, var(--surface));
-  border: 1px solid color-mix(in srgb, var(--acc) 40%, transparent);
+  background: var(--surface);
+  border: 1px solid var(--line);
   color: var(--text);
-  text-align: left;
-  font-size: 14px;
+  font-size: 13px;
+}
+
+.picker[data-open] .trigger {
+  border-color: var(--line-2);
 }
 
 .triggerLabel {
   flex: 1;
+  text-align: left;
   font-size: 12px;
   font-weight: 700;
-  color: var(--text-2);
+  color: var(--text-3);
 }
 
 .chevron {
   display: inline-flex;
-  color: var(--text-2);
+  color: var(--text-3);
   transition: transform 180ms var(--ease);
 }
 
@@ -148,91 +172,43 @@
 
 .menu {
   display: grid;
-  gap: 8px;
-  padding: 6px;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 4px;
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 4px;
   border-radius: 12px;
   background: var(--surface);
   border: 1px solid var(--line);
-  animation: slide 180ms var(--ease);
+  animation: fade 150ms var(--ease);
 }
 
-@keyframes slide {
-  from {
-    opacity: 0;
-    transform: translateY(-6px);
-  }
-}
-
-.options {
-  display: grid;
-  gap: 2px;
-  max-height: 320px;
-  overflow-x: hidden;
-  overflow-y: auto;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.options button {
-  display: grid;
-  grid-template-columns: 1fr auto;
+.menu button {
+  display: flex;
   align-items: center;
-  column-gap: 8px;
-  width: 100%;
+  justify-content: space-between;
+  gap: 6px;
   min-width: 0;
-  padding: 8px 10px;
+  height: 32px;
+  padding: 0 10px;
   border-radius: 8px;
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 700;
   text-align: left;
+}
+
+.menu button:hover {
+  background: var(--surface-2);
   color: var(--text);
 }
 
-.options button:hover,
-.options button:focus-visible {
-  background: var(--surface-2);
+.menu button[aria-selected="true"] {
+  background: color-mix(in srgb, var(--acc) 16%, transparent);
+  color: var(--text);
 }
 
-.options button[aria-selected="true"] {
-  background: color-mix(in srgb, var(--acc) 18%, transparent);
-}
-
-.optionName {
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.optionHint {
-  grid-column: 1;
-  font-size: 11px;
+.count {
+  font-size: 10px;
   color: var(--text-3);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.optionCount {
-  grid-column: 2;
-  grid-row: 1 / span 2;
-  font-size: 11px;
-  color: var(--text-3);
-}
-
-.preview {
-  padding: 10px;
-  border-radius: 10px;
-  background: var(--bg-2);
-  border: 1px solid var(--line);
-}
-
-/* если меню широкое — список слева, «что даёт» справа (по ширине колонки, не окна) */
-@container module-picker (min-width: 560px) {
-  .menu {
-    grid-template-columns: minmax(0, 1fr) 280px;
-    align-items: start;
-  }
-
-  .preview {
-    position: sticky;
-    top: 0;
-  }
 }

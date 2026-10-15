@@ -53,7 +53,7 @@ import { useAlerts } from "@/features/alerts";
 import { usePro } from "@/features/pro";
 import { useBarter } from "@/features/barter";
 import { categoryLabel, rarityOf, useItem } from "@/features/items";
-import { variantLabel, variantOf, variantsOf } from "@/features/modules";
+import { moduleAttrs, variantLabel, variantOf, variantsOf } from "@/features/modules";
 import { formatCompact, formatDuration, formatNumber, formatPrice, formatRelative, plural } from "@/lib/format";
 import { actions, useApp } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
@@ -630,7 +630,7 @@ function Quality({ additional }: { additional?: Additional }) {
   return (
     <>
       {/* характеристика первой: от неё цена модуля зависит сильнее всего */}
-      {variant && <ModuleStatBadge id={variant} quality={qi} />}
+      {variant && <ModuleStatBadge id={variant} quality={qi} attrs={moduleAttrs(additional)} />}
       <span className={`pill ${styles.qualityPill}`} style={{ color: q.color, height: 22, fontSize: 11 }}>
         {q.label}
       </span>
