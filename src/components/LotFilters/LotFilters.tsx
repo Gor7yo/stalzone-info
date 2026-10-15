@@ -1,8 +1,9 @@
 "use client";
 
 import { lotUnitPrice, MAX_UPGRADE, pickedQualities, qualityOf, QUALITY, upgradeOf, type Lot, type LotFilter } from "@/features/auction";
-import { variantLabel, variantsOf } from "@/features/modules";
+import { variantOf, variantsOf } from "@/features/modules";
 import { haptic } from "@/lib/telegram";
+import { ModuleStatPicker } from "../ModuleStat/ModuleStat";
 import styles from "./LotFilters.module.css";
 import { UpgradeDial } from "./UpgradeDial";
 
@@ -52,31 +53,22 @@ export function LotFilters({
   const qualityCount = (q: number) => lots.filter((l) => qualityOf(l.additional) === q).length;
   // ключевые характеристики модуля в лотах — самые частые первыми
   const variants = variantsOf(lots);
+  const variantCounts: Record<string, number> = {};
+  for (const l of lots) {
+    const v = variantOf(l.additional);
+    if (v) variantCounts[v] = (variantCounts[v] ?? 0) + 1;
+  }
 
   return (
     <div className={styles.panel}>
       {variants.length > 0 && (
-        <div className={styles.row} role="radiogroup" aria-label="Ключевая характеристика модуля">
-          <button
-            type="button"
-            className={styles.chip}
-            aria-pressed={filter.variant == null}
-            onClick={() => pick({ ...filter, variant: null })}
-          >
-            Любая
-          </button>
-          {variants.map((v) => (
-            <button
-              key={v}
-              type="button"
-              className={styles.chip}
-              aria-pressed={filter.variant === v}
-              onClick={() => pick({ ...filter, variant: filter.variant === v ? null : v })}
-            >
-              {variantLabel(v)}
-            </button>
-          ))}
-        </div>
+        <ModuleStatPicker
+          variants={variants}
+          counts={variantCounts}
+          value={filter.variant ?? null}
+          quality={qualities.length === 1 ? qualities[0] : null}
+          onChange={(variant) => onFilter({ ...filter, variant })}
+        />
       )}
 
       <div className={styles.row} role="group" aria-label="Качество (можно несколько)">

@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Icon } from "@/components/Icon";
+import { ModuleStatBadge } from "@/components/ModuleStat/ModuleStat";
 import { ItemIcon } from "@/components/ui/ItemIcon";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { RegionSwitch } from "@/components/ui/RegionSwitch";
 import { Segmented } from "@/components/ui/Segmented";
 import { EmptyState, ErrorState, RowSkeleton } from "@/components/ui/States";
 import { QUALITY, TIERS } from "@/features/auction";
-import { variantLabel } from "@/features/modules";
 import { CONFIDENCE, useFlips, type Flip } from "@/features/flips";
 import { GROUPS, useItems, type Item } from "@/features/items";
 import { formatRelative, formatShort, plural } from "@/lib/format";
@@ -341,8 +341,8 @@ function OfferCard({ offer, item }: { offer: Offer; item?: Item }) {
             {!f.variant && (f.upgrade > 0 || quality) && <span className={styles.upgrade}>+{f.upgrade}</span>}
           </span>
           <span className={styles.tags}>
+            {f.variant && <ModuleStatBadge id={f.variant} quality={quality ? f.quality : null} />}
             {quality && <span className={styles.qualityTag}>{quality.label}</span>}
-            {f.variant && <span className={styles.tag}>{variantLabel(f.variant)}</span>}
             {f.amount > 1 && <span className={styles.tag}>×{f.amount}</span>}
             <span className={styles.conf} style={{ color: conf.color }}>
               ● {conf.label}

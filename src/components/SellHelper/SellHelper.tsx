@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { MAX_UPGRADE, QUALITY, TIERS } from "@/features/auction";
-import { variantLabel } from "@/features/modules";
 import { usePro } from "@/features/pro";
 import { formatHours, hoursToSell, targetLabel, unitsAhead, useSellAdvice, type SellAdvice } from "@/features/sell";
 import { formatNumber, formatPrice, formatRelative, formatShort, parseGamePrice, plural } from "@/lib/format";
 import type { Region } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
 import { Icon } from "../Icon";
+import { ModuleStatPicker } from "../ModuleStat/ModuleStat";
 import { ProTeaser } from "../Pro/Pro";
 import { LoginCard } from "../Account/AccountGate";
 import styles from "./SellHelper.module.css";
@@ -102,22 +102,13 @@ function SellPanel({ itemId, region, hasQuality, hasUpgrade, stackable, initialQ
       )}
 
       {variants.length > 0 && (
-        <div className="chips" role="radiogroup" aria-label="Ключевая характеристика модуля">
-          {variants.map((v) => (
-            <button
-              key={v}
-              type="button"
-              className="chip"
-              aria-pressed={variant === v}
-              onClick={() => {
-                haptic.tap();
-                setVariant(v);
-              }}
-            >
-              {variantLabel(v)}
-            </button>
-          ))}
-        </div>
+        <ModuleStatPicker
+          variants={variants}
+          value={variant || null}
+          quality={quality >= 0 ? quality : null}
+          allowAny={false}
+          onChange={(v) => v && setVariant(v)}
+        />
       )}
 
       {(upgradable || stackable) && (

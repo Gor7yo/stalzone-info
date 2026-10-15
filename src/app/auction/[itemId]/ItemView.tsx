@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { BarterSection } from "@/components/Barter/Barter";
 import { CRAFT_ENABLED } from "@/lib/flags";
 import { Icon } from "@/components/Icon";
+import { ModuleStatBadge } from "@/components/ModuleStat/ModuleStat";
 import { PriceAlertPanel } from "@/components/PriceAlert/PriceAlertPanel";
 import { PriceChart } from "@/components/PriceChart/PriceChart";
 import { SellHelper } from "@/components/SellHelper/SellHelper";
@@ -283,7 +284,9 @@ export function ItemView({
                       {q.label}
                     </span>
                   ))}
-                  {filter.variant && <span className="pill">{variantLabel(filter.variant)}</span>}
+                  {filter.variant && (
+                    <ModuleStatBadge id={filter.variant} quality={qualities.length === 1 ? qualities[0] : null} size="md" />
+                  )}
                   {item.rarity !== "DEFAULT" && (
                     <span className="pill" style={{ color: rarity.color }}>
                       <span className="dot" />
@@ -626,14 +629,12 @@ function Quality({ additional }: { additional?: Additional }) {
   const variant = variantOf(additional);
   return (
     <>
+      {/* характеристика первой: от неё цена модуля зависит сильнее всего */}
+      {variant && <ModuleStatBadge id={variant} quality={qi} />}
       <span className={`pill ${styles.qualityPill}`} style={{ color: q.color, height: 22, fontSize: 11 }}>
         {q.label}
       </span>
-      {variant ? (
-        <span className="pill" style={{ height: 22, fontSize: 11, fontWeight: 800 }} title="Ключевая характеристика модуля">
-          {variantLabel(variant)}
-        </span>
-      ) : (
+      {!variant && (
         <span
           className={styles.upgrade}
           data-max={up === MAX_UPGRADE || undefined}
