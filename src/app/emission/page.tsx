@@ -3,7 +3,7 @@
 import { Anomaly } from "@/components/Anomaly/Anomaly";
 import { Icon } from "@/components/Icon";
 import { EmissionStatus } from "@/components/Emission/EmissionStatus";
-import { LinkedAs, TelegramLink } from "@/components/PriceAlert/TelegramLink";
+import { LoginCard, SentTo, TelegramLinkCard } from "@/components/Account/AccountGate";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { useAlerts, useToggleEmissionAlert } from "@/features/alerts";
 import { emissionState, useEmission } from "@/features/emission";
@@ -59,10 +59,12 @@ function EmissionAlertToggle({ region }: { region: Region }) {
   const toggle = useToggleEmissionAlert();
   const label = REGIONS.find((r) => r.value === region)?.label;
 
+  if (alerts.pending) return null;
   if (!alerts.available) {
-    return (
-      <TelegramLink text="Уведомления о начале выброса приходят в Telegram-бота. Привяжите Telegram — это один клик в боте, без пароля." />
-    );
+    return <LoginCard text="Войдите через EXBO, чтобы получать в Telegram уведомление о начале выброса." />;
+  }
+  if (!alerts.telegram) {
+    return <TelegramLinkCard text="Уведомления о начале выброса приходят в Telegram-бота. Привяжите Telegram — это один клик в боте." />;
   }
 
   const on = alerts.data?.emission.includes(region) ?? false;
@@ -72,7 +74,7 @@ function EmissionAlertToggle({ region }: { region: Region }) {
       <span className={styles.notifyText}>
         Сообщить в Telegram, когда начнётся выброс на {label}
         {toggle.error && <small className={styles.notifyError}>{toggle.error.message}</small>}
-        {alerts.linkedAs && <LinkedAs session={alerts.linkedAs} />}
+        {alerts.sentTo && <SentTo telegram={alerts.sentTo} />}
       </span>
       <button
         type="button"

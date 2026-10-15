@@ -1,7 +1,7 @@
 "use client";
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { authed } from "./alerts";
+import { authed } from "./account";
 import type { Region } from "@/lib/store";
 
 export type Confidence = "high" | "medium" | "low";

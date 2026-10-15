@@ -1,7 +1,7 @@
 "use client";
 
 import { useDeferredValue, useState } from "react";
-import { TelegramLink } from "@/components/PriceAlert/TelegramLink";
+import { LoginCard } from "@/components/Account/AccountGate";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { SearchField } from "@/components/ui/SearchField";
 import { Segmented } from "@/components/ui/Segmented";
@@ -18,7 +18,7 @@ import {
   type Point,
   type Term,
 } from "@/features/admin";
-import { usePro } from "@/features/pro";
+import { useMe } from "@/features/account";
 import { isNotFound } from "@/lib/api";
 import { formatDate, formatDateTime, formatNumber, formatRelative } from "@/lib/format";
 import { haptic } from "@/lib/telegram";
@@ -27,22 +27,22 @@ import styles from "./admin.module.css";
 type Tab = "dash" | "users" | "log";
 
 export default function AdminPage() {
-  const me = usePro();
+  const me = useMe();
   const [tab, setTab] = useState<Tab>("dash");
-  const admin = Boolean(me.data?.admin);
+  const admin = Boolean(me.me?.admin);
 
-  if (!me.available)
-    return (
-      <main className="page">
-        <PageHeader eyebrow="Служебное" title="Админка" />
-        <TelegramLink text="Админка открывается по вашему Telegram. Привяжите Telegram, чтобы войти." />
-      </main>
-    );
   if (me.pending)
     return (
       <main className="page">
         <PageHeader eyebrow="Служебное" title="Админка" />
         <RowSkeleton count={4} />
+      </main>
+    );
+  if (!me.loggedIn)
+    return (
+      <main className="page">
+        <PageHeader eyebrow="Служебное" title="Админка" />
+        <LoginCard text="Админка открывается для аккаунта с Telegram администратора. Войдите через EXBO." />
       </main>
     );
   if (!admin)
@@ -86,12 +86,20 @@ function DashboardTab() {
   return (
     <>
       <section className={styles.tiles}>
-        <Stat label="Пользователей" value={users.total} hint={`+${users.new1} за сутки · +${users.new7} за неделю`} />
+        <Stat
+          label="Аккаунтов"
+          value={users.total}
+          hint={`+${users.new1} за сутки · +${users.new7} за неделю · с Telegram ${users.telegram}`}
+        />
         <Stat label="Активны сегодня" value={users.dau} hint={`неделя ${users.wau} · месяц ${users.mau}`} />
         <Stat label="Pro активен" value={pro.active} hint={`пробных взято ${pro.trials}`} accent />
         <Stat label="Платящих" value={pro.paidUsers} hint={`платежей ${pro.payments}`} />
         <Stat label="Выручка за 30 дней" text={money(revenue.last30)} hint={`всего ${money(revenue.total)}`} accent />
-        <Stat label="Алерты" value={alerts.price + alerts.flip} hint={`цен ${alerts.price} · флип ${alerts.flip} · выброс ${alerts.emission}`} />
+        <Stat
+          label="Алерты"
+          value={alerts.price + alerts.flip}
+          hint={`цен ${alerts.price} · флип ${alerts.flip} · выброс ${alerts.emission}`}
+        />
         <Stat label="Забанено" value={users.banned} />
       </section>
 
@@ -175,22 +183,18 @@ function UsersTab() {
   const [selected, setSelected] = useState<string | null>(null);
   const list = useAdminUsers(q, !selected);
 
-  if (selected) return <UserCard chatId={selected} onBack={() => setSelected(null)} />;
+  if (selected) return <UserCard id={selected} onBack={() => setSelected(null)} />;
 
-  const asId = q.replace(/^@/, "");
   return (
     <>
-      <SearchField value={query} onChange={setQuery} placeholder="@ник, имя или Telegram id" aria-label="Поиск пользователя" />
+      <SearchField value={query} onChange={setQuery} placeholder="Логин EXBO, @ник Telegram или Telegram id" aria-label="Поиск аккаунта" />
       <div className="stack" style={{ gap: 6, marginTop: 10 }}>
         {list.isLoading && <RowSkeleton count={4} />}
-        {list.data?.map((u) => <UserRow key={u.chatId} user={u} onOpen={() => setSelected(u.chatId)} />)}
+        {list.data?.map((u) => (
+          <UserRow key={u.id} user={u} onOpen={() => setSelected(u.id)} />
+        ))}
         {list.data && !list.data.length && (
-          <EmptyState icon="user" title="Никого не нашли" text="Ищите по нику без @ тоже. Если человек ещё не заходил — введите его Telegram id." />
-        )}
-        {/^\d{5,20}$/.test(asId) && !list.data?.some((u) => u.chatId === asId) && (
-          <button type="button" className="btn" onClick={() => setSelected(asId)}>
-            Открыть id {asId}
-          </button>
+          <EmptyState icon="user" title="Никого не нашли" text="Аккаунт появляется после первого входа через EXBO." />
         )}
       </div>
     </>
@@ -200,25 +204,35 @@ function UsersTab() {
 function Badges({ user }: { user: AdminUser }) {
   return (
     <span className={styles.badges}>
-      {user.pro && <span className={styles.badge} data-tone="pro">Pro</span>}
-      {user.banned && <span className={styles.badge} data-tone="ban">Бан</span>}
+      {user.pro && (
+        <span className={styles.badge} data-tone="pro">
+          Pro
+        </span>
+      )}
+      {user.banned && (
+        <span className={styles.badge} data-tone="ban">
+          Бан
+        </span>
+      )}
       {user.trialUsedAt && !user.pro && <span className={styles.badge}>пробный был</span>}
-      {user.botBlocked && <span className={styles.badge}>бот заблокирован</span>}
+      {user.telegram?.botBlocked && <span className={styles.badge}>бот заблокирован</span>}
+      {!user.telegram && <span className={styles.badge}>без Telegram</span>}
     </span>
   );
 }
 
-const nameOf = (u: Pick<AdminUser, "username" | "firstName" | "chatId">) => (u.username ? `@${u.username}` : u.firstName || `id ${u.chatId}`);
+/** «@ник» или имя в Telegram */
+const telegramOf = (t: NonNullable<AdminUser["telegram"]>) => (t.username ? `@${t.username}` : t.firstName || `id ${t.chatId}`);
 
 function UserRow({ user, onOpen }: { user: AdminUser; onOpen: () => void }) {
   return (
     <button type="button" className="list-row" onClick={() => (haptic.select(), onOpen())}>
       <span style={{ flex: 1, minWidth: 0, textAlign: "left", display: "grid", gap: 2 }}>
         <strong className="truncate" style={{ fontSize: 14 }}>
-          {nameOf(user)} {user.firstName && user.username && <span className="dim">· {user.firstName}</span>}
+          {user.login} {user.telegram && <span className="dim">· {telegramOf(user.telegram)}</span>}
         </strong>
         <span className="dim mono" style={{ fontSize: 11 }}>
-          {user.chatId} · {user.lastSeenAt ? `был ${formatRelative(user.lastSeenAt)}` : "не заходил"}
+          {user.lastSeenAt ? `был ${formatRelative(user.lastSeenAt)}` : "не заходил"}
         </span>
       </span>
       <Badges user={user} />
@@ -229,9 +243,9 @@ function UserRow({ user, onOpen }: { user: AdminUser; onOpen: () => void }) {
 const PRO_PRESETS = [1, 3, 7, 30, 90, 365];
 const BAN_PRESETS = [1, 7, 30];
 
-function UserCard({ chatId, onBack }: { chatId: string; onBack: () => void }) {
-  const { data, isLoading, error } = useAdminUser(chatId);
-  const act = useAdminAction(chatId);
+function UserCard({ id, onBack }: { id: string; onBack: () => void }) {
+  const { data, isLoading, error } = useAdminUser(id);
+  const act = useAdminAction(id);
   const [proDays, setProDays] = useState("");
   const [proDate, setProDate] = useState("");
   const [notify, setNotify] = useState(true);
@@ -239,7 +253,7 @@ function UserCard({ chatId, onBack }: { chatId: string; onBack: () => void }) {
   const [reason, setReason] = useState("");
   const [confirm, setConfirm] = useState<string | null>(null);
 
-  const fresh = isNotFound(error);
+  const gone = isNotFound(error);
   const run = (key: string, fn: () => void, dangerous = false) => {
     if (dangerous && confirm !== key) return setConfirm(key);
     setConfirm(null);
@@ -255,17 +269,16 @@ function UserCard({ chatId, onBack }: { chatId: string; onBack: () => void }) {
         ← К списку
       </button>
       {isLoading && <RowSkeleton count={3} />}
-      {error && !fresh && <ErrorState />}
+      {error && !gone && <ErrorState />}
+      {gone && <EmptyState icon="user" title="Аккаунт не найден" text="Возможно, он удалён." />}
 
       <section className={`section ${styles.card}`}>
         <h2 className={styles.userName}>
-          {data ? nameOf(data) : `id ${chatId}`} {data && <Badges user={data} />}
+          {data?.login ?? "…"} {data && <Badges user={data} />}
         </h2>
-        {fresh && <p className="dim">Ещё не заходил в приложение — Pro или бан можно выдать заранее по id.</p>}
         {data && (
           <dl className={styles.facts}>
-            <Fact k="Telegram id" v={data.chatId} />
-            {data.firstName && <Fact k="Имя" v={data.firstName} />}
+            <Fact k="Telegram" v={data.telegram ? `${telegramOf(data.telegram)} · id ${data.telegram.chatId}` : "не привязан"} />
             <Fact k="Pro" v={data.pro && data.proUntil ? `до ${formatDateTime(data.proUntil)}` : "нет"} />
             {data.banned && <Fact k="Бан" v={`до ${formatDateTime(data.bannedUntil!)}${data.banReason ? ` · ${data.banReason}` : ""}`} />}
             <Fact k="Последний визит" v={data.lastSeenAt ? formatDateTime(data.lastSeenAt) : "—"} />
@@ -294,11 +307,28 @@ function UserCard({ chatId, onBack }: { chatId: string; onBack: () => void }) {
           </button>
         </div>
         <div className={styles.inline}>
-          <input className={styles.input} inputMode="numeric" placeholder="дней" value={proDays} onChange={(e) => setProDays(e.target.value.replace(/\D/g, ""))} />
-          <button type="button" className="btn" disabled={!proDays || act.isPending} onClick={() => run("proN", () => pro({ days: Number(proDays) }))}>
+          <input
+            className={styles.input}
+            inputMode="numeric"
+            placeholder="дней"
+            value={proDays}
+            onChange={(e) => setProDays(e.target.value.replace(/\D/g, ""))}
+          />
+          <button
+            type="button"
+            className="btn"
+            disabled={!proDays || act.isPending}
+            onClick={() => run("proN", () => pro({ days: Number(proDays) }))}
+          >
             +{proDays || "N"} д
           </button>
-          <input className={styles.input} type="date" value={proDate} onChange={(e) => setProDate(e.target.value)} aria-label="Pro до даты" />
+          <input
+            className={styles.input}
+            type="date"
+            value={proDate}
+            onChange={(e) => setProDate(e.target.value)}
+            aria-label="Pro до даты"
+          />
           <button
             type="button"
             className="btn"
@@ -328,12 +358,24 @@ function UserCard({ chatId, onBack }: { chatId: string; onBack: () => void }) {
       <section className={`section ${styles.card}`}>
         <h2 className="section-title">Блокировка</h2>
         {data?.banned ? (
-          <button type="button" className="btn primary" disabled={act.isPending} onClick={() => run("unban", () => act.mutate({ kind: "unban" }))}>
+          <button
+            type="button"
+            className="btn primary"
+            disabled={act.isPending}
+            onClick={() => run("unban", () => act.mutate({ kind: "unban" }))}
+          >
             Разбанить
           </button>
         ) : (
           <>
-            <input className={styles.input} style={{ width: "100%" }} placeholder="Причина (видна только в админке)" maxLength={300} value={reason} onChange={(e) => setReason(e.target.value)} />
+            <input
+              className={styles.input}
+              style={{ width: "100%" }}
+              placeholder="Причина (видна только в админке)"
+              maxLength={300}
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+            />
             <div className={styles.actions}>
               {BAN_PRESETS.map((d) => (
                 <button
@@ -360,7 +402,13 @@ function UserCard({ chatId, onBack }: { chatId: string; onBack: () => void }) {
               </button>
             </div>
             <div className={styles.inline}>
-              <input className={styles.input} inputMode="numeric" placeholder="дней" value={banDays} onChange={(e) => setBanDays(e.target.value.replace(/\D/g, ""))} />
+              <input
+                className={styles.input}
+                inputMode="numeric"
+                placeholder="дней"
+                value={banDays}
+                onChange={(e) => setBanDays(e.target.value.replace(/\D/g, ""))}
+              />
               <button
                 type="button"
                 className="btn"
@@ -411,7 +459,7 @@ function LogLine({ entry, withTarget }: { entry: LogEntry; withTarget?: boolean 
   return (
     <li>
       <span className="mono dim">{formatDateTime(entry.createdAt)}</span> {ACTION_LABEL[entry.action] ?? entry.action}
-      {withTarget && <span className="mono"> · {entry.targetId}</span>}
+      {withTarget && <span className="mono"> · {entry.targetLogin ?? (entry.targetId ? `tg ${entry.targetId}` : "удалён")}</span>}
       {entry.details && <span className="dim"> · {entry.details}</span>}
     </li>
   );

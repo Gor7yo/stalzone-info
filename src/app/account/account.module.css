@@ -95,6 +95,12 @@
   flex: 1;
 }
 
+.meta {
+  align-self: center;
+  font-size: 12px;
+  color: var(--text-3);
+}
+
 .unlink {
   color: var(--text-3);
 }

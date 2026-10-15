@@ -1,7 +1,7 @@
 "use client";
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { authed } from "./alerts";
+import { authed } from "./account";
 import type { Region } from "@/lib/store";
 
 export interface SalePrices {
@@ -97,8 +97,7 @@ function demandShare(s: SalePrices, price: number) {
 }
 
 /** Сколько штук на рынке дешевле (или по той же цене) — их выкупят раньше. */
-export const unitsAhead = (ladder: LadderStep[], price: number) =>
-  ladder.reduce((n, l) => (l.unit <= price ? n + l.amount : n), 0);
+export const unitsAhead = (ladder: LadderStep[], price: number) => ladder.reduce((n, l) => (l.unit <= price ? n + l.amount : n), 0);
 
 /** Примерное время продажи по цене, ч; null — вряд ли продастся за срок жизни лота. */
 export function hoursToSell(a: SellAdvice, price: number): number | null {

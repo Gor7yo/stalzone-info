@@ -9,7 +9,7 @@ import type { Region } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
 import { Icon } from "../Icon";
 import { ProTeaser } from "../Pro/Pro";
-import { TelegramLink } from "../PriceAlert/TelegramLink";
+import { LoginCard } from "../Account/AccountGate";
 import styles from "./SellHelper.module.css";
 
 interface Props {
@@ -29,10 +29,10 @@ interface Props {
 /** «По какой цене выставить, чтобы продалось за N часов» — Pro. */
 export function SellHelper(props: Props) {
   const { isPro, available, pending } = usePro();
-  if (!available) {
-    return <TelegramLink text="Помощник продажи работает в Pro - он привязан к Telegram. Привяжите Telegram, это один клик в боте." />;
-  }
   if (pending) return <div className="skeleton" style={{ height: 180, borderRadius: 22, marginTop: 12 }} />;
+  if (!available) {
+    return <LoginCard text="Помощник продажи работает в Pro. Войдите через EXBO, чтобы оформить или взять пробные 3 дня." />;
+  }
   if (!isPro) {
     return (
       <div style={{ marginTop: 12 }}>
@@ -162,10 +162,11 @@ function SellPanel({ itemId, region, hasQuality, hasUpgrade, stackable, initialQ
           <p className={styles.hint}>
             Посчитано по {formatNumber(a.deals)} {plural(a.deals, ["сделке", "сделкам", "сделкам"])} за {a.windowDays} дн. (медиана{" "}
             {formatShort(a.sales.median)}
-            {a.basis === "tier" && `, вся ступень заточки ${TIERS.find((t) => upgrade >= t.min && upgrade <= t.max)?.label} - с +${upgrade} сделок мало`}) и{" "}
-            {formatNumber(a.lotsTotal)} {plural(a.lotsTotal, ["лоту", "лотам", "лотам"])} на рынке. Оценка примерная: покупают самые дешёвые
-            лоты, а новые продавцы могут перебить цену. «На руки» - после комиссии аукциона {Math.round(a.fee * 100)} %. Нажмите на цену, чтобы
-            скопировать.
+            {a.basis === "tier" &&
+              `, вся ступень заточки ${TIERS.find((t) => upgrade >= t.min && upgrade <= t.max)?.label} - с +${upgrade} сделок мало`}
+            ) и {formatNumber(a.lotsTotal)} {plural(a.lotsTotal, ["лоту", "лотам", "лотам"])} на рынке. Оценка примерная: покупают самые
+            дешёвые лоты, а новые продавцы могут перебить цену. «На руки» - после комиссии аукциона {Math.round(a.fee * 100)} %. Нажмите на
+            цену, чтобы скопировать.
           </p>
         </div>
       )}
@@ -230,8 +231,10 @@ function MyPrice({ a, price }: { a: SellAdvice; price: number }) {
       ) : (
         <>
           Продастся примерно {formatHours(hours).replace("≈", "за ")}
-          {ahead > 0 ? `, впереди ${formatNumber(ahead)} ${plural(ahead, ["штука", "штуки", "штук"])} дешевле` : ", вы будете самым дешёвым"}. На руки{" "}
-          {formatPrice(price * a.amount * (1 - a.fee))}.
+          {ahead > 0
+            ? `, впереди ${formatNumber(ahead)} ${plural(ahead, ["штука", "штуки", "штук"])} дешевле`
+            : ", вы будете самым дешёвым"}
+          . На руки {formatPrice(price * a.amount * (1 - a.fee))}.
         </>
       )}
     </p>
@@ -241,8 +244,8 @@ function MyPrice({ a, price }: { a: SellAdvice; price: number }) {
 function NoData({ a }: { a: SellAdvice }) {
   return (
     <p className={styles.note}>
-      За {a.windowDays} дн. {a.deals ? `всего ${formatNumber(a.deals)} ${plural(a.deals, ["сделка", "сделки", "сделок"])}` : "сделок не было"} - цену
-      не оценить.
+      За {a.windowDays} дн.{" "}
+      {a.deals ? `всего ${formatNumber(a.deals)} ${plural(a.deals, ["сделка", "сделки", "сделок"])}` : "сделок не было"} - цену не оценить.
       {a.ladder[0] && ` Самый дешёвый лот сейчас - ${formatPrice(a.ladder[0].unit)}.`}
       {a.lastSale && ` Последняя продажа - ${formatRelative(a.lastSale)}.`}
     </p>

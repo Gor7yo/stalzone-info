@@ -1,10 +1,9 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { authed } from "./alerts";
-import { usePro } from "./pro";
+import { authed, useMe } from "./account";
 
-/** Админка: метрики, пользователи, Pro и баны. Доступ — Telegram id из ADMIN_CHAT_IDS на бэкенде. */
+/** Админка: метрики, аккаунты, Pro и баны. Доступ — аккаунт с Telegram из ADMIN_CHAT_IDS на бэкенде. */
 
 export interface Point {
   day: string;
@@ -19,7 +18,7 @@ export interface Money {
 
 export interface Dashboard {
   updatedAt: string;
-  users: { total: number; new1: number; new7: number; dau: number; wau: number; mau: number; banned: number };
+  users: { total: number; new1: number; new7: number; dau: number; wau: number; mau: number; banned: number; telegram: number };
   pro: { active: number; trials: number; paidUsers: number; payments: number };
   revenue: { total: Money[]; last30: Money[] };
   alerts: { price: number; flip: number; emission: number };
@@ -34,17 +33,18 @@ export interface Dashboard {
   };
 }
 
+/** Аккаунт (EXBO) в админке. */
 export interface AdminUser {
-  chatId: string;
-  username: string | null;
-  firstName: string | null;
+  id: string;
+  login: string;
+  /** привязанный Telegram; null - не привязан */
+  telegram: { chatId: string; username: string | null; firstName: string | null; botBlocked: boolean } | null;
   pro: boolean;
   proUntil: string | null;
   trialUsedAt: string | null;
   banned: boolean;
   bannedUntil: string | null;
   banReason: string | null;
-  botBlocked: boolean;
   lastSeenAt: string | null;
   createdAt: string;
 }
@@ -52,7 +52,11 @@ export interface AdminUser {
 export interface LogEntry {
   id: string;
   adminId: string;
-  targetId: string;
+  /** Telegram цели (старые записи) */
+  targetId: string | null;
+  targetUserId: string | null;
+  /** логин цели (только в общем журнале) */
+  targetLogin?: string | null;
   action: "pro_grant" | "pro_revoke" | "ban" | "unban";
   details: string | null;
   createdAt: string;
@@ -69,8 +73,7 @@ export type Term = { days: number } | { until: string } | { forever: true };
 
 /** Админ ли текущий пользователь (флаг из /api/me). */
 export function useIsAdmin() {
-  const pro = usePro();
-  return Boolean(pro.data?.admin);
+  return Boolean(useMe().me?.admin);
 }
 
 export const useDashboard = (enabled: boolean) =>
@@ -89,11 +92,11 @@ export const useAdminUsers = (q: string, enabled: boolean) =>
     placeholderData: (prev) => prev,
   });
 
-export const useAdminUser = (chatId: string | null) =>
+export const useAdminUser = (id: string | null) =>
   useQuery({
-    queryKey: ["admin", "user", chatId],
-    queryFn: () => authed<AdminUserDetail>(`/api/admin/users/${chatId}`),
-    enabled: !!chatId,
+    queryKey: ["admin", "user", id],
+    queryFn: () => authed<AdminUserDetail>(`/api/admin/users/${id}`),
+    enabled: !!id,
   });
 
 export const useAdminLog = (enabled: boolean) =>
@@ -104,17 +107,14 @@ export const useAdminLog = (enabled: boolean) =>
   });
 
 type Action =
-  | { kind: "pro"; term: Term; notify: boolean }
-  | { kind: "revoke" }
-  | { kind: "ban"; term: Term; reason: string }
-  | { kind: "unban" };
+  { kind: "pro"; term: Term; notify: boolean } | { kind: "revoke" } | { kind: "ban"; term: Term; reason: string } | { kind: "unban" };
 
 /** Действие над пользователем; после него обновляем карточку, список и журнал. */
-export function useAdminAction(chatId: string) {
+export function useAdminAction(id: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (a: Action) => {
-      const base = `/api/admin/users/${chatId}`;
+      const base = `/api/admin/users/${id}`;
       switch (a.kind) {
         case "pro":
           return authed<AdminUserDetail>(`${base}/pro`, "POST", { ...a.term, notify: a.notify });
@@ -127,7 +127,7 @@ export function useAdminAction(chatId: string) {
       }
     },
     onSuccess: (user) => {
-      qc.setQueryData(["admin", "user", chatId], user);
+      qc.setQueryData(["admin", "user", id], user);
       void qc.invalidateQueries({ queryKey: ["admin", "users"] });
       void qc.invalidateQueries({ queryKey: ["admin", "log"] });
       void qc.invalidateQueries({ queryKey: ["admin", "dashboard"] });

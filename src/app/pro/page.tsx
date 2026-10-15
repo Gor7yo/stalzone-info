@@ -1,8 +1,7 @@
 "use client";
 
-import { ExboAccount } from "@/components/ExboAccount/ExboAccount";
+import { LoginCard, TelegramLinkCard } from "@/components/Account/AccountGate";
 import { Icon } from "@/components/Icon";
-import { TelegramLink } from "@/components/PriceAlert/TelegramLink";
 import { ProBadge } from "@/components/Pro/Pro";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { PRO_BUY_URL, PRO_FEATURES, usePro, useStartTrial } from "@/features/pro";
@@ -49,41 +48,48 @@ export default function ProPage() {
       </section>
 
       <section className="section">
-        {!pro.available ? (
-          <TelegramLink text="Pro привязывается к вашему Telegram — так он работает и в мини-приложении, и на сайте. Привяжите Telegram, чтобы оформить." />
+        {pro.pending ? null : !pro.available ? (
+          <LoginCard text="Pro живёт на вашем аккаунте EXBO — работает и на сайте, и в мини-приложении. Войдите, чтобы оформить или взять пробные 3 дня." />
         ) : pro.isPro ? null : (
-          <div className={`glass ${styles.buy}`}>
-            {pro.data?.trialAvailable && (
-              <>
-                <button type="button" className="btn primary" disabled={trial.isPending} onClick={() => trial.mutate()}>
-                  {trial.isPending ? "Включаем…" : "Попробовать 3 дня бесплатно"}
-                </button>
-                {trial.error && <span className="dim">{trial.error.message}</span>}
-              </>
+          <div className="stack" style={{ gap: 12 }}>
+            <div className={`glass ${styles.buy}`}>
+              {pro.data?.trialAvailable && (
+                <>
+                  <button type="button" className="btn primary" disabled={trial.isPending} onClick={() => trial.mutate()}>
+                    {trial.isPending ? "Включаем…" : "Попробовать 3 дня бесплатно"}
+                  </button>
+                  {trial.error && <span className="dim">{trial.error.message}</span>}
+                </>
+              )}
+              {pro.data?.telegram && (
+                <>
+                  <a
+                    href={PRO_BUY_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={pro.data.trialAvailable ? "btn" : "btn primary"}
+                    onClick={() => setTimeout(() => pro.refetch(), 30_000)}
+                  >
+                    Оформить Pro — 199 ₽ / 30 дней
+                  </a>
+                  <span className="dim">
+                    Оплата через Tribute картой или Telegram Stars из Telegram, привязанного к аккаунту. Pro включится сразу после оплаты,
+                    бот пришлёт подтверждение.
+                  </span>
+                </>
+              )}
+            </div>
+            {!pro.data?.telegram && (
+              <TelegramLinkCard text="Оплата Pro идёт через Tribute в Telegram — привяжите Telegram, чтобы оплата дошла до вашего аккаунта." />
             )}
-            <a
-              href={PRO_BUY_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={pro.data?.trialAvailable ? "btn" : "btn primary"}
-              onClick={() => setTimeout(() => pro.refetch(), 30_000)}
-            >
-              Оформить Pro — 199 ₽ / 30 дней
-            </a>
-            <span className="dim">
-              Оплата через Tribute картой или Telegram Stars. Pro включится на этом Telegram сразу после оплаты, бот пришлёт подтверждение.
-            </span>
           </div>
         )}
       </section>
 
-      <ExboAccount />
-
       <section className="section">
         <h2 className="section-title">Бесплатно остаётся</h2>
         <p className={`dim ${styles.free}`}>
-          Поиск и цены на рынке, лоты, история продаж за месяц, кланы, профили игроков, уведомления о выбросе и один ценовой
-          алерт.
+          Поиск и цены на рынке, лоты, история продаж за месяц, кланы, профили игроков, уведомления о выбросе и один ценовой алерт.
         </p>
       </section>
     </main>

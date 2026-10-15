@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useMe } from "@/features/account";
 import { emissionState, useEmission } from "@/features/emission";
 import { CREATOR, creatorHref } from "@/lib/creator";
 import { useApp } from "@/lib/store";
@@ -23,6 +24,24 @@ const tabIndex = (path: string) => {
   const i = TABS.findIndex((t) => t.href !== "/" && path.startsWith(t.href));
   return i === -1 ? 0 : i;
 };
+
+/** Аккаунт: «Войти» или логин EXBO — на телефоне в углу, на широком экране внизу боковой панели. */
+function AccountButton({ active }: { active: boolean }) {
+  const { me, pending } = useMe();
+  if (pending) return null;
+  return (
+    <Link
+      href="/account"
+      className={styles.account}
+      aria-current={active ? "page" : undefined}
+      aria-label={me ? `Аккаунт ${me.login}` : "Войти через EXBO"}
+      onClick={() => haptic.tap()}
+    >
+      <span className={styles.accountMark}>{me ? me.login.slice(0, 1).toUpperCase() : <Icon name="user" size={14} />}</span>
+      <span className={styles.accountName}>{me ? me.login : "Войти"}</span>
+    </Link>
+  );
+}
 
 export function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -73,6 +92,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
         </Link>
         <span className={styles.disclaimer}>Неофициальный фан-проект · данные STALZONE API · EXBO</span>
       </footer>
+
+      <AccountButton active={pathname === "/account"} />
 
       {canGoBack && (
         <button

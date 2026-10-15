@@ -1,7 +1,7 @@
 "use client";
 
 import { Icon } from "@/components/Icon";
-import { LinkedAs, TelegramLink } from "@/components/PriceAlert/TelegramLink";
+import { LoginCard, SentTo, TelegramLinkCard } from "@/components/Account/AccountGate";
 import { useAlerts, useDeleteFlipAlert, useSetFlipAlert, type FlipAlert, type FlipAlertInput } from "@/features/alerts";
 import { GROUPS } from "@/features/items";
 import { formatShort } from "@/lib/format";
@@ -19,10 +19,7 @@ const inputOf = (region: Region, s: FlipSettings): FlipAlertInput => ({
 });
 
 const same = (a: FlipAlert, b: FlipAlertInput) =>
-  a.minProfit === b.minProfit &&
-  a.minConfidence === b.minConfidence &&
-  a.maxBudget === b.maxBudget &&
-  a.groups.join() === b.groups.join();
+  a.minProfit === b.minProfit && a.minConfidence === b.minConfidence && a.maxBudget === b.maxBudget && a.groups.join() === b.groups.join();
 
 /** «от 100к · надёжно · до 5кк · Артефакты» */
 function describe(a: Pick<FlipAlert, "minProfit" | "minConfidence" | "maxBudget" | "groups">) {
@@ -42,8 +39,12 @@ export function FlipAlertCard({ region, settings }: { region: Region; settings: 
   const save = useSetFlipAlert();
   const remove = useDeleteFlipAlert();
 
+  if (alerts.pending) return null;
   if (!alerts.available) {
-    return <TelegramLink text="Бот может присылать новые флипы по вашим фильтрам. Привяжите Telegram — это один клик, без пароля." />;
+    return <LoginCard text="Войдите через EXBO - бот сможет присылать новые флипы по вашим фильтрам." />;
+  }
+  if (!alerts.telegram) {
+    return <TelegramLinkCard text="Бот может присылать новые флипы по вашим фильтрам. Привяжите Telegram — это один клик в боте." />;
   }
 
   const alert = alerts.data?.flip?.find((f) => f.region === region);
@@ -64,11 +65,9 @@ export function FlipAlertCard({ region, settings }: { region: Region; settings: 
       </span>
       <div className={styles.alertBody}>
         <strong>{alert ? "Флипы приходят в Telegram" : "Присылать новые флипы в Telegram"}</strong>
-        <span className="dim">
-          {alert ? describe(alert) : `${describe(wanted)} · по текущим фильтрам`}
-        </span>
+        <span className="dim">{alert ? describe(alert) : `${describe(wanted)} · по текущим фильтрам`}</span>
         {changed && <span className={styles.alertChanged}>Фильтры изменились: {describe(wanted)}</span>}
-        {alerts.linkedAs && <LinkedAs session={alerts.linkedAs} />}
+        {alerts.sentTo && <SentTo telegram={alerts.sentTo} />}
         {error && <span className={styles.alertError}>{error.message}</span>}
       </div>
       <div className={styles.alertActions}>

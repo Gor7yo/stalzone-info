@@ -11,7 +11,7 @@ import { haptic } from "@/lib/telegram";
 import { Icon } from "../Icon";
 import { ProTeaser } from "../Pro/Pro";
 import styles from "./PriceAlert.module.css";
-import { LinkedAs, TelegramLink } from "./TelegramLink";
+import { LoginCard, SentTo, TelegramLinkCard } from "../Account/AccountGate";
 
 interface Props {
   itemId: string;
@@ -30,8 +30,7 @@ export const variantLabel = (a: {
   qualities?: number[] | null;
   upgrade?: number | null;
   upgrades?: number[] | null;
-}) =>
-  [qualityLabel(a), upgradeLabel({ upgrade: a.upgrade ?? null, upgrades: a.upgrades })].filter(Boolean).join(" ");
+}) => [qualityLabel(a), upgradeLabel({ upgrade: a.upgrade ?? null, upgrades: a.upgrades })].filter(Boolean).join(" ");
 
 /** «Сообщи в Telegram, когда этот предмет будет дешевле N». */
 export function PriceAlertPanel({ itemId, itemName, region, filter, bestPrice, median }: Props) {
@@ -41,8 +40,12 @@ export function PriceAlertPanel({ itemId, itemName, region, filter, bestPrice, m
   const remove = useDeletePriceAlert();
   const [input, setInput] = useState("");
 
+  if (alerts.pending) return null;
   if (!alerts.available) {
-    return <TelegramLink text="Уведомления о цене приходят в Telegram-бота. Привяжите Telegram — это один клик в боте, без пароля." />;
+    return <LoginCard text="Войдите через EXBO, чтобы получать в Telegram уведомление, когда предмет подешевеет." />;
+  }
+  if (!alerts.telegram) {
+    return <TelegramLinkCard text="Уведомления о цене приходят в Telegram-бота. Привяжите Telegram — это один клик в боте." />;
   }
 
   const mine = (alerts.data?.price ?? []).filter((a) => a.itemId === itemId);
@@ -132,7 +135,7 @@ export function PriceAlertPanel({ itemId, itemName, region, filter, bestPrice, m
         create.error && <p className={styles.error}>{create.error.message}</p>
       )}
 
-      {alerts.linkedAs && <LinkedAs session={alerts.linkedAs} />}
+      {alerts.sentTo && <SentTo telegram={alerts.sentTo} />}
 
       {mine.length > 0 && (
         <ul className={styles.list}>
