@@ -307,6 +307,7 @@ export function ItemView({
               itemName={item?.name ?? id}
               region={region}
               filter={filter}
+              variantItem={variantItem}
               bestPrice={bestPrice}
               median={stats?.median}
             />

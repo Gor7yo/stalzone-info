@@ -313,6 +313,8 @@
   }
 
   .back {
+    /* кнопка лежит на боковой панели (.dock, z-index 50) — иначе панель перехватывает клики */
+    z-index: 55;
     left: 14px;
     bottom: 20px;
     width: calc(var(--side-w) - 28px);

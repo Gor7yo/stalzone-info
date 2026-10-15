@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useAlerts, useCreatePriceAlert, useDeletePriceAlert, type PriceAlert } from "@/features/alerts";
 import { hasUpgradeFilter, pickedQualities, qualityLabel, upgradeLabel, type LotFilter } from "@/features/auction";
+import { variantLabel as moduleLabel } from "@/features/modules";
 import { usePro } from "@/features/pro";
 import { isProRequired } from "@/lib/api";
 import { formatShort, parseGamePrice } from "@/lib/format";
@@ -19,6 +20,8 @@ interface Props {
   region: Region;
   /** Вариант артефакта берём из текущего фильтра страницы */
   filter: LotFilter;
+  /** У предмета есть ключевая характеристика (оружейный модуль) */
+  variantItem?: boolean;
   bestPrice?: number | null;
   median?: number | null;
 }
@@ -30,10 +33,14 @@ export const variantLabel = (a: {
   qualities?: number[] | null;
   upgrade?: number | null;
   upgrades?: number[] | null;
-}) => [qualityLabel(a), upgradeLabel({ upgrade: a.upgrade ?? null, upgrades: a.upgrades })].filter(Boolean).join(" ");
+  variant?: string | null;
+}) =>
+  [a.variant ? moduleLabel(a.variant) : "", qualityLabel(a), upgradeLabel({ upgrade: a.upgrade ?? null, upgrades: a.upgrades })]
+    .filter(Boolean)
+    .join(" ");
 
 /** «Сообщи в Telegram, когда этот предмет будет дешевле N». */
-export function PriceAlertPanel({ itemId, itemName, region, filter, bestPrice, median }: Props) {
+export function PriceAlertPanel({ itemId, itemName, region, filter, variantItem, bestPrice, median }: Props) {
   const alerts = useAlerts();
   const { isPro } = usePro();
   const create = useCreatePriceAlert();
@@ -68,6 +75,7 @@ export function PriceAlertPanel({ itemId, itemName, region, filter, bestPrice, m
         itemName,
         qualities: pickedQualities(filter).length ? pickedQualities(filter) : undefined,
         upgrades: filter.upgrades?.length ? filter.upgrades : undefined,
+        variant: filter.variant || undefined,
         maxPrice: price,
       },
       {
@@ -85,7 +93,8 @@ export function PriceAlertPanel({ itemId, itemName, region, filter, bestPrice, m
       <div className={styles.head}>
         <Icon name="bell" size={18} />
         <span>
-          Сообщить в Telegram, когда {variant ? <b>«{variant}»</b> : "лот"} на {regionLabel(region)} будет дешевле
+          Сообщить в Telegram, когда {variant ? <b>{filter.variant ? variant : `«${variant}»`}</b> : "лот"} на {regionLabel(region)} будет
+          дешевле
         </span>
       </div>
 
@@ -122,6 +131,9 @@ export function PriceAlertPanel({ itemId, itemName, region, filter, bestPrice, m
         </div>
       )}
 
+      {variantItem && !filter.variant && (
+        <p className={styles.hint}>Выберите ключевую характеристику в фильтре выше - без неё сработает на любой модуль.</p>
+      )}
       {!pickedQualities(filter).length && !hasUpgradeFilter(filter) && (
         <p className={styles.hint}>
           {isPro

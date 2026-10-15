@@ -19,6 +19,8 @@ export interface PriceAlert {
   upgrade: number | null;
   /** Выбранные уровни заточки; пусто — любая */
   upgrades: number[];
+  /** Ключевая характеристика модуля; "" — любая */
+  variant: string;
   maxPrice: number;
   lastNotifiedAt: string | null;
   createdAt: string;
@@ -54,6 +56,7 @@ export interface NewPriceAlert {
   itemName: string;
   qualities?: number[];
   upgrades?: number[];
+  variant?: string;
   maxPrice: number;
 }
 
