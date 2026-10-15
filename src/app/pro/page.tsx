@@ -1,5 +1,6 @@
 "use client";
 
+import { ExboAccount } from "@/components/ExboAccount/ExboAccount";
 import { Icon } from "@/components/Icon";
 import { TelegramLink } from "@/components/PriceAlert/TelegramLink";
 import { ProBadge } from "@/components/Pro/Pro";
@@ -75,6 +76,8 @@ export default function ProPage() {
           </div>
         )}
       </section>
+
+      <ExboAccount />
 
       <section className="section">
         <h2 className="section-title">Бесплатно остаётся</h2>

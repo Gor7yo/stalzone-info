@@ -45,7 +45,7 @@ npm run dev                     # http://localhost:3000
 | `NEXT_PUBLIC_API_URL` | адрес бэкенда, локально `http://localhost:3001`, на проде `https://api.stalzone-info.ru` |
 | `NEXT_PUBLIC_TG_APP_URL` | ссылка на мини-приложение `https://t.me/<бот>/<приложение>` - для диплинков |
 
-`NEXT_PUBLIC_*` вшиваются в сборку - после изменения нужен перезапуск workflow `deploy` (Actions → deploy → Run workflow).
+`NEXT_PUBLIC_*` вшиваются в сборку - после изменения нужен Redeploy на Vercel.
 
 Проверки: `npm run typecheck`, `npm run lint`.
 
@@ -70,8 +70,12 @@ public/         справочники (items.json, barter.json), иконки �
 
 ## Деплой
 
-Фронт живёт на том же VPS, что и бэкенд (Vercel из России без VPN не открывается).
-Push в `main` → GitHub Actions (`.github/workflows/deploy.yml`) собирает `next build` в режиме `standalone`,
+Vercel: push в `main` → сборка. Домен `stalzone-info.ru` (DNS на Рег.ру - записи, которые показывает Vercel в Settings → Domains).
+
+### Запасной вариант: VPS
+
+Если понадобится уйти с Vercel (в 10.2026 жили на VPS сутки - из России без VPN не открывается ни Vercel, ни DigitalOcean).
+Actions → deploy → Run workflow (`.github/workflows/deploy.yml`) собирает `next build` в режиме `standalone`,
 заливает архив на сервер и вызывает `stalzone-front-release`: распаковка в `/opt/stalzone/front/releases/<дата>-<коммит>`,
 переключение ссылки `current`, рестарт службы `stalzone-front` (Node на `127.0.0.1:3000`, Caddy проксирует домен).
 Хранятся 3 последних релиза.

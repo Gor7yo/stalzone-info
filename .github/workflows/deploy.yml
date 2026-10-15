@@ -3,9 +3,8 @@
 # Переменные репозитория: NEXT_PUBLIC_API_URL, NEXT_PUBLIC_TG_APP_URL.
 name: deploy
 
+# Основной деплой - Vercel; этот запасной путь на VPS запускается только вручную (Actions → deploy → Run workflow)
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 concurrency:
