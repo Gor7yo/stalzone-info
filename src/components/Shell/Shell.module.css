@@ -50,7 +50,7 @@
 /* ---------- док ---------- */
 
 .dock {
-  --count: 5;
+  --count: 6;
   --pad: 6px;
   position: fixed;
   z-index: 50;
@@ -187,56 +187,6 @@
   transform: scale(0.94);
 }
 
-/* аккаунт: на телефоне — в правом верхнем углу */
-.account {
-  position: fixed;
-  z-index: 45;
-  top: calc(var(--safe-top) + 12px);
-  right: max(16px, calc(50% - 230px));
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  max-width: 46vw;
-  height: 34px;
-  padding: 0 12px 0 4px;
-  border-radius: 999px;
-  background: rgb(14 16 19 / 0.78);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--line-2);
-  font-size: 13px;
-  font-weight: 800;
-  box-shadow: 0 12px 30px -10px rgb(0 0 0 / 0.8);
-  transition: transform 160ms var(--ease);
-}
-
-.account:active {
-  transform: scale(0.94);
-}
-
-.account[aria-current="page"] {
-  border-color: rgb(var(--acc-rgb) / 0.5);
-}
-
-.accountMark {
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: rgb(var(--acc-rgb) / 0.16);
-  color: var(--acc);
-  font-family: var(--font-display);
-  font-size: 12px;
-}
-
-.accountName {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 /* подпись автора внизу каждой страницы: заходит в нижний отступ .page, над доком */
 .credit {
   position: relative;
@@ -364,20 +314,9 @@
 
   .back {
     left: 14px;
-    bottom: 66px;
-    width: calc(var(--side-w) - 28px);
-    justify-content: center;
-  }
-
-  /* на широком экране — внизу боковой панели */
-  .account {
-    top: auto;
-    right: auto;
-    left: 14px;
     bottom: 20px;
     width: calc(var(--side-w) - 28px);
-    max-width: none;
-    height: 38px;
+    justify-content: center;
   }
 
   .credit {

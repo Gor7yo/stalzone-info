@@ -14,34 +14,19 @@ import styles from "./Shell.module.css";
 const TABS: { href: string; label: string; icon: IconName }[] = [
   { href: "/", label: "Главная", icon: "home" },
   { href: "/auction", label: "Рынок", icon: "market" },
-  { href: "/character", label: "Игроки", icon: "user" },
+  { href: "/character", label: "Игроки", icon: "users" },
   { href: "/clans", label: "Кланы", icon: "shield" },
   { href: "/emission", label: "Выброс", icon: "radiation" },
+  // подпись меняется: «Войти» / «Аккаунт»
+  { href: "/account", label: "Аккаунт", icon: "user" },
 ];
 
 const tabIndex = (path: string) => {
   if (["/loot", "/craft", "/flips"].some((p) => path.startsWith(p))) return 1; // часть рынка
+  if (["/pro", "/admin", "/auth"].some((p) => path.startsWith(p))) return TABS.length - 1; // аккаунт
   const i = TABS.findIndex((t) => t.href !== "/" && path.startsWith(t.href));
   return i === -1 ? 0 : i;
 };
-
-/** Аккаунт: «Войти» или логин EXBO — на телефоне в углу, на широком экране внизу боковой панели. */
-function AccountButton({ active }: { active: boolean }) {
-  const { me, pending } = useMe();
-  if (pending) return null;
-  return (
-    <Link
-      href="/account"
-      className={styles.account}
-      aria-current={active ? "page" : undefined}
-      aria-label={me ? `Аккаунт ${me.login}` : "Войти через EXBO"}
-      onClick={() => haptic.tap()}
-    >
-      <span className={styles.accountMark}>{me ? me.login.slice(0, 1).toUpperCase() : <Icon name="user" size={14} />}</span>
-      <span className={styles.accountName}>{me ? me.login : "Войти"}</span>
-    </Link>
-  );
-}
 
 export function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -50,6 +35,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const { data } = useEmission(region);
   const emissionActive = emissionState(data).phase === "active";
   const active = tabIndex(pathname);
+  // вкладка аккаунта: не вошли — «Войти»
+  const { me, pending: mePending } = useMe();
+  const accountLabel = me || mePending ? "Аккаунт" : "Войти";
 
   // нативная кнопка «Назад» Telegram на вложенных экранах
   useEffect(() => {
@@ -93,8 +81,6 @@ export function Shell({ children }: { children: React.ReactNode }) {
         <span className={styles.disclaimer}>Неофициальный фан-проект · данные STALZONE API · EXBO</span>
       </footer>
 
-      <AccountButton active={pathname === "/account"} />
-
       {canGoBack && (
         <button
           type="button"
@@ -136,7 +122,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 <Icon name={tab.icon} size={21} strokeWidth={i === active ? 2.2 : 1.8} />
                 {tab.href === "/emission" && emissionActive && <span className={styles.alert} />}
               </span>
-              <span className={styles.tabLabel}>{tab.label}</span>
+              <span className={styles.tabLabel}>{tab.href === "/account" ? accountLabel : tab.label}</span>
             </Link>
           ))}
         </div>

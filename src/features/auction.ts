@@ -3,8 +3,9 @@
 import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { Region } from "@/lib/store";
+import { variantOf } from "./modules";
 
-/** qlt — качество (0–5), ptn — заточка (1–15; поля нет, если +0) */
+/** qlt — качество (0–5), ptn — заточка (1–15; поля нет, если +0), attributes — характеристики модуля */
 export type Additional = { qlt?: number; ptn?: number; [key: string]: unknown };
 
 export interface Lot {
@@ -96,8 +97,7 @@ export const bestPriceQuery = (region: Region, item: string) => ({
   staleTime: 2 * 60_000,
 });
 
-export const useBestPrice = (region: Region, item: string, enabled = true) =>
-  useQuery({ ...bestPriceQuery(region, item), enabled });
+export const useBestPrice = (region: Region, item: string, enabled = true) => useQuery({ ...bestPriceQuery(region, item), enabled });
 
 // ---------- история за период ----------
 
@@ -140,7 +140,10 @@ export function bucketPoints(points: ChartPoint[], bucketMs: number): ChartPoint
         ? list[0]
         : {
             t: key * bucketMs + bucketMs / 2,
-            price: quantile(list.map((p) => p.price).sort((a, b) => a - b), 0.5),
+            price: quantile(
+              list.map((p) => p.price).sort((a, b) => a - b),
+              0.5,
+            ),
             count: list.length,
           },
     );
@@ -162,8 +165,7 @@ export function useHistory(region: Region, item: string, period: HistoryPeriod, 
   return useQuery({
     enabled,
     queryKey: ["history", region, item, period],
-    queryFn: () =>
-      api<PeriodHistoryResponse>("/api/auction/history/period", { region, item, period, fresh: fresh(region, item) }),
+    queryFn: () => api<PeriodHistoryResponse>("/api/auction/history/period", { region, item, period, fresh: fresh(region, item) }),
     staleTime: period === "day" ? 60_000 : 5 * 60_000,
     // при смене периода старый график остаётся на экране, пока грузится новый
     placeholderData: keepPreviousData,
@@ -210,8 +212,7 @@ const unit = (s: { price: number; amount: number }) => s.price / Math.max(1, Num
 export const STATS_WINDOW_DAYS = 30;
 const MIN_SALES = 3;
 
-const matching = (sales: Sale[], filter: LotFilter) =>
-  sales.filter((s) => s.price > 0 && matchesFilter(s.additional, filter));
+const matching = (sales: Sale[], filter: LotFilter) => sales.filter((s) => s.price > 0 && matchesFilter(s.additional, filter));
 
 /** Последняя сделка (любой давности) — чтобы честно сказать «давно не продавался». */
 export function lastSale(sales: Sale[], filter: LotFilter = ALL) {
@@ -232,20 +233,24 @@ export function priceStats(sales: Sale[], filter: LotFilter = ALL, days = STATS_
   if (valid.length < MIN_SALES) return null;
 
   const points = valid
-    .map(
-      (s): ChartPoint => ({
-        t: new Date(s.time).getTime(),
-        price: unit(s),
-        quality: qualityOf(s.additional),
-        upgrade: upgradeOf(s.additional),
-      }),
-    )
+    .map((s): ChartPoint => ({
+      t: new Date(s.time).getTime(),
+      price: unit(s),
+      quality: qualityOf(s.additional),
+      upgrade: upgradeOf(s.additional),
+    }))
     .sort((a, b) => a.t - b.t);
 
   const sorted = points.map((p) => p.price).sort((a, b) => a - b);
   const half = Math.floor(points.length / 2);
-  const older = points.slice(0, half).map((p) => p.price).sort((a, b) => a - b);
-  const newer = points.slice(half).map((p) => p.price).sort((a, b) => a - b);
+  const older = points
+    .slice(0, half)
+    .map((p) => p.price)
+    .sort((a, b) => a - b);
+  const newer = points
+    .slice(half)
+    .map((p) => p.price)
+    .sort((a, b) => a - b);
   const olderMedian = quantile(older, 0.5);
 
   const dayAgo = Date.now() - 86_400_000;
@@ -262,8 +267,7 @@ export function priceStats(sales: Sale[], filter: LotFilter = ALL, days = STATS_
   };
 }
 
-export const lotUnitPrice = (lot: Lot) =>
-  lot.buyoutPrice > 0 ? lot.buyoutPrice / Math.max(1, lot.amount) : 0;
+export const lotUnitPrice = (lot: Lot) => (lot.buyoutPrice > 0 ? lot.buyoutPrice / Math.max(1, lot.amount) : 0);
 
 export type Deal = { kind: "hot" | "good" | "fair" | "high"; diff: number };
 
@@ -326,6 +330,8 @@ export interface LotFilter {
   upgrade: number | null;
   upgrades?: number[] | null;
   tier?: number | null;
+  /** Ключевая характеристика модуля (marksman…); null/undefined — любая */
+  variant?: string | null;
 }
 
 export const ALL: LotFilter = { quality: null, upgrade: null };
@@ -370,18 +376,21 @@ export const matchesFilter = (additional: Additional | undefined, f: LotFilter) 
     (!f.qualities?.length || f.qualities.includes(qualityOf(additional) ?? -1)) &&
     (f.upgrade === null || u === f.upgrade) &&
     (!f.upgrades?.length || f.upgrades.includes(u)) &&
-    (f.tier == null || tierOf(additional) === f.tier)
+    (f.tier == null || tierOf(additional) === f.tier) &&
+    (f.variant == null || variantOf(additional) === f.variant)
   );
 };
 
 /**
  * Медиана для оценки лота: сначала по точному качеству и заточке,
- * если таких сделок мало — по ступени заточки. Нет данных — undefined (без оценки).
+ * если таких сделок мало — по ступени заточки. Ключевая характеристика модуля — всегда точная
+ * (модули с разной характеристикой стоят несравнимо). Нет данных — undefined (без оценки).
  */
 export function comparableMedian(sales: Sale[], additional?: Additional) {
   const quality = qualityOf(additional);
+  const variant = variantOf(additional);
   return (
-    priceStats(sales, { quality, upgrade: upgradeOf(additional) })?.median ??
-    priceStats(sales, { quality, upgrade: null, tier: tierOf(additional) })?.median
+    priceStats(sales, { quality, upgrade: upgradeOf(additional), variant })?.median ??
+    priceStats(sales, { quality, upgrade: null, tier: tierOf(additional), variant })?.median
   );
 }

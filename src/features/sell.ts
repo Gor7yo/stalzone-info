@@ -49,17 +49,20 @@ export interface SellParams {
   /** -1 — у предмета нет качества */
   quality: number;
   upgrade: number;
+  /** Ключевая характеристика модуля; "" — у предмета её нет */
+  variant: string;
   amount: number;
 }
 
-/** Только для Pro (сервер проверяет подписку по Telegram). */
+/** Только для Pro (сервер проверяет подписку аккаунта). */
 export const useSellAdvice = (p: SellParams, enabled = true) =>
   useQuery({
     enabled,
-    queryKey: ["sell", p.region, p.itemId, p.quality, p.upgrade, p.amount],
+    queryKey: ["sell", p.region, p.itemId, p.quality, p.upgrade, p.variant, p.amount],
     queryFn: () =>
       authed<SellAdvice>(
-        `/api/sell/advice?region=${p.region}&item=${p.itemId}&quality=${p.quality}&upgrade=${p.upgrade}&amount=${p.amount}`,
+        `/api/sell/advice?region=${p.region}&item=${p.itemId}&quality=${p.quality}&upgrade=${p.upgrade}&amount=${p.amount}` +
+          (p.variant ? `&variant=${encodeURIComponent(p.variant)}` : ""),
       ),
     staleTime: 30_000,
     refetchInterval: 60_000,

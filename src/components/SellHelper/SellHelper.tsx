@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { MAX_UPGRADE, QUALITY, TIERS } from "@/features/auction";
+import { variantLabel } from "@/features/modules";
 import { usePro } from "@/features/pro";
 import { formatHours, hoursToSell, targetLabel, unitsAhead, useSellAdvice, type SellAdvice } from "@/features/sell";
 import { formatNumber, formatPrice, formatRelative, formatShort, parseGamePrice, plural } from "@/lib/format";
@@ -24,6 +25,9 @@ interface Props {
   /** стартовые качество и заточка — из фильтра страницы */
   initialQuality: number | null;
   initialUpgrade: number | null;
+  /** ключевые характеристики модуля, что встречаются на рынке; пусто — у предмета их нет */
+  variants: string[];
+  initialVariant: string | null;
 }
 
 /** «По какой цене выставить, чтобы продалось за N часов» — Pro. */
@@ -45,17 +49,28 @@ export function SellHelper(props: Props) {
     );
   }
   // фильтр страницы поменялся — начинаем с нового варианта
-  return <SellPanel key={`${props.initialQuality}:${props.initialUpgrade}`} {...props} />;
+  return <SellPanel key={`${props.initialQuality}:${props.initialUpgrade}:${props.initialVariant}`} {...props} />;
 }
 
-function SellPanel({ itemId, region, hasQuality, hasUpgrade, stackable, initialQuality, initialUpgrade }: Props) {
+function SellPanel({ itemId, region, hasQuality, hasUpgrade, stackable, initialQuality, initialUpgrade, variants, initialVariant }: Props) {
   const [quality, setQuality] = useState(hasQuality ? (initialQuality ?? 0) : -1);
   const [upgrade, setUpgrade] = useState(initialUpgrade ?? 0);
+  // модуль: без характеристики цену не посчитать — берём выбранную на странице или самую частую
+  const [variant, setVariant] = useState(initialVariant ?? variants[0] ?? "");
   const [amountInput, setAmountInput] = useState("1");
   const [myInput, setMyInput] = useState("");
   const amount = stackable ? Math.max(1, Math.min(100_000, Math.floor(Number(amountInput)) || 1)) : 1;
+  // у модуля заточки нет — вместо неё ключевая характеристика
+  const upgradable = hasUpgrade && !variants.length;
 
-  const advice = useSellAdvice({ region, itemId, quality: hasQuality ? quality : -1, upgrade, amount });
+  const advice = useSellAdvice({
+    region,
+    itemId,
+    quality: hasQuality ? quality : -1,
+    upgrade: upgradable ? upgrade : 0,
+    variant,
+    amount,
+  });
   const a = advice.data;
   const myPrice = parseGamePrice(myInput);
 
@@ -86,9 +101,28 @@ function SellPanel({ itemId, region, hasQuality, hasUpgrade, stackable, initialQ
         </div>
       )}
 
-      {(hasUpgrade || stackable) && (
+      {variants.length > 0 && (
+        <div className="chips" role="radiogroup" aria-label="Ключевая характеристика модуля">
+          {variants.map((v) => (
+            <button
+              key={v}
+              type="button"
+              className="chip"
+              aria-pressed={variant === v}
+              onClick={() => {
+                haptic.tap();
+                setVariant(v);
+              }}
+            >
+              {variantLabel(v)}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {(upgradable || stackable) && (
         <div className={styles.params}>
-          {hasUpgrade && (
+          {upgradable && (
             <div className={styles.stepper} aria-label="Заточка">
               <button type="button" aria-label="Меньше" disabled={upgrade <= 0} onClick={() => setUpgrade((u) => Math.max(0, u - 1))}>
                 −

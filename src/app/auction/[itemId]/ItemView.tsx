@@ -52,6 +52,7 @@ import { useAlerts } from "@/features/alerts";
 import { usePro } from "@/features/pro";
 import { useBarter } from "@/features/barter";
 import { categoryLabel, rarityOf, useItem } from "@/features/items";
+import { variantLabel, variantOf, variantsOf } from "@/features/modules";
 import { formatCompact, formatDuration, formatNumber, formatPrice, formatRelative, plural } from "@/lib/format";
 import { actions, useApp } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
@@ -78,18 +79,30 @@ const QUALITY_LOTS_MAX = 1000;
  * quality / upgrade — открыть сразу с фильтром по ним (переход из флиппера);
  * null — без фильтра (у артефакта по умолчанию «Обычный»).
  */
-export function ItemView({ id, quality = null, upgrade = null }: { id: string; quality?: number | null; upgrade?: number | null }) {
+export function ItemView({
+  id,
+  quality = null,
+  upgrade = null,
+  variant = null,
+}: {
+  id: string;
+  quality?: number | null;
+  upgrade?: number | null;
+  /** ключевая характеристика модуля (?v=) */
+  variant?: string | null;
+}) {
   const region = useApp((s) => s.region);
   const isFav = useApp((s) => s.favItems.includes(id));
   const { item, isLoading: itemLoading } = useItem(id);
 
   const linked: LotFilter | null =
-    quality !== null || upgrade !== null
+    quality !== null || upgrade !== null || variant !== null
       ? {
           quality: null,
           qualities: quality !== null ? [quality] : null,
           upgrade: null,
           upgrades: upgrade !== null ? [upgrade] : null,
+          variant,
         }
       : null;
 
@@ -124,9 +137,11 @@ export function ItemView({ id, quality = null, upgrade = null }: { id: string; q
   // артефакт по умолчанию открывается на «Обычном»: без фильтра график — «пила» из смеси качеств
   const filter = !isPro ? ALL : (userFilter ?? (item?.group === "artefact" ? { quality: null, qualities: [0], upgrade: null } : ALL));
   const qualities = pickedQualities(filter);
-  const filtered = qualities.length > 0 || hasUpgradeFilter(filter);
+  const filtered = qualities.length > 0 || hasUpgradeFilter(filter) || filter.variant != null;
+  // у модуля цена зависит от ключевой характеристики («Снайпер») так же сильно, как от качества
+  const variantItem = item?.group === "weapon_modules";
   // у артефакта без одного выбранного качества медиана и тренд смешивают дешёвые и дорогие варианты
-  const mixed = qualityItem && qualities.length !== 1;
+  const mixed = qualityItem && (qualities.length !== 1 || (variantItem && filter.variant == null));
 
   const history = useHistory(region, id, period, tradable);
   const lots = useLots(region, id, sort.sort, sort.order, tradable, qualityItem ? 200 : undefined);
@@ -164,7 +179,7 @@ export function ItemView({ id, quality = null, upgrade = null }: { id: string; q
   const medians = new Map<string, number | undefined>();
   const lotMedian = (lot: Lot) => {
     if (!hasQuality) return stats?.median;
-    const key = `${qualityOf(lot.additional)}:${upgradeOf(lot.additional)}`;
+    const key = `${qualityOf(lot.additional)}:${upgradeOf(lot.additional)}:${variantOf(lot.additional)}`;
     if (!medians.has(key)) medians.set(key, comparableMedian(sales, lot.additional));
     return medians.get(key);
   };
@@ -199,7 +214,9 @@ export function ItemView({ id, quality = null, upgrade = null }: { id: string; q
   const cellBest = filtered ? Math.min(...lotsInFilter.map(lotUnitPrice).filter((p) => p > 0)) : null;
   const bestPrice = filtered ? (Number.isFinite(cellBest) ? cellBest : null) : best.data?.price;
   const latest = lastSale(sales, filter);
-  const filterLabel = [qualityLabel(filter), upgradeLabel(filter)].filter(Boolean).join(" ");
+  const filterLabel = [qualityLabel(filter), upgradeLabel(filter), filter.variant ? variantLabel(filter.variant) : ""]
+    .filter(Boolean)
+    .join(" ");
   // нет ни лотов, ни свежих сделок — предмет сейчас не торгуется (или вообще не продаётся)
   const inactive = !lots.isLoading && !history.isLoading && !lots.isError && !history.isError && totalLots === 0 && !stats;
 
@@ -266,6 +283,7 @@ export function ItemView({ id, quality = null, upgrade = null }: { id: string; q
                       {q.label}
                     </span>
                   ))}
+                  {filter.variant && <span className="pill">{variantLabel(filter.variant)}</span>}
                   {item.rarity !== "DEFAULT" && (
                     <span className="pill" style={{ color: rarity.color }}>
                       <span className="dot" />
@@ -303,6 +321,8 @@ export function ItemView({ id, quality = null, upgrade = null }: { id: string; q
               stackable={allLots.some((l) => l.amount > 1)}
               initialQuality={qualities.length === 1 ? qualities[0] : null}
               initialUpgrade={filter.upgrades?.length === 1 ? filter.upgrades[0] : (filter.upgrade ?? null)}
+              variants={variantItem ? variantsOf(allLots, sales) : []}
+              initialVariant={filter.variant ?? null}
             />
           )}
 
@@ -357,7 +377,9 @@ export function ItemView({ id, quality = null, upgrade = null }: { id: string; q
                         hint={
                           mixed
                             ? isPro
-                              ? "смесь качеств — выбери качество"
+                              ? variantItem
+                                ? "смесь модулей — выбери качество и характеристику"
+                                : "смесь качеств — выбери качество"
                               : "все качества вместе"
                             : stats
                               ? `${formatCompact(stats.p25)} – ${formatCompact(stats.p75)}`
@@ -599,19 +621,27 @@ function Quality({ additional }: { additional?: Additional }) {
   const q = qi === null ? undefined : QUALITY[qi];
   if (!q) return null;
   const up = upgradeOf(additional);
+  // у модуля вместо заточки — ключевая характеристика («Снайпер»), от неё и зависит цена
+  const variant = variantOf(additional);
   return (
     <>
       <span className={`pill ${styles.qualityPill}`} style={{ color: q.color, height: 22, fontSize: 11 }}>
         {q.label}
       </span>
-      <span
-        className={styles.upgrade}
-        data-max={up === MAX_UPGRADE || undefined}
-        style={{ "--up": up / MAX_UPGRADE } as React.CSSProperties}
-        title={`Заточка +${up} из +${MAX_UPGRADE}`}
-      >
-        +{up}
-      </span>
+      {variant ? (
+        <span className="pill" style={{ height: 22, fontSize: 11, fontWeight: 800 }} title="Ключевая характеристика модуля">
+          {variantLabel(variant)}
+        </span>
+      ) : (
+        <span
+          className={styles.upgrade}
+          data-max={up === MAX_UPGRADE || undefined}
+          style={{ "--up": up / MAX_UPGRADE } as React.CSSProperties}
+          title={`Заточка +${up} из +${MAX_UPGRADE}`}
+        >
+          +{up}
+        </span>
+      )}
     </>
   );
 }

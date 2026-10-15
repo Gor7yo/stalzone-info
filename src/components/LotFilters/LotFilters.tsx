@@ -1,15 +1,7 @@
 "use client";
 
-import {
-  lotUnitPrice,
-  MAX_UPGRADE,
-  pickedQualities,
-  qualityOf,
-  QUALITY,
-  upgradeOf,
-  type Lot,
-  type LotFilter,
-} from "@/features/auction";
+import { lotUnitPrice, MAX_UPGRADE, pickedQualities, qualityOf, QUALITY, upgradeOf, type Lot, type LotFilter } from "@/features/auction";
+import { variantLabel, variantsOf } from "@/features/modules";
 import { haptic } from "@/lib/telegram";
 import styles from "./LotFilters.module.css";
 import { UpgradeDial } from "./UpgradeDial";
@@ -58,9 +50,35 @@ export function LotFilters({
     return { count: list.length, best: prices.length ? Math.min(...prices) : null };
   });
   const qualityCount = (q: number) => lots.filter((l) => qualityOf(l.additional) === q).length;
+  // ключевые характеристики модуля в лотах — самые частые первыми
+  const variants = variantsOf(lots);
 
   return (
     <div className={styles.panel}>
+      {variants.length > 0 && (
+        <div className={styles.row} role="radiogroup" aria-label="Ключевая характеристика модуля">
+          <button
+            type="button"
+            className={styles.chip}
+            aria-pressed={filter.variant == null}
+            onClick={() => pick({ ...filter, variant: null })}
+          >
+            Любая
+          </button>
+          {variants.map((v) => (
+            <button
+              key={v}
+              type="button"
+              className={styles.chip}
+              aria-pressed={filter.variant === v}
+              onClick={() => pick({ ...filter, variant: filter.variant === v ? null : v })}
+            >
+              {variantLabel(v)}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className={styles.row} role="group" aria-label="Качество (можно несколько)">
         <button
           type="button"
@@ -86,11 +104,14 @@ export function LotFilters({
         ))}
       </div>
 
-      <UpgradeDial
-        levels={byLevel}
-        value={filter.upgrades ?? []}
-        onChange={(upgrades) => onFilter({ ...filter, upgrade: null, upgrades: upgrades.length ? upgrades : null })}
-      />
+      {/* у модулей заточки нет — вместо неё ключевая характеристика (ряд выше) */}
+      {!variants.length && (
+        <UpgradeDial
+          levels={byLevel}
+          value={filter.upgrades ?? []}
+          onChange={(upgrades) => onFilter({ ...filter, upgrade: null, upgrades: upgrades.length ? upgrades : null })}
+        />
+      )}
 
       <div className={styles.deals} role="radiogroup" aria-label="Выгодность">
         {(

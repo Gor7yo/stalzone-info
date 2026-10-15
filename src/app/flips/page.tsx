@@ -9,6 +9,7 @@ import { RegionSwitch } from "@/components/ui/RegionSwitch";
 import { Segmented } from "@/components/ui/Segmented";
 import { EmptyState, ErrorState, RowSkeleton } from "@/components/ui/States";
 import { QUALITY, TIERS } from "@/features/auction";
+import { variantLabel } from "@/features/modules";
 import { CONFIDENCE, useFlips, type Flip } from "@/features/flips";
 import { GROUPS, useItems, type Item } from "@/features/items";
 import { formatRelative, formatShort, plural } from "@/lib/format";
@@ -44,7 +45,7 @@ interface Offer {
 function groupOffers(flips: Flip[]): Offer[] {
   const map = new Map<string, Offer>();
   for (const f of flips) {
-    const key = `${f.itemId}:${f.quality}:${f.upgrade}`;
+    const key = `${f.itemId}:${f.quality}:${f.upgrade}:${f.variant ?? ""}`;
     const offer = map.get(key);
     if (!offer) map.set(key, { key, best: f, lots: [f] });
     else {
@@ -70,8 +71,8 @@ export default function FlipsPage() {
   return (
     <main className="page">
       <PageHeader eyebrow="Аукцион · Pro" title="Флиппер">
-        Лоты дешевле рынка в реальном времени: выкупи и перепродай. Цена продажи — медиана сделок за 3 дня с тем же качеством и
-        заточкой, комиссия 5 % уже вычтена.
+        Лоты дешевле рынка в реальном времени: выкупи и перепродай. Цена продажи — медиана сделок за 3 дня с тем же качеством и заточкой,
+        комиссия 5 % уже вычтена.
       </PageHeader>
       <ProTeaser
         title="Флиппер — в Pro"
@@ -85,7 +86,9 @@ export default function FlipsPage() {
               <span className="skeleton" style={{ width: "60%", height: 14 }} />
               <span className="skeleton" style={{ width: "40%", height: 12 }} />
             </span>
-            <strong className="mono" style={{ color: "var(--green)" }}>+{["735", "244", "88"][i]}к</strong>
+            <strong className="mono" style={{ color: "var(--green)" }}>
+              +{["735", "244", "88"][i]}к
+            </strong>
           </div>
         ))}
       </div>
@@ -133,8 +136,8 @@ function FlipsFeed() {
   return (
     <main className="page">
       <PageHeader eyebrow="Аукцион" title="Флиппер" aside={<RegionSwitch />}>
-        Лоты дешевле рынка: выкупи и перепродай. Цена продажи — медиана сделок за {data?.windowDays ?? 3} {plural(data?.windowDays ?? 3, ["день", "дня", "дней"])} с тем же качеством и
-        заточкой, комиссия 5 % уже вычтена.
+        Лоты дешевле рынка: выкупи и перепродай. Цена продажи — медиана сделок за {data?.windowDays ?? 3}{" "}
+        {plural(data?.windowDays ?? 3, ["день", "дня", "дней"])} с тем же качеством и заточкой, комиссия 5 % уже вычтена.
       </PageHeader>
 
       <section className={`glass ${styles.hero}`}>
@@ -201,7 +204,13 @@ function FlipsFeed() {
           <Filter label="Прибыль от">
             <div className="chips">
               {MIN_PROFIT.map((v) => (
-                <button key={v} type="button" className="chip" aria-pressed={settings.minProfit === v} onClick={() => set({ minProfit: v })}>
+                <button
+                  key={v}
+                  type="button"
+                  className="chip"
+                  aria-pressed={settings.minProfit === v}
+                  onClick={() => set({ minProfit: v })}
+                >
                   {formatShort(v)}
                 </button>
               ))}
@@ -223,7 +232,13 @@ function FlipsFeed() {
                   Все
                 </button>
                 {groups.map((g) => (
-                  <button key={g.id} type="button" className="chip" aria-pressed={settings.group === g.id} onClick={() => set({ group: g.id })}>
+                  <button
+                    key={g.id}
+                    type="button"
+                    className="chip"
+                    aria-pressed={settings.group === g.id}
+                    onClick={() => set({ group: g.id })}
+                  >
                     <span aria-hidden>{g.icon}</span> {g.label}
                   </button>
                 ))}
@@ -262,14 +277,18 @@ function FlipsFeed() {
           <EmptyState
             icon="sparkle"
             title="Флипов не нашлось"
-            text={all.length ? "Ослабьте фильтры: меньше прибыль, больше бюджет или все уровни надёжности." : "Сейчас на рынке нет лотов заметно дешевле сделок. Загляните позже."}
+            text={
+              all.length
+                ? "Ослабьте фильтры: меньше прибыль, больше бюджет или все уровни надёжности."
+                : "Сейчас на рынке нет лотов заметно дешевле сделок. Загляните позже."
+            }
           />
         )}
       </section>
 
       <p className={`dim ${styles.note}`}>
-        Оценка — по прошлым сделкам, а не обещание: лот могли уже выкупить, а цена — сдвинуться. «Надёжно» — много сделок с тем же
-        качеством и заточкой и небольшой разброс цен.
+        Оценка — по прошлым сделкам, а не обещание: лот могли уже выкупить, а цена — сдвинуться. «Надёжно» — много сделок с тем же качеством
+        и заточкой и небольшой разброс цен.
       </p>
     </main>
   );
@@ -288,7 +307,8 @@ function Filter({ label, children }: { label: string; children: React.ReactNode 
 function itemHref(f: Flip, item?: Item) {
   const params = new URLSearchParams();
   if (f.quality >= 0) params.set("q", String(f.quality));
-  if (f.upgrade > 0 || (item && UPGRADABLE.has(item.group))) params.set("u", String(f.upgrade));
+  if (f.variant) params.set("v", f.variant);
+  else if (f.upgrade > 0 || (item && UPGRADABLE.has(item.group))) params.set("u", String(f.upgrade));
   const query = params.toString();
   return `/auction/${f.itemId}${query ? `?${query}` : ""}`;
 }
@@ -318,10 +338,11 @@ function OfferCard({ offer, item }: { offer: Offer; item?: Item }) {
         <span className={styles.cardTitle}>
           <span className={styles.nameRow}>
             <strong className="truncate">{item?.name ?? f.itemId}</strong>
-            {(f.upgrade > 0 || quality) && <span className={styles.upgrade}>+{f.upgrade}</span>}
+            {!f.variant && (f.upgrade > 0 || quality) && <span className={styles.upgrade}>+{f.upgrade}</span>}
           </span>
           <span className={styles.tags}>
             {quality && <span className={styles.qualityTag}>{quality.label}</span>}
+            {f.variant && <span className={styles.tag}>{variantLabel(f.variant)}</span>}
             {f.amount > 1 && <span className={styles.tag}>×{f.amount}</span>}
             <span className={styles.conf} style={{ color: conf.color }}>
               ● {conf.label}
