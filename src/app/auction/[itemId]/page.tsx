@@ -1,7 +1,20 @@
 import type { Metadata } from "next";
+import { serverItem } from "@/lib/items-server";
 import { ItemView } from "./ItemView";
 
-export const metadata: Metadata = { title: "Предмет" };
+/** Заголовок и описание с названием предмета — по ним страницу находят в поиске («Комета цена»). */
+export async function generateMetadata({ params }: PageProps<"/auction/[itemId]">): Promise<Metadata> {
+  const { itemId } = await params;
+  const id = decodeURIComponent(itemId);
+  const item = serverItem(id);
+  if (!item) return { title: "Предмет" };
+  return {
+    title: `${item.name} - цена на аукционе`,
+    description: `${item.name}: цена на аукционе STALZONE сейчас, лоты, история продаж и график цен по регионам RU, EU, NA и SEA.`,
+    alternates: { canonical: `/auction/${id}` },
+    openGraph: { title: `${item.name} - цена на аукционе`, url: `/auction/${id}` },
+  };
+}
 
 /**
  * ?q=3&u=5 — сразу открыть с фильтром «качество Редкий, заточка +5» (ссылки из флиппера);
@@ -20,5 +33,6 @@ const variantParam = (value: string | string[] | undefined) => {
 export default async function ItemPage({ params, searchParams }: PageProps<"/auction/[itemId]">) {
   const { itemId } = await params;
   const { q, u, v } = await searchParams;
-  return <ItemView id={decodeURIComponent(itemId)} quality={level(q, 5)} upgrade={level(u, 15)} variant={variantParam(v)} />;
+  const id = decodeURIComponent(itemId);
+  return <ItemView id={id} name={serverItem(id)?.name} quality={level(q, 5)} upgrade={level(u, 15)} variant={variantParam(v)} />;
 }

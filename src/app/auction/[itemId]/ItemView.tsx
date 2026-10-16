@@ -84,11 +84,14 @@ const MODULE_LOTS_MAX = 5000;
  */
 export function ItemView({
   id,
+  name,
   quality = null,
   upgrade = null,
   variant = null,
 }: {
   id: string;
+  /** название из справочника на сервере — заголовок есть в HTML до загрузки items.json */
+  name?: string;
   quality?: number | null;
   upgrade?: number | null;
   /** ключевая характеристика модуля (?v=) */
@@ -295,10 +298,11 @@ export function ItemView({
               <ItemIcon item={item} size={72} />
             </span>
             <div className={styles.heroText}>
-              {itemLoading ? (
+              {/* название с сервера — сразу в HTML (для поисковиков), без заглушки */}
+              {itemLoading && !name ? (
                 <span className="skeleton" style={{ height: 26, width: "70%" }} />
               ) : (
-                <h1 className="display">{item?.name ?? `Предмет ${id}`}</h1>
+                <h1 className="display">{item?.name ?? name ?? `Предмет ${id}`}</h1>
               )}
               {item && rarity && (
                 <div className="row" style={{ flexWrap: "wrap", gap: 6 }}>
