@@ -9,9 +9,9 @@ import { PageHeader, StatTile } from "@/components/ui/PageHeader";
 import { RegionSwitch } from "@/components/ui/RegionSwitch";
 import { Segmented } from "@/components/ui/Segmented";
 import { EmptyState, ErrorState, RowSkeleton } from "@/components/ui/States";
-import { CHART_ALLIANCES, chartAlliance } from "@/features/alliances";
+import { allianceName, CHART_ALLIANCES, chartAlliance } from "@/features/alliances";
 import {
-  CLAN_PERIODS,
+  clanPeriods,
   MAX_MEMBERS,
   useClanAnalytics,
   useClanTrend,
@@ -19,31 +19,39 @@ import {
   type ClanBrief,
   type ClanPeriod,
 } from "@/features/clans";
-import { formatNumber, formatRelative, formatShortDate, formatSigned, plural } from "@/lib/format";
+import { useFormat, useLang, useT } from "@/i18n/client";
 import { stripMc } from "@/lib/mcText";
 import { useApp, type Region } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
 import { useNow } from "@/lib/useNow";
 import styles from "./analytics.module.css";
 
-const fighters = (n: number) => `${formatNumber(n)} ${plural(n, ["боец", "бойца", "бойцов"])}`;
-const clansWord = (n: number) => `${formatNumber(n)} ${plural(n, ["клан", "клана", "кланов"])}`;
+/** «12 бойцов», «3 клана» на языке интерфейса. */
+function useWords() {
+  const t = useT().clans;
+  const { formatNumber } = useFormat();
+  return {
+    fighters: (n: number) => t.fighters(n, formatNumber(n)),
+    clansWord: (n: number) => t.clansCount(n, formatNumber(n)),
+  };
+}
 
 /** Сводка по кланам региона по нашей истории: динамика, рост и отток бойцов, группировки, распределения. */
 export default function ClanAnalyticsPage() {
+  const t = useT().clanStats;
   const region = useApp((s) => s.region);
   const { data, isLoading, isError, refetch, isPlaceholderData } = useClanAnalytics(region);
 
   return (
     <main className="page">
-      <PageHeader eyebrow="Кланы" title="Аналитика кланов" aside={<RegionSwitch />} />
+      <PageHeader eyebrow={t.eyebrow} title={t.title} aside={<RegionSwitch />} />
 
       {isError ? (
         <ErrorState onRetry={() => refetch()} />
       ) : isLoading || !data ? (
         <RowSkeleton count={8} />
       ) : !data.totals.clans ? (
-        <EmptyState icon="shield" title="Кланы ещё загружаются" text="Сервер скачивает список кланов этого региона - обычно это занимает пару минут." />
+        <EmptyState icon="shield" title={t.loadingTitle} text={t.loadingText} />
       ) : (
         <div style={{ opacity: isPlaceholderData ? 0.6 : 1, transition: "opacity 200ms" }}>
           <Report data={data} region={region} />
@@ -54,37 +62,42 @@ export default function ClanAnalyticsPage() {
 }
 
 function Report({ data, region }: { data: ClanAnalytics; region: Region }) {
+  const t = useT().clanStats;
+  const lang = useLang();
+  const { formatNumber, formatShortDate, formatSigned } = useFormat();
+  const { fighters, clansWord } = useWords();
   const [growthWindow, setGrowthWindow] = useState<"day" | "week">("week");
-  const t = data.totals;
+  const s = data.totals;
   const growth = data.growth[growthWindow];
   const growthInfo = data.windows[growthWindow];
 
   return (
     <>
       {!data.windows.week.full && (
-        <p className={styles.notice}>
-          История собирается с {data.historyFrom ? formatShortDate(data.historyFrom) : "сегодняшнего дня"} - изменения «за неделю» пока считаются с
-          начала истории и наполнятся со временем.
-        </p>
+        <p className={styles.notice}>{t.historyNotice(data.historyFrom ? formatShortDate(data.historyFrom) : null)}</p>
       )}
 
       <section className={`${styles.tiles} stagger`}>
-        <StatTile label="Кланов" tone="acc" value={formatNumber(t.clans)} hint={`${formatNumber(data.disbanded.count)} распущено за неделю`} />
-        <StatTile label="Бойцов в кланах" value={formatNumber(t.members)} hint={`в среднем ${t.avgMembers.toFixed(1)}, медиана ${formatNumber(t.medianMembers)}`} />
-        <StatTile label="Полный состав" value={clansWord(t.full)} hint={`${MAX_MEMBERS} из ${MAX_MEMBERS} бойцов`} />
+        <StatTile label={t.clans} tone="acc" value={formatNumber(s.clans)} hint={t.disbandedWeek(formatNumber(data.disbanded.count))} />
         <StatTile
-          label="За неделю"
-          tone={t.membersWeek > 0 ? "up" : t.membersWeek < 0 ? "down" : undefined}
-          value={formatSigned(t.membersWeek)}
-          hint={`+${formatNumber(t.joinedWeek)} пришло · −${formatNumber(t.leftWeek)} ушло`}
+          label={t.members}
+          value={formatNumber(s.members)}
+          hint={t.avgMedian(s.avgMembers.toFixed(1), formatNumber(s.medianMembers))}
+        />
+        <StatTile label={t.full} value={clansWord(s.full)} hint={t.fullHint(MAX_MEMBERS)} />
+        <StatTile
+          label={t.week}
+          tone={s.membersWeek > 0 ? "up" : s.membersWeek < 0 ? "down" : undefined}
+          value={formatSigned(s.membersWeek)}
+          hint={t.joinedLeft(formatNumber(s.joinedWeek), formatNumber(s.leftWeek))}
         />
         <StatTile
-          label="За сутки"
-          tone={t.membersDay > 0 ? "up" : t.membersDay < 0 ? "down" : undefined}
-          value={formatSigned(t.membersDay)}
-          hint="бойцов во всех кланах"
+          label={t.day}
+          tone={s.membersDay > 0 ? "up" : s.membersDay < 0 ? "down" : undefined}
+          value={formatSigned(s.membersDay)}
+          hint={t.inAllClans}
         />
-        <StatTile label="Возраст клана" value={`${formatNumber(t.medianAgeDays)} дн.`} hint="медиана" />
+        <StatTile label={t.age} value={t.days(formatNumber(s.medianAgeDays))} hint={t.median} />
       </section>
 
       <Trend region={region} />
@@ -95,35 +108,35 @@ function Report({ data, region }: { data: ClanAnalytics; region: Region }) {
           <div className={styles.titleWithSwitch}>
             <h2 className="section-title">
               <span>
-                Набирают бойцов
-                {growthInfo.since && !growthInfo.full && <small> с {formatShortDate(growthInfo.since)}</small>}
+                {t.growing}
+                {growthInfo.since && !growthInfo.full && <small> {t.since(formatShortDate(growthInfo.since))}</small>}
               </span>
             </h2>
             <Segmented
               size="sm"
-              label="Окно"
+              label={t.window}
               value={growthWindow}
               onChange={(v) => setGrowthWindow(v as "day" | "week")}
               options={[
-                { value: "day", label: "Сутки" },
-                { value: "week", label: "Неделя" },
+                { value: "day", label: t.windowDay },
+                { value: "week", label: t.windowWeek },
               ]}
             />
           </div>
-          <ClanList rows={growth} region={region} empty="Пока никто не прибавил бойцов." aside={(r) => <Delta n={r.delta ?? 0} />} />
+          <ClanList rows={growth} region={region} empty={t.noGrowth} aside={(r) => <Delta n={r.delta ?? 0} />} />
         </section>
 
         <section className="section">
           <h2 className="section-title">
-            Теряют бойцов <small>за неделю</small>
+            {t.losing} <small>{t.perWeek}</small>
           </h2>
-          <ClanList rows={data.decline} region={region} empty="Никто не потерял бойцов." aside={(r) => <Delta n={r.delta ?? 0} />} />
+          <ClanList rows={data.decline} region={region} empty={t.noDecline} aside={(r) => <Delta n={r.delta ?? 0} />} />
         </section>
       </div>
 
       <section className="section">
         <h2 className="section-title">
-          Группировки <small>доля бойцов</small>
+          {t.alliances} <small>{t.share}</small>
         </h2>
         <div className={styles.alliances}>
           {/* только четыре игровые группировки — «none» и прочее не показываем */}
@@ -135,7 +148,7 @@ function Report({ data, region }: { data: ClanAnalytics; region: Region }) {
               <div key={a.alliance} className={styles.alliance} style={{ "--c": color } as React.CSSProperties}>
                 <div className={styles.allianceHead}>
                   <span className={styles.swatch} style={{ background: color }} />
-                  <strong>{meta.label}</strong>
+                  <strong>{allianceName(meta, lang)}</strong>
                   <span className="mono">{(a.share * 100).toFixed(1)} %</span>
                 </div>
                 <div className={styles.track}>
@@ -144,8 +157,10 @@ function Report({ data, region }: { data: ClanAnalytics; region: Region }) {
                 <div className={styles.allianceStats}>
                   <span>{clansWord(a.clans)}</span>
                   <span>{fighters(a.members)}</span>
-                  <span>в среднем {a.avgMembers.toFixed(1)}</span>
-                  <span data-tone={a.membersWeek > 0 ? "up" : a.membersWeek < 0 ? "down" : undefined}>{formatSigned(a.membersWeek)} за неделю</span>
+                  <span>{t.avg(a.avgMembers.toFixed(1))}</span>
+                  <span data-tone={a.membersWeek > 0 ? "up" : a.membersWeek < 0 ? "down" : undefined}>
+                    {formatSigned(a.membersWeek)} {t.perWeek}
+                  </span>
                 </div>
               </div>
             );
@@ -155,21 +170,26 @@ function Report({ data, region }: { data: ClanAnalytics; region: Region }) {
 
       <div className="desk-cols">
         <section className="section">
-          <h2 className="section-title">По уровню</h2>
+          <h2 className="section-title">{t.byLevel}</h2>
           <div className={styles.chartCard}>
             <BarChart
               bars={data.levels.map((l) => ({
-                label: `${l.level} ур.`,
+                label: t.lvlShort(l.level),
                 value: l.clans,
-                tip: `${l.level} уровень: ${clansWord(l.clans)}, ${fighters(l.members)}`,
+                tip: `${t.levelN(l.level)}: ${clansWord(l.clans)}, ${fighters(l.members)}`,
               }))}
             />
           </div>
         </section>
         <section className="section">
-          <h2 className="section-title">По возрасту</h2>
+          <h2 className="section-title">{t.byAge}</h2>
           <div className={styles.chartCard}>
-            <BarChart bars={data.ages.map((a) => ({ label: a.label, value: a.clans, tip: `${a.label}: ${clansWord(a.clans)}` }))} />
+            <BarChart
+              bars={data.ages.map((a) => {
+                const label = (lang === "en" && t.ages[a.label as keyof typeof t.ages]) || a.label;
+                return { label, value: a.clans, tip: `${label}: ${clansWord(a.clans)}` };
+              })}
+            />
           </div>
         </section>
       </div>
@@ -177,21 +197,21 @@ function Report({ data, region }: { data: ClanAnalytics; region: Region }) {
       <div className="desk-cols">
         <section className="section">
           <h2 className="section-title">
-            Новые кланы <small>{clansWord(data.newClans.count)} за неделю</small>
+            {t.newClans} <small>{t.countPerWeek(clansWord(data.newClans.count))}</small>
           </h2>
           <ClanList
             rows={data.newClans.list}
             region={region}
-            empty="За неделю новых кланов не было."
-            aside={(r) => <span className={styles.aside}>{r.ageDays ? `${r.ageDays} дн.` : "сегодня"}</span>}
+            empty={t.noNew}
+            aside={(r) => <span className={styles.aside}>{r.ageDays ? t.days(String(r.ageDays)) : t.today}</span>}
           />
         </section>
 
         <section className="section">
           <h2 className="section-title">
-            Распущены <small>{clansWord(data.disbanded.count)} за неделю</small>
+            {t.disbanded} <small>{t.countPerWeek(clansWord(data.disbanded.count))}</small>
           </h2>
-          <ClanList rows={data.disbanded.list} region={region} empty="За неделю ни один клан не распался." gone aside={(r) => <GoneAt at={r.goneAt} />} />
+          <ClanList rows={data.disbanded.list} region={region} empty={t.noDisbanded} gone aside={(r) => <GoneAt at={r.goneAt} />} />
         </section>
       </div>
     </>
@@ -203,6 +223,9 @@ type TrendSplit = "total" | "alliances";
 
 /** Бойцы и кланы региона во времени: всего или по группировкам. */
 function Trend({ region }: { region: Region }) {
+  const t = useT().clanStats;
+  const lang = useLang();
+  const { formatNumber, formatShortDate } = useFormat();
   const [period, setPeriod] = useState<ClanPeriod>("week");
   const [metric, setMetric] = useState<TrendMetric>("members");
   const [split, setSplit] = useState<TrendSplit>("alliances");
@@ -216,62 +239,57 @@ function Trend({ region }: { region: Region }) {
     const series: LineSeries[] = byAlliance
       ? CHART_ALLIANCES.filter((a) => pts.some((p) => p.alliances[a.key])).map((a) => ({
           key: a.key,
-          label: a.label,
+          label: allianceName(a, lang),
           color: a.color,
           values: pts.map((p) => p.alliances[a.key] ?? 0),
         }))
       : [
           {
             key: metric,
-            label: metric === "members" ? "Бойцы" : "Кланы",
+            label: metric === "members" ? t.metricMembers : t.metricClans,
             color: "var(--acc)",
             values: pts.map((p) => (metric === "members" ? p.members : p.clans)),
           },
         ];
     return { times, series };
-  }, [data, byAlliance, metric]);
+  }, [data, byAlliance, metric, lang, t]);
 
   return (
     <section className="section">
       <h2 className="section-title">
-        Динамика региона
-        {data?.historyFrom && <small>история с {formatShortDate(data.historyFrom)}</small>}
+        {t.trendTitle}
+        {data?.historyFrom && <small>{t.historyFrom(formatShortDate(data.historyFrom))}</small>}
       </h2>
       <div className={styles.controls}>
         <Segmented
           size="sm"
-          label="Показатель"
+          label={t.metric}
           value={metric}
           onChange={(v) => (haptic.select(), setMetric(v as TrendMetric))}
           options={[
-            { value: "members", label: "Бойцы" },
-            { value: "clans", label: "Кланы" },
+            { value: "members", label: t.metricMembers },
+            { value: "clans", label: t.metricClans },
           ]}
         />
         {metric === "members" && (
           <Segmented
             size="sm"
-            label="Разбивка"
+            label={t.split}
             value={split}
             onChange={(v) => (haptic.select(), setSplit(v as TrendSplit))}
             options={[
-              { value: "alliances", label: "По группировкам" },
-              { value: "total", label: "Всего" },
+              { value: "alliances", label: t.splitAlliances },
+              { value: "total", label: t.splitTotal },
             ]}
           />
         )}
-        <Segmented size="sm" label="Период" value={period} onChange={(v) => setPeriod(v as ClanPeriod)} options={CLAN_PERIODS} />
+        <Segmented size="sm" label={t.period} value={period} onChange={(v) => setPeriod(v as ClanPeriod)} options={clanPeriods(lang)} />
       </div>
       {isLoading ? (
         <div className="skeleton" style={{ height: 300, borderRadius: 22 }} />
       ) : (
         <div style={{ opacity: isPlaceholderData ? 0.6 : 1, transition: "opacity 200ms" }}>
-          <LineChart
-            times={times}
-            series={series}
-            format={formatNumber}
-            emptyText="История ещё собирается - график появится после следующих снимков."
-          />
+          <LineChart times={times} series={series} format={formatNumber} emptyText={t.trendEmpty} />
         </div>
       )}
     </section>
@@ -279,6 +297,7 @@ function Trend({ region }: { region: Region }) {
 }
 
 function Delta({ n }: { n: number }) {
+  const { formatSigned } = useFormat();
   return (
     <span className={`mono ${styles.delta}`} data-tone={n > 0 ? "up" : n < 0 ? "down" : undefined}>
       {formatSigned(n)}
@@ -287,6 +306,7 @@ function Delta({ n }: { n: number }) {
 }
 
 function GoneAt({ at }: { at?: string }) {
+  const { formatRelative } = useFormat();
   const now = useNow(60_000);
   return <span className={styles.aside}>{at && now ? formatRelative(at, now) : ""}</span>;
 }
@@ -305,6 +325,8 @@ function ClanList({
   /** распущенные: страница клана уже не откроется — без ссылки */
   gone?: boolean;
 }) {
+  const t = useT().clans;
+  const { fighters } = useWords();
   if (!rows.length) return <p className={styles.empty}>{empty}</p>;
   return (
     <div className="stack" style={{ gap: 6 }}>
@@ -317,7 +339,7 @@ function ClanList({
                 [{stripMc(r.tag)}] {stripMc(r.name)}
               </strong>
               <span className="dim truncate">
-                ур. {r.level} · {fighters(r.memberCount)}
+                {t.lvl(r.level)} · {fighters(r.memberCount)}
               </span>
             </span>
             {aside(r)}

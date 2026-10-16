@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useT } from "@/i18n/client";
 import { haptic } from "@/lib/telegram";
 import { Icon } from "../Icon";
 import styles from "./Pro.module.css";
@@ -15,6 +16,7 @@ export function ProBadge() {
  * compact — одной строкой (внутри страницы), иначе — крупная карточка.
  */
 export function ProTeaser({ title, text, compact = false }: { title: string; text: string; compact?: boolean }) {
+  const t = useT();
   return (
     <Link href="/pro" className={`glass ${styles.teaser}`} data-compact={compact || undefined} onClick={() => haptic.tap()}>
       <span className={styles.lock}>
@@ -26,7 +28,7 @@ export function ProTeaser({ title, text, compact = false }: { title: string; tex
         </strong>
         <span>{text}</span>
       </span>
-      {compact ? <Icon name="chevron" size={18} className="dim" /> : <span className={`btn primary ${styles.cta}`}>Что даёт Pro</span>}
+      {compact ? <Icon name="chevron" size={18} className="dim" /> : <span className={`btn primary ${styles.cta}`}>{t.pro.whatPro}</span>}
     </Link>
   );
 }

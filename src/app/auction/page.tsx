@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useDeferredValue, useState } from "react";
+import { useDeferredValue, useEffect, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { ItemRow } from "@/components/ItemRow";
 import { ProBadge } from "@/components/Pro/Pro";
@@ -11,14 +11,17 @@ import { SearchField } from "@/components/ui/SearchField";
 import { EmptyState, ErrorState, RowSkeleton } from "@/components/ui/States";
 import { useBestPrice } from "@/features/auction";
 import { CRAFT_ENABLED, LOOT_ENABLED } from "@/lib/flags";
-import { GROUPS, searchItems, useItems, type Item } from "@/features/items";
-import { formatShort } from "@/lib/format";
+import { GROUPS, groupLabel, searchItems, useItems, type Item } from "@/features/items";
+import { useFormat, useLang, useT } from "@/i18n/client";
 import { actions, useApp, type Region } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
 
 const STEP = 40;
 
 export default function AuctionPage() {
+  const t = useT().market;
+  const lang = useLang();
+  const { formatNumber } = useFormat();
   const region = useApp((s) => s.region);
   const favItems = useApp((s) => s.favItems);
   const recentItems = useApp((s) => s.recentItems);
@@ -27,6 +30,12 @@ export default function AuctionPage() {
   const [group, setGroup] = useState<string | undefined>();
   const [limit, setLimit] = useState(STEP);
   const deferred = useDeferredValue(query);
+
+  // /auction?q=комета — поиск из выдачи Google (SearchAction в layout) и ссылки извне
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("q")?.trim();
+    if (q) setQuery(q.slice(0, 64));
+  }, []);
 
   const { data: index, isLoading, isError, refetch } = useItems();
   const browsing = deferred.trim().length > 0 || group !== undefined;
@@ -40,9 +49,9 @@ export default function AuctionPage() {
 
   return (
     <main className="page">
-      <PageHeader eyebrow="Аукцион" title="Рынок" aside={<RegionSwitch />}>
-        {index ? `${index.list.length.toLocaleString("ru-RU")} предметов. ` : ""}Ищите по-русски или по-английски — даже в неправильной
-        раскладке.
+      <PageHeader eyebrow={t.eyebrow} title={t.title} aside={<RegionSwitch />}>
+        {index ? `${t.itemsCount(index.list.length, formatNumber(index.list.length))} ` : ""}
+        {t.searchHint}
       </PageHeader>
 
       <SearchField
@@ -51,8 +60,8 @@ export default function AuctionPage() {
           setQuery(v);
           setLimit(STEP);
         }}
-        placeholder="Например, «Сердце» или «AK-74»"
-        aria-label="Поиск предмета"
+        placeholder={t.searchPlaceholder}
+        aria-label={t.searchAria}
       />
 
       <Link href="/flips" className="list-row" style={{ marginTop: 12 }} onClick={() => haptic.tap()}>
@@ -72,10 +81,10 @@ export default function AuctionPage() {
         </span>
         <span style={{ flex: 1, minWidth: 0 }}>
           <strong style={{ fontSize: 14 }}>
-            Флиппер <ProBadge />
+            {t.flipper} <ProBadge />
           </strong>
           <span className="dim" style={{ display: "block", fontSize: 12, fontWeight: 600 }}>
-            Лоты дешевле рынка — выкупить и перепродать
+            {t.flipperHint}
           </span>
         </span>
         <Icon name="chevron" size={18} className="dim" />
@@ -98,9 +107,9 @@ export default function AuctionPage() {
             <Icon name="sparkle" size={20} />
           </span>
           <span style={{ flex: 1, minWidth: 0 }}>
-            <strong style={{ fontSize: 14 }}>Планировщик крафта</strong>
+            <strong style={{ fontSize: 14 }}>{t.craft}</strong>
             <span className="dim" style={{ display: "block", fontSize: 12, fontWeight: 600 }}>
-              Что нафармить, что докупить блоками
+              {t.craftHint}
             </span>
           </span>
           <Icon name="chevron" size={18} className="dim" />
@@ -124,9 +133,9 @@ export default function AuctionPage() {
             <Icon name="bag" size={20} />
           </span>
           <span style={{ flex: 1, minWidth: 0 }}>
-            <strong style={{ fontSize: 14 }}>Рюкзак</strong>
+            <strong style={{ fontSize: 14 }}>{t.loot}</strong>
             <span className="dim" style={{ display: "block", fontSize: 12, fontWeight: 600 }}>
-              Оценить лут после вылазки
+              {t.lootHint}
             </span>
           </span>
           <Icon name="chevron" size={18} className="dim" />
@@ -135,18 +144,18 @@ export default function AuctionPage() {
 
       <div className="chips" style={{ marginTop: 12 }}>
         <button type="button" className="chip" aria-pressed={!group} onClick={() => pick(undefined)}>
-          Все
+          {t.all}
         </button>
         {GROUPS.map((g) => (
           <button key={g.id} type="button" className="chip" aria-pressed={group === g.id} onClick={() => pick(g.id)}>
-            <span aria-hidden>{g.icon}</span> {g.label}
+            <span aria-hidden>{g.icon}</span> {groupLabel(g, lang)}
           </button>
         ))}
       </div>
 
       <div className="section" style={{ marginTop: 18 }}>
         {isError ? (
-          <ErrorState onRetry={() => refetch()} text="Не удалось загрузить базу предметов." />
+          <ErrorState onRetry={() => refetch()} text={t.loadError} />
         ) : isLoading || !index ? (
           <RowSkeleton />
         ) : browsing ? (
@@ -159,12 +168,12 @@ export default function AuctionPage() {
               </div>
               {results.length > limit && (
                 <button type="button" className="btn" style={{ width: "100%", marginTop: 12 }} onClick={() => setLimit((l) => l + STEP)}>
-                  Показать ещё
+                  {t.showMore}
                 </button>
               )}
             </>
           ) : (
-            <EmptyState title="Ничего не найдено" text="Проверьте название или попробуйте другую категорию." />
+            <EmptyState title={t.notFound} text={t.notFoundText} />
           )
         ) : (
           <Shortcuts index={index.byId} favItems={favItems} recentItems={recentItems} region={region} />
@@ -185,17 +194,12 @@ function Shortcuts({
   recentItems: string[];
   region: Region;
 }) {
+  const t = useT();
   const favs = favItems.map((id) => index.get(id)).filter((i): i is Item => !!i);
   const recents = recentItems.map((id) => index.get(id)).filter((i): i is Item => !!i && !favItems.includes(i.id));
 
   if (!favs.length && !recents.length) {
-    return (
-      <EmptyState
-        icon="sparkle"
-        title="Что ищем?"
-        text="Введите название предмета. Добавляйте предметы в избранное ★ — их цены появятся на главной."
-      />
-    );
+    return <EmptyState icon="sparkle" title={t.market.emptyTitle} text={t.market.emptyText} />;
   }
 
   return (
@@ -203,7 +207,10 @@ function Shortcuts({
       {favs.length > 0 && (
         <>
           <h2 className="section-title">
-            Избранное <small>лучшая цена · {region.toUpperCase()}</small>
+            {t.market.favorites}{" "}
+            <small>
+              {t.market.bestPrice} · {region.toUpperCase()}
+            </small>
           </h2>
           <div className="item-grid">
             {favs.map((item) => (
@@ -215,9 +222,9 @@ function Shortcuts({
       {recents.length > 0 && (
         <div className={favs.length ? "section" : undefined}>
           <h2 className="section-title">
-            Недавние
+            {t.market.recent}
             <button type="button" onClick={actions.clearRecentItems}>
-              Очистить
+              {t.common.clear}
             </button>
           </h2>
           <div className="item-grid">
@@ -232,6 +239,7 @@ function Shortcuts({
 }
 
 function BestPrice({ id, region }: { id: string; region: Region }) {
+  const { formatShort } = useFormat();
   const { data, isLoading } = useBestPrice(region, id);
   if (isLoading) return <span className="skeleton" style={{ width: 60, height: 12 }} />;
   return (

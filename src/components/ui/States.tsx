@@ -1,3 +1,6 @@
+"use client";
+
+import { useT } from "@/i18n/client";
 import { Icon, type IconName } from "../Icon";
 import styles from "./ui.module.css";
 
@@ -27,16 +30,12 @@ export function EmptyState({
 }
 
 export function ErrorState({ onRetry, text }: { onRetry?: () => void; text?: string }) {
+  const t = useT();
   return (
-    <EmptyState
-      icon="bolt"
-      tone="error"
-      title="Связь с Зоной потеряна"
-      text={text ?? "Сервер не ответил. Проверьте соединение и попробуйте ещё раз."}
-    >
+    <EmptyState icon="bolt" tone="error" title={t.common.errorTitle} text={text ?? t.common.errorText}>
       {onRetry && (
         <button type="button" className="btn" onClick={onRetry}>
-          Повторить
+          {t.common.retry}
         </button>
       )}
     </EmptyState>

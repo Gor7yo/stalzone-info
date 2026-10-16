@@ -7,11 +7,11 @@ import { Tilt } from "@/components/Tilt/Tilt";
 import { FavButton, ShareButton } from "@/components/ui/Buttons";
 import { StatTile } from "@/components/ui/PageHeader";
 import { EmptyState, ErrorState } from "@/components/ui/States";
-import { allianceOf } from "@/features/alliances";
+import { allianceName, allianceOf } from "@/features/alliances";
 import { useClan } from "@/features/clans";
+import { useFormat, useLang, useT } from "@/i18n/client";
 import { ClanMetrics } from "./ClanMetrics";
 import { isNotFound } from "@/lib/api";
-import { formatNumber, formatRelative, formatShortDate } from "@/lib/format";
 import { McText, stripMc } from "@/lib/mcText";
 import { actions, useApp, type Region } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
@@ -19,6 +19,9 @@ import { useNow } from "@/lib/useNow";
 import styles from "./clan.module.css";
 
 export function ClanView({ region, id }: { region: Region; id: string }) {
+  const t = useT().clans;
+  const lang = useLang();
+  const { formatNumber, formatRelative, formatShortDate } = useFormat();
   const { data: clan, isLoading, error, refetch } = useClan(region, id);
   const isFav = useApp((s) => s.favClans.some((c) => c.id === id));
   const now = useNow(60_000);
@@ -38,9 +41,9 @@ export function ClanView({ region, id }: { region: Region; id: string }) {
         {error && !isNotFound(error) ? (
           <ErrorState onRetry={() => refetch()} />
         ) : (
-          <EmptyState icon="shield" title="Клан не найден" text="Возможно, он распущен или находится в другом регионе.">
+          <EmptyState icon="shield" title={t.clanNotFound} text={t.clanNotFoundText}>
             <Link href="/clans" className="btn">
-              К списку кланов
+              {t.toList}
             </Link>
           </EmptyState>
         )}
@@ -55,7 +58,7 @@ export function ClanView({ region, id }: { region: Region; id: string }) {
       <div className={styles.toolbar}>
         <span className="pill dim">{region.toUpperCase()}</span>
         <div className="row" style={{ gap: 8 }}>
-          <ShareButton text={`Клан [${stripMc(clan.tag)}] ${stripMc(clan.name)}`} />
+          <ShareButton text={t.shareText(stripMc(clan.tag), stripMc(clan.name))} />
           <FavButton
             active={isFav}
             onToggle={() =>
@@ -86,9 +89,9 @@ export function ClanView({ region, id }: { region: Region; id: string }) {
             <div className="row" style={{ gap: 6, flexWrap: "wrap", justifyContent: "center" }}>
               <span className="pill" style={{ color: alliance.color }}>
                 <span className="dot" />
-                {alliance.label}
+                {allianceName(alliance, lang)}
               </span>
-              <span className="pill">Уровень {clan.level}</span>
+              <span className="pill">{t.levelN(clan.level)}</span>
             </div>
           </Tilt>
 
@@ -96,10 +99,10 @@ export function ClanView({ region, id }: { region: Region; id: string }) {
         </div>
         <div className="desk-side">
           <section className={`${styles.stats} stagger`}>
-            <StatTile label="Бойцов" tone="acc" value={formatNumber(clan.memberCount)} />
-            <StatTile label="Уровень" value={formatNumber(clan.level)} />
+            <StatTile label={t.members} tone="acc" value={formatNumber(clan.memberCount)} />
+            <StatTile label={t.level} value={formatNumber(clan.level)} />
             <StatTile
-              label="Основан"
+              label={t.founded}
               value={clan.registrationTime ? formatShortDate(clan.registrationTime) : "—"}
               hint={clan.registrationTime && now ? formatRelative(clan.registrationTime, now) : undefined}
             />
@@ -125,12 +128,12 @@ export function ClanView({ region, id }: { region: Region; id: string }) {
                     letterSpacing: "0.08em",
                   }}
                 >
-                  Лидер
+                  {t.leader}
                 </span>
                 <strong className="truncate">{clan.leader}</strong>
               </span>
               <span className="dim" style={{ fontSize: 12, fontWeight: 700 }}>
-                Досье
+                {t.dossier}
               </span>
               <Icon name="chevron" size={18} className="dim" />
             </Link>
@@ -138,7 +141,7 @@ export function ClanView({ region, id }: { region: Region; id: string }) {
 
           {clan.description && (
             <section className="section">
-              <h2 className="section-title">Описание</h2>
+              <h2 className="section-title">{t.description}</h2>
               <div className={styles.description}>
                 <McText text={clan.description} />
               </div>

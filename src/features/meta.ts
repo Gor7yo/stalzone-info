@@ -5,8 +5,8 @@ import { DATA_VERSION } from "@/lib/dataVersion";
 
 /** Названия статистик и достижений из официальной базы (public/meta.json, ~22 КБ gzip). */
 export interface Meta {
-  stats: Record<string, [name: string, category: string, type: string]>;
-  achievements: Record<string, [title: string, description: string, points: number]>;
+  stats: Record<string, [name: string, category: string, type: string, nameEn?: string]>;
+  achievements: Record<string, [title: string, description: string, points: number, titleEn?: string, descriptionEn?: string]>;
 }
 
 export const useMeta = () =>
@@ -29,4 +29,14 @@ export const STAT_CATEGORIES: Record<string, string> = {
   SESSION_MODES: "Сессионные режимы",
   HIDEOUT: "Убежище",
   NONE: "Прочее",
+};
+
+export const STAT_CATEGORIES_EN: Record<string, string> = {
+  COMBAT: "Combat",
+  SURVIVAL: "Survival",
+  EXPLORATION: "Exploration",
+  ECONOMY: "Economy",
+  SESSION_MODES: "Session modes",
+  HIDEOUT: "Hideout",
+  NONE: "Other",
 };

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { BarterSection } from "@/components/Barter/Barter";
 import { CRAFT_ENABLED } from "@/lib/flags";
@@ -32,9 +33,11 @@ import {
   lotUnitPrice,
   priceStats,
   QUALITY,
+  qualities,
   bucketPoints,
   PERIODS,
   periodInfo,
+  localizePeriod,
   type HistoryPeriod,
   qualityOf,
   requestFresh,
@@ -52,9 +55,9 @@ import { ProTeaser } from "@/components/Pro/Pro";
 import { useAlerts } from "@/features/alerts";
 import { usePro } from "@/features/pro";
 import { useBarter } from "@/features/barter";
-import { categoryLabel, rarityOf, useItem } from "@/features/items";
+import { categoryLabel, groupLabel, rarityLabel, rarityOf, useItem } from "@/features/items";
 import { moduleAttr, moduleAttrs, variantLabel, variantOf, variantsOf } from "@/features/modules";
-import { formatCompact, formatDuration, formatNumber, formatPrice, formatRelative, plural } from "@/lib/format";
+import { useFormat, useLang, useT } from "@/i18n/client";
 import { actions, useApp } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
 import { useNow } from "@/lib/useNow";
@@ -62,14 +65,13 @@ import { useUndoable } from "@/lib/useUndoable";
 import styles from "./item.module.css";
 
 const SORTS: {
-  value: string;
-  label: string;
+  value: "cheap" | "ending" | "new";
   sort: LotSort;
   order: SortOrder;
 }[] = [
-  { value: "cheap", label: "Дешевле", sort: "buyout_price", order: "asc" },
-  { value: "ending", label: "Скоро конец", sort: "time_left", order: "asc" },
-  { value: "new", label: "Новые", sort: "time_created", order: "desc" },
+  { value: "cheap", sort: "buyout_price", order: "asc" },
+  { value: "ending", sort: "time_left", order: "asc" },
+  { value: "new", sort: "time_created", order: "desc" },
 ];
 
 const LOTS_PAGE = 10;
@@ -85,6 +87,7 @@ const MODULE_LOTS_MAX = 5000;
 export function ItemView({
   id,
   name,
+  group,
   quality = null,
   upgrade = null,
   variant = null,
@@ -92,11 +95,17 @@ export function ItemView({
   id: string;
   /** название из справочника на сервере — заголовок есть в HTML до загрузки items.json */
   name?: string;
+  /** категория для «Рынок › Артефакты» (с сервера — ссылка есть в HTML для поисковиков) */
+  group?: { id: string; label: string };
   quality?: number | null;
   upgrade?: number | null;
   /** ключевая характеристика модуля (?v=) */
   variant?: string | null;
 }) {
+  const t = useT().item;
+  const lang = useLang();
+  const QUALITY = qualities(lang);
+  const { formatCompact, formatNumber, formatPrice, formatRelative } = useFormat();
   const region = useApp((s) => s.region);
   const isFav = useApp((s) => s.favItems.includes(id));
   const { item, isLoading: itemLoading } = useItem(id);
@@ -115,7 +124,7 @@ export function ItemView({
   // всё, что меняет пользователь на экране, — с историей: кнопка «Отменить» / Ctrl+Z
   const view = useUndoable({
     tab: "lots" as "lots" | "history",
-    sortKey: "cheap",
+    sortKey: "cheap" as (typeof SORTS)[number]["value"],
     filter: linked,
     deal: "all" as DealFilter,
     page: 0,
@@ -126,7 +135,7 @@ export function ItemView({
   const { isPro } = usePro();
   const period: HistoryPeriod = isPro ? view.value.period : "month";
   const dealFilter: DealFilter = isPro ? view.value.deal : "all";
-  const periodMeta = periodInfo(period);
+  const periodMeta = periodInfo(period, lang);
   const [alertOpen, setAlertOpen] = useState(false);
   const [sellOpen, setSellOpen] = useState(false);
   const alerts = useAlerts();
@@ -142,12 +151,12 @@ export function ItemView({
   // фильтр «клетки» карты цен: качество × ступень заточки
   // артефакт по умолчанию открывается на «Обычном»: без фильтра график — «пила» из смеси качеств
   const filter = !isPro ? ALL : (userFilter ?? (item?.group === "artefact" ? { quality: null, qualities: [0], upgrade: null } : ALL));
-  const qualities = pickedQualities(filter);
-  const filtered = qualities.length > 0 || hasUpgradeFilter(filter) || filter.variant != null;
+  const picked = pickedQualities(filter);
+  const filtered = picked.length > 0 || hasUpgradeFilter(filter) || filter.variant != null;
   // у модуля цена зависит от ключевой характеристики («Снайпер») так же сильно, как от качества
   const variantItem = item?.group === "weapon_modules";
   // у артефакта без одного выбранного качества медиана и тренд смешивают дешёвые и дорогие варианты
-  const mixed = qualityItem && (qualities.length !== 1 || (variantItem && filter.variant == null));
+  const mixed = qualityItem && (picked.length !== 1 || (variantItem && filter.variant == null));
 
   const history = useHistory(region, id, period, tradable);
   // У артефактов и модулей грузим весь рынок (для фильтра качества) один раз «по выкупу» и сортируем
@@ -185,7 +194,7 @@ export function ItemView({
 
   const rarity = item ? rarityOf(item.rarity) : null;
   // у артефакта подсветка карточки — цвет выбранного качества (из нескольких — самого высокого)
-  const pickedQualityList = qualityItem ? qualities.map((q) => QUALITY[q]).filter(Boolean) : [];
+  const pickedQualityList = qualityItem ? picked.map((q) => QUALITY[q]).filter(Boolean) : [];
   const accent = pickedQualityList[pickedQualityList.length - 1]?.color ?? rarity?.color ?? "var(--text-3)";
   const allLots = useMemo(() => {
     const list = lots.data?.pages.flatMap((p) => p.lots) ?? [];
@@ -242,7 +251,7 @@ export function ItemView({
   const cellBest = filtered ? Math.min(...lotsInFilter.map(lotUnitPrice).filter((p) => p > 0)) : null;
   const bestPrice = filtered ? (Number.isFinite(cellBest) ? cellBest : null) : best.data?.price;
   const latest = lastSale(sales, filter);
-  const filterLabel = [qualityLabel(filter), upgradeLabel(filter), filter.variant ? variantLabel(filter.variant) : ""]
+  const filterLabel = [qualityLabel(filter, lang), upgradeLabel(filter), filter.variant ? variantLabel(filter.variant, lang) : ""]
     .filter(Boolean)
     .join(" ");
   // нет ни лотов, ни свежих сделок — предмет сейчас не торгуется (или вообще не продаётся)
@@ -250,6 +259,13 @@ export function ItemView({
 
   return (
     <main className="page">
+      {group && (
+        <nav className={styles.crumbs} aria-label={t.crumbsAria}>
+          <Link href="/auction">{t.market}</Link>
+          <span aria-hidden>›</span>
+          <Link href={`/auction/c/${group.id}`}>{groupLabel(group, lang)}</Link>
+        </nav>
+      )}
       <div className={styles.toolbar}>
         <RegionSwitch />
         <div className="row" style={{ gap: 8 }}>
@@ -259,8 +275,8 @@ export function ItemView({
               className={`icon-btn ${styles.bell}`}
               data-active={sellOpen || undefined}
               aria-pressed={sellOpen}
-              aria-label="По какой цене продать"
-              title="По какой цене продать"
+              aria-label={t.sellAt}
+              title={t.sellAt}
               onClick={() => {
                 haptic.tap();
                 setSellOpen((v) => !v);
@@ -276,7 +292,7 @@ export function ItemView({
               className={`icon-btn ${styles.bell}`}
               data-active={hasAlert || alertOpen || undefined}
               aria-pressed={alertOpen}
-              aria-label="Уведомить о цене"
+              aria-label={t.notify}
               onClick={() => {
                 haptic.tap();
                 setAlertOpen((v) => !v);
@@ -286,7 +302,7 @@ export function ItemView({
               <Icon name="bell" size={19} filled={hasAlert} />
             </button>
           )}
-          <ShareButton text={`${item?.name ?? "Предмет"} — цены на рынке STALZONE`} />
+          <ShareButton text={t.shareText(item?.name ?? t.itemFallback)} />
           <FavButton active={isFav} onToggle={() => actions.toggleFavItem(id)} />
         </div>
       </div>
@@ -302,7 +318,7 @@ export function ItemView({
               {itemLoading && !name ? (
                 <span className="skeleton" style={{ height: 26, width: "70%" }} />
               ) : (
-                <h1 className="display">{item?.name ?? name ?? `Предмет ${id}`}</h1>
+                <h1 className="display">{item?.name ?? name ?? `${t.itemFallback} ${id}`}</h1>
               )}
               {item && rarity && (
                 <div className="row" style={{ flexWrap: "wrap", gap: 6 }}>
@@ -312,21 +328,20 @@ export function ItemView({
                       {q.label}
                     </span>
                   ))}
-                  {filter.variant && (
-                    <ModuleStatBadge id={filter.variant} quality={qualities.length === 1 ? qualities[0] : null} size="md" />
-                  )}
+                  {filter.variant && <ModuleStatBadge id={filter.variant} quality={picked.length === 1 ? picked[0] : null} size="md" />}
                   {item.rarity !== "DEFAULT" && (
                     <span className="pill" style={{ color: rarity.color }}>
                       <span className="dot" />
-                      {rarity.label}
+                      {rarityLabel(item.rarity, lang)}
                     </span>
                   )}
-                  <span className="pill dim">{categoryLabel(item.category)}</span>
+                  <span className="pill dim">{categoryLabel(item.category, lang)}</span>
                 </div>
               )}
-              {item?.nameEn && (
+              {/* второе название - на другом языке (в игре предмет могут искать и так) */}
+              {item && (lang === "en" ? item.nameRu : item.nameEn) && item.name !== (lang === "en" ? item.nameRu : item.nameEn) && (
                 <span className="dim" style={{ fontSize: 12, fontWeight: 600 }}>
-                  {item.nameEn}
+                  {lang === "en" ? item.nameRu : item.nameEn}
                 </span>
               )}
             </div>
@@ -351,7 +366,7 @@ export function ItemView({
               hasQuality={qualityItem}
               hasUpgrade={hasQuality || allLots.some((l) => upgradeOf(l.additional) > 0)}
               stackable={allLots.some((l) => l.amount > 1)}
-              initialQuality={qualities.length === 1 ? qualities[0] : null}
+              initialQuality={picked.length === 1 ? picked[0] : null}
               initialUpgrade={filter.upgrades?.length === 1 ? filter.upgrades[0] : (filter.upgrade ?? null)}
               variants={variantItem ? variantsOf(allLots, sales).filter((v) => moduleAttr(v)) : []}
               initialVariant={filter.variant ?? null}
@@ -377,12 +392,8 @@ export function ItemView({
                 <section className="section">
                   <EmptyState
                     icon="market"
-                    title="Сейчас не торгуется"
-                    text={
-                      latest
-                        ? `Лотов нет, сделок ${periodMeta.title} не было. Последняя продажа — ${formatRelative(latest.t)} за ${formatPrice(latest.price)}.`
-                        : "Лотов нет и продаж на аукционе этого региона не было."
-                    }
+                    title={t.inactiveTitle}
+                    text={latest ? t.inactiveLast(periodMeta.title, formatRelative(latest.t), formatPrice(latest.price)) : t.inactiveNever}
                   />
                 </section>
               )}
@@ -392,79 +403,69 @@ export function ItemView({
                   {isPro && (
                     <section className={`${styles.stats} stagger`}>
                       <StatTile
-                        label="Лучшая цена"
+                        label={t.bestPrice}
                         tone="acc"
                         value={best.isLoading ? "…" : formatPrice(bestPrice)}
                         hint={
                           filtered
-                            ? `${formatNumber(lotsInFilter.length)} ${plural(lotsInFilter.length, ["лот", "лота", "лотов"])} «${filterLabel}»`
+                            ? `${t.lots(lotsInFilter.length, formatNumber(lotsInFilter.length))} «${filterLabel}»`
                             : best.data
-                              ? `${formatNumber(best.data.total)} лотов`
+                              ? t.lots(best.data.total, formatNumber(best.data.total))
                               : undefined
                         }
                       />
                       <StatTile
-                        label={`Медиана · ${periodMeta.title}`}
+                        label={`${t.median} · ${periodMeta.title}`}
                         value={history.isLoading ? "…" : formatPrice(stats?.median)}
                         hint={
                           mixed
                             ? isPro
                               ? variantItem
-                                ? "смесь модулей — выбери качество и характеристику"
-                                : "смесь качеств — выбери качество"
-                              : "все качества вместе"
+                                ? t.mixedModules
+                                : t.mixedQualities
+                              : t.allQualities
                             : stats
                               ? `${formatCompact(stats.p25)} – ${formatCompact(stats.p75)}`
                               : undefined
                         }
                       />
                       <StatTile
-                        label="Тренд"
+                        label={t.trend}
                         tone={stats?.trend == null ? undefined : stats.trend >= 0 ? "up" : "down"}
                         value={stats?.trend == null ? "—" : `${stats.trend > 0 ? "+" : ""}${stats.trend.toFixed(1)}%`}
-                        hint={mixed ? "по всем качествам" : "новые vs старые сделки"}
+                        hint={mixed ? t.trendMixed : t.trendHint}
                       />
                       <StatTile
-                        label="Сделок за 24ч"
+                        label={t.deals24h}
                         value={stats ? formatNumber(stats.sales24h) : "—"}
-                        hint={stats ? `мин ${formatCompact(stats.min)} · макс ${formatCompact(stats.max)}` : undefined}
+                        hint={stats ? t.minMax(formatCompact(stats.min), formatCompact(stats.max)) : undefined}
                       />
                     </section>
                   )}
 
-                  {!isPro && (
-                    <ProTeaser
-                      compact
-                      title="Аналитика цены"
-                      text={
-                        hasQuality
-                          ? "Лучшая цена, медиана, тренд, сделки за сутки, график, фильтр по качеству и заточке, оценка «выгодно / дорого»"
-                          : "Лучшая цена, медиана, тренд, сделки за сутки и график цены за день и неделю"
-                      }
-                    />
-                  )}
+                  {!isPro && <ProTeaser compact title={t.proTitle} text={hasQuality ? t.proTextQuality : t.proText} />}
 
                   {isPro && (
                     <section className="section">
                       <div className={styles.chartHead}>
                         <h2 className="section-title">
-                          История цены <small>за штуку</small>
+                          {t.priceHistory} <small>{t.perUnit}</small>
                         </h2>
                       </div>
                       <div className={styles.periodBar}>
                         <Segmented
                           size="sm"
-                          label="Период истории"
+                          label={t.periodAria}
                           value={period}
                           onChange={(p) => view.set({ period: p })}
                           options={PERIODS.map((p) => ({
                             value: p.value,
-                            label: p.label,
+                            label: localizePeriod(p, lang).label,
                           }))}
                         />
                         {history.data?.sampled && (
-                          <span className={styles.sampled} title="Сделок за период слишком много — график и медиана по равномерной выборке">
-                            выборка · ≈{formatCompact(history.data.total)} сделок
+                          <span className={styles.sampled} title={t.sampledHint}>
+                            {t.sampled(formatCompact(history.data.total))}
                           </span>
                         )}
                       </div>
@@ -482,11 +483,11 @@ export function ItemView({
                       ) : (
                         <EmptyState
                           icon="market"
-                          title={`Мало сделок ${periodMeta.title}`}
+                          title={t.fewDeals(periodMeta.title)}
                           text={
                             latest
-                              ? `Последняя продажа${filtered ? ` «${filterLabel}»` : ""} — ${formatRelative(latest.t)} за ${formatPrice(latest.price)}.`
-                              : "Продаж не было."
+                              ? t.lastSale(filtered ? filterLabel : "", formatRelative(latest.t), formatPrice(latest.price))
+                              : t.noSalesText
                           }
                         />
                       )}
@@ -504,17 +505,17 @@ export function ItemView({
             <>
               <section className="section">
                 <Segmented
-                  label="Раздел"
+                  label={t.sectionAria}
                   value={tab}
-                  onChange={(t) => view.set({ tab: t })}
+                  onChange={(v) => view.set({ tab: v })}
                   options={[
                     {
                       value: "lots",
-                      label: `Лоты${filtered || dealFilter !== "all" ? ` · ${formatNumber(lotsShown.length)}` : totalLots ? ` · ${formatNumber(totalLots)}` : ""}`,
+                      label: `${t.lotsTab}${filtered || dealFilter !== "all" ? ` · ${formatNumber(lotsShown.length)}` : totalLots ? ` · ${formatNumber(totalLots)}` : ""}`,
                     },
                     {
                       value: "history",
-                      label: isPro ? "Продажи" : "Продажи · месяц",
+                      label: isPro ? t.salesTab : t.salesTabMonth,
                     },
                   ]}
                 />
@@ -531,7 +532,7 @@ export function ItemView({
                             aria-pressed={s.value === sortKey}
                             onClick={() => view.set({ sortKey: s.value, page: 0 })}
                           >
-                            {s.label}
+                            {t.sorts[s.value]}
                           </button>
                         ))}
                       </div>
@@ -539,8 +540,8 @@ export function ItemView({
                         <button
                           type="button"
                           className={`icon-btn ${styles.undo}`}
-                          aria-label="Отменить (Ctrl+Z)"
-                          title="Отменить (Ctrl+Z)"
+                          aria-label={t.undo}
+                          title={t.undo}
                           onClick={() => {
                             haptic.tap();
                             view.undo();
@@ -593,22 +594,22 @@ export function ItemView({
                             disabled={lots.isFetchingNextPage}
                             onClick={() => lots.fetchNextPage()}
                           >
-                            {lots.isFetchingNextPage ? "Загрузка…" : `Ещё лоты · осталось ${formatNumber(totalLots - allLots.length)}`}
+                            {lots.isFetchingNextPage ? t.loading : t.moreLots(formatNumber(totalLots - allLots.length))}
                           </button>
                         )}
                       </>
                     ) : (
                       <EmptyState
                         icon="market"
-                        title="Лотов нет"
+                        title={t.noLots}
                         text={
                           dealFilter !== "all"
                             ? dealFilter === "good"
-                              ? "Выгодных лотов сейчас нет."
-                              : "Дорогих лотов нет."
+                              ? t.noGoodLots
+                              : t.noBadLots
                             : filtered
-                              ? `Лотов «${filterLabel}» сейчас нет.`
-                              : "Сейчас этот предмет никто не продаёт. Загляните позже."
+                              ? t.noFilteredLots(filterLabel)
+                              : t.noLotsText
                         }
                       />
                     )}
@@ -622,7 +623,7 @@ export function ItemView({
                     ) : salesShown.length ? (
                       salesShown.slice(0, 60).map((sale, i) => <SaleRow key={`${sale.time}-${i}`} sale={sale} />)
                     ) : (
-                      <EmptyState icon="clock" title="Продаж не было" />
+                      <EmptyState icon="clock" title={t.noSales} />
                     )}
                   </div>
                 )}
@@ -648,9 +649,11 @@ function tint(additional?: Additional) {
 }
 
 function Quality({ additional }: { additional?: Additional }) {
+  const t = useT().item;
+  const lang = useLang();
   if (!additional) return null;
   const qi = qualityOf(additional);
-  const q = qi === null ? undefined : QUALITY[qi];
+  const q = qi === null ? undefined : qualities(lang)[qi];
   if (!q) return null;
   const up = upgradeOf(additional);
   // у модуля вместо заточки — ключевая характеристика («Снайпер»), от неё и зависит цена
@@ -667,7 +670,7 @@ function Quality({ additional }: { additional?: Additional }) {
           className={styles.upgrade}
           data-max={up === MAX_UPGRADE || undefined}
           style={{ "--up": up / MAX_UPGRADE } as React.CSSProperties}
-          title={`Заточка +${up} из +${MAX_UPGRADE}`}
+          title={t.upgradeTitle(up, MAX_UPGRADE)}
         >
           +{up}
         </span>
@@ -676,23 +679,18 @@ function Quality({ additional }: { additional?: Additional }) {
   );
 }
 
-const DEAL_LABEL = {
-  hot: "Огонь",
-  good: "Выгодно",
-  fair: "По рынку",
-  high: "Дорого",
-} as const;
-
 function LotRow({ lot, median }: { lot: Lot; median?: number }) {
+  const t = useT().item;
+  const { formatDuration, formatNumber, formatPrice } = useFormat();
   const now = useNow(1000);
   const left = new Date(lot.endTime).getTime() - now;
   const deal = dealOf(lot, median);
   const unit = lotUnitPrice(lot);
   const bid = lot.currentPrice || lot.startPrice;
-  const t = tint(lot.additional);
+  const tn = tint(lot.additional);
 
   return (
-    <article className={`list-row ${styles.lot} ${t.className}`} style={t.style} data-deal={deal?.kind}>
+    <article className={`list-row ${styles.lot} ${tn.className}`} style={tn.style} data-deal={deal?.kind}>
       <div className={styles.lotMain}>
         <div className="row" style={{ gap: 6, flexWrap: "wrap" }}>
           <span className="pill mono" style={{ height: 22, fontSize: 11 }}>
@@ -701,18 +699,18 @@ function LotRow({ lot, median }: { lot: Lot; median?: number }) {
           <Quality additional={lot.additional} />
           {deal && deal.kind !== "fair" && (
             <span className={styles.deal} data-kind={deal.kind}>
-              {DEAL_LABEL[deal.kind]} {deal.diff > 0 ? "+" : ""}
+              {t.deal[deal.kind]} {deal.diff > 0 ? "+" : ""}
               {deal.diff.toFixed(0)}%
             </span>
           )}
         </div>
         <span className={styles.lotMeta}>
-          {bid > 0 ? `ставка ${formatPrice(bid)}` : "без ставок"}
+          {bid > 0 ? t.bid(formatPrice(bid)) : t.noBids}
           {now > 0 && (
             <>
               {" · "}
               <span style={{ color: left < 3_600_000 ? "var(--ember)" : undefined }}>
-                {left > 0 ? `${formatDuration(left, left < 3_600_000)} осталось` : "завершён"}
+                {left > 0 ? t.left(formatDuration(left, left < 3_600_000)) : t.ended}
               </span>
             </>
           )}
@@ -720,19 +718,21 @@ function LotRow({ lot, median }: { lot: Lot; median?: number }) {
       </div>
       <div className={styles.lotPrice}>
         <strong className="mono">{unit ? formatPrice(unit) : "—"}</strong>
-        {lot.amount > 1 && lot.buyoutPrice > 0 && <span className="mono dim">{formatPrice(lot.buyoutPrice)} всего</span>}
-        {!lot.buyoutPrice && <span className="dim">без выкупа</span>}
+        {lot.amount > 1 && lot.buyoutPrice > 0 && <span className="mono dim">{t.total(formatPrice(lot.buyoutPrice))}</span>}
+        {!lot.buyoutPrice && <span className="dim">{t.noBuyout}</span>}
       </div>
     </article>
   );
 }
 
 function SaleRow({ sale }: { sale: Sale }) {
+  const t = useT().item;
+  const { formatNumber, formatPrice, formatRelative } = useFormat();
   const now = useNow(60_000);
   const amount = Number(sale.amount) || 1;
-  const t = tint(sale.additional);
+  const tn = tint(sale.additional);
   return (
-    <article className={`list-row ${t.className}`} style={t.style}>
+    <article className={`list-row ${tn.className}`} style={tn.style}>
       <div style={{ flex: 1, minWidth: 0, display: "grid", gap: 4 }}>
         <div className="row" style={{ gap: 6 }}>
           <span className="pill mono" style={{ height: 22, fontSize: 11 }}>
@@ -746,7 +746,7 @@ function SaleRow({ sale }: { sale: Sale }) {
       </div>
       <div className={styles.lotPrice}>
         <strong className="mono">{formatPrice(sale.price / amount)}</strong>
-        {amount > 1 && <span className="mono dim">{formatPrice(sale.price)} всего</span>}
+        {amount > 1 && <span className="mono dim">{t.total(formatPrice(sale.price))}</span>}
       </div>
     </article>
   );

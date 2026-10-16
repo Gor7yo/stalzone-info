@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { formatNumber } from "@/lib/format";
+import { useFormat } from "@/i18n/client";
 import { haptic } from "@/lib/telegram";
 import styles from "./Charts.module.css";
 
@@ -18,7 +18,9 @@ export interface Bar {
  * Столбчатый график: подсказка при наведении/касании, подписи оси без наложений
  * (при многих столбцах — через одну-пять), максимум над сеткой.
  */
-export function BarChart({ bars, format = formatNumber, height = 160 }: { bars: Bar[]; format?: (v: number) => string; height?: number }) {
+export function BarChart({ bars, format: formatProp, height = 160 }: { bars: Bar[]; format?: (v: number) => string; height?: number }) {
+  const { formatNumber } = useFormat();
+  const format = formatProp ?? formatNumber;
   const [active, setActive] = useState<number | null>(null);
   const max = Math.max(1, ...bars.map((b) => b.value));
   // подписи оси: при 35 столбцах — 1, 5, 10 … и последний
@@ -53,10 +55,7 @@ export function BarChart({ bars, format = formatNumber, height = 160 }: { bars: 
             onPointerDown={() => pick(i)}
             onFocus={() => pick(i)}
           >
-            <span
-              className={styles.bar}
-              style={{ height: `${(b.value / max) * 100}%`, background: b.color ?? "var(--acc)" }}
-            />
+            <span className={styles.bar} style={{ height: `${(b.value / max) * 100}%`, background: b.color ?? "var(--acc)" }} />
             {active === i && (
               <span className={styles.barTip} data-edge={i < 2 ? "left" : i > bars.length - 3 ? "right" : undefined}>
                 <strong className="mono">{format(b.value)}</strong>

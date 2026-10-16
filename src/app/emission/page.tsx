@@ -7,19 +7,21 @@ import { LoginCard, SentTo, TelegramLinkCard } from "@/components/Account/Accoun
 import { PageHeader } from "@/components/ui/PageHeader";
 import { useAlerts, useToggleEmissionAlert } from "@/features/alerts";
 import { emissionState, useEmission } from "@/features/emission";
+import { useT } from "@/i18n/client";
 import { actions, REGIONS, useApp, type Region } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
 import styles from "./emission.module.css";
 
 export default function EmissionPage() {
+  const { emission: t, regions } = useT();
   const region = useApp((s) => s.region);
   const current = useEmission(region);
   const phase = emissionState(current.data).phase;
 
   return (
     <main className="page">
-      <PageHeader eyebrow="Радар" title="Выбросы">
-        Состояние Зоны во всех регионах. Обновляется автоматически, во время выброса — каждые 10 секунд.
+      <PageHeader eyebrow={t.eyebrow} title={t.title}>
+        {t.lead}
       </PageHeader>
 
       <div className="desk-cols">
@@ -32,10 +34,11 @@ export default function EmissionPage() {
                 className={styles.orb}
                 mode={phase === "active" ? "active" : current.isError ? "idle" : "calm"}
                 onTap={() => haptic.tap("heavy")}
+                label={t.anomalyAria}
               />
             </div>
             <div className={styles.radarText}>
-              <span className="pill">{REGIONS.find((r) => r.value === region)?.name}</span>
+              <span className="pill">{regions[region]}</span>
               <EmissionStatus data={current.data} isLoading={current.isLoading} isError={current.isError} />
             </div>
           </section>
@@ -55,16 +58,17 @@ export default function EmissionPage() {
 
 /** Уведомление в Telegram-бота, когда в выбранном регионе начинается выброс. */
 function EmissionAlertToggle({ region }: { region: Region }) {
+  const t = useT().emission;
   const alerts = useAlerts();
   const toggle = useToggleEmissionAlert();
-  const label = REGIONS.find((r) => r.value === region)?.label;
+  const label = REGIONS.find((r) => r.value === region)?.label ?? region.toUpperCase();
 
   if (alerts.pending) return null;
   if (!alerts.available) {
-    return <LoginCard text="Войдите через EXBO, чтобы получать в Telegram уведомление о начале выброса." />;
+    return <LoginCard text={t.login} />;
   }
   if (!alerts.telegram) {
-    return <TelegramLinkCard text="Уведомления о начале выброса приходят в Telegram-бота. Привяжите Telegram — это один клик в боте." />;
+    return <TelegramLinkCard text={t.linkTelegram} />;
   }
 
   const on = alerts.data?.emission.includes(region) ?? false;
@@ -72,7 +76,7 @@ function EmissionAlertToggle({ region }: { region: Region }) {
     <div className={`glass ${styles.notify}`}>
       <Icon name="bell" size={18} filled={on} />
       <span className={styles.notifyText}>
-        Сообщить в Telegram, когда начнётся выброс на {label}
+        {t.notify(label)}
         {toggle.error && <small className={styles.notifyError}>{toggle.error.message}</small>}
         {alerts.sentTo && <SentTo telegram={alerts.sentTo} />}
       </span>
@@ -80,7 +84,7 @@ function EmissionAlertToggle({ region }: { region: Region }) {
         type="button"
         role="switch"
         aria-checked={on}
-        aria-label={`Уведомления о выбросе на ${label}`}
+        aria-label={t.notifyAria(label)}
         className={styles.switch}
         disabled={alerts.isLoading || toggle.isPending}
         onClick={() => {

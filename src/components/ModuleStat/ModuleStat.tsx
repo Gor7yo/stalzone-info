@@ -2,15 +2,17 @@
 
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { createPortal } from "react-dom";
-import { QUALITY } from "@/features/auction";
+import { qualities } from "@/features/auction";
 import { effectText, formatPercent, moduleAttr, variantLabel, variantName, type ModuleAttr } from "@/features/modules";
+import { useLang, useT } from "@/i18n/client";
 import { haptic } from "@/lib/telegram";
 import { Icon } from "../Icon";
 import styles from "./ModuleStat.module.css";
 
 function Effects({ id, at }: { id: string; at: Parameters<typeof effectText>[1] }) {
+  const t = useT().module;
   const info = moduleAttr(id);
-  if (!info) return <span className={styles.empty}>Данных пока нет</span>;
+  if (!info) return <span className={styles.empty}>{t.noData}</span>;
   return (
     <ul className={styles.effects}>
       {info.effects.map((e, i) => (
@@ -36,6 +38,7 @@ const nameOf = (a: { id: string; slot: string }) => (a.slot === "key" ? variantL
  * как в игре; без них — только ключевая характеристика с диапазоном для ранга качества (null — для любого).
  */
 export function ModuleStatCard({ id, quality, attrs }: { id: string; quality: number | null; attrs?: ModuleAttr[] }) {
+  const QUALITY = qualities(useLang());
   if (attrs?.length) {
     return (
       <div className={styles.card}>
@@ -139,6 +142,7 @@ export function ModuleStatBadge({
   /** sm — в строках лотов, md — рядом с обычными плашками (.pill) */
   size?: "sm" | "md";
 }) {
+  const t = useT().module;
   // атрибуты без названия в справочнике не показываем (английский id из EXBO ничего не скажет)
   const known = attrs?.filter((a) => moduleAttr(a.id));
   const pre = known?.find((a) => a.slot === "pre");
@@ -160,7 +164,7 @@ export function ModuleStatBadge({
         aria-label={`${[pre?.id, suf?.id, key ?? undefined]
           .filter((x): x is string => Boolean(x))
           .map(variantName)
-          .join(" ")} - что даёт`}
+          .join(" ")} - ${t.whatGives}`}
         onPointerDown={(e) => (pointer.current = e.pointerType)}
         onPointerEnter={(e) => e.pointerType === "mouse" && pop.show(id, e.currentTarget)}
         onPointerLeave={(e) => e.pointerType === "mouse" && pop.hide()}
@@ -204,6 +208,7 @@ export function ModuleStatPicker({
   allowAny?: boolean;
   onChange: (value: string | null) => void;
 }) {
+  const t = useT().module;
   const ref = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const pop = useStatPopover(ref);
@@ -230,18 +235,18 @@ export function ModuleStatPicker({
           setOpen((o) => !o);
         }}
       >
-        <span className={styles.triggerLabel}>Характеристика</span>
-        <b>{value ? variantName(value) : "Любая"}</b>
+        <span className={styles.triggerLabel}>{t.stat}</span>
+        <b>{value ? variantName(value) : t.any}</b>
         <span className={styles.chevron}>
           <Icon name="down" size={16} />
         </span>
       </button>
 
       {open && (
-        <div className={styles.menu} role="listbox" aria-label="Ключевая характеристика модуля">
+        <div className={styles.menu} role="listbox" aria-label={t.keyStatAria}>
           {allowAny && (
             <button type="button" role="option" aria-selected={value === null} onClick={() => pick(null)}>
-              Любая
+              {t.any}
             </button>
           )}
           {shown.map((v) => (

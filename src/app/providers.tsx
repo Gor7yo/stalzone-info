@@ -3,10 +3,12 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { I18nProvider } from "@/i18n/client";
+import type { Lang } from "@/i18n/lang";
 import { syncFromCloud } from "@/lib/store";
 import { consumeStartPath, initTelegram } from "@/lib/telegram";
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({ lang, children }: { lang: Lang | null; children: React.ReactNode }) {
   const router = useRouter();
   const [queryClient] = useState(
     () =>
@@ -30,5 +32,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
     });
   }, [router]);
 
-  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <I18nProvider saved={lang}>{children}</I18nProvider>
+    </QueryClientProvider>
+  );
 }

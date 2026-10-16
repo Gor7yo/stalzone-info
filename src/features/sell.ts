@@ -2,6 +2,7 @@
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { authed } from "./account";
+import type { Lang } from "@/i18n/lang";
 import type { Region } from "@/lib/store";
 
 export interface SalePrices {
@@ -112,11 +113,24 @@ export function hoursToSell(a: SellAdvice, price: number): number | null {
 }
 
 /** «≈20 мин», «≈3 ч», «≈1,5 сут» */
-export function formatHours(h: number) {
-  if (h < 1) return `≈${Math.max(5, Math.round((h * 60) / 5) * 5)} мин`;
-  if (h < 24) return `≈${Math.round(h)} ч`;
-  return `≈${(Math.round((h / 24) * 10) / 10).toLocaleString("ru-RU")} сут`;
+export function formatHours(h: number, lang: Lang = "ru") {
+  const en = lang === "en";
+  if (h < 1) return `≈${Math.max(5, Math.round((h * 60) / 5) * 5)} ${en ? "min" : "мин"}`;
+  if (h < 24) return `≈${Math.round(h)} ${en ? "h" : "ч"}`;
+  const days = (Math.round((h / 24) * 10) / 10).toLocaleString(en ? "en-US" : "ru-RU");
+  return `≈${days} ${en ? "d" : "сут"}`;
 }
 
 /** «за 1 ч», «за сутки», «за 2 суток» */
-export const targetLabel = (h: number) => (h === 24 ? "за сутки" : h === 48 ? "за 2 суток" : `за ${h} ч`);
+export const targetLabel = (h: number, lang: Lang = "ru") =>
+  lang === "en"
+    ? h === 24
+      ? "within a day"
+      : h === 48
+        ? "within 2 days"
+        : `within ${h} h`
+    : h === 24
+      ? "за сутки"
+      : h === 48
+        ? "за 2 суток"
+        : `за ${h} ч`;

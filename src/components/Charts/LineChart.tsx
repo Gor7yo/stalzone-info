@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { formatDateTime } from "@/lib/format";
+import { useFormat, useT } from "@/i18n/client";
 import { haptic } from "@/lib/telegram";
 import styles from "./Charts.module.css";
 
@@ -24,13 +24,15 @@ export function LineChart({
   times,
   series,
   format,
-  emptyText = "Нет данных",
+  emptyText,
 }: {
   times: number[];
   series: LineSeries[];
   format: (v: number) => string;
   emptyText?: string;
 }) {
+  const t = useT().chart;
+  const { formatDateTime } = useFormat();
   const boxRef = useRef<HTMLDivElement>(null);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const [active, setActive] = useState<number | null>(null);
@@ -91,15 +93,9 @@ export function LineChart({
   return (
     <div className={styles.card}>
       {series.length > 1 && (
-        <div className={styles.legend} role="group" aria-label="Серии графика">
+        <div className={styles.legend} role="group" aria-label={t.series}>
           {series.map((s) => (
-            <button
-              key={s.key}
-              type="button"
-              className={styles.legendItem}
-              aria-pressed={!hidden.has(s.key)}
-              onClick={() => toggle(s.key)}
-            >
+            <button key={s.key} type="button" className={styles.legendItem} aria-pressed={!hidden.has(s.key)} onClick={() => toggle(s.key)}>
               <span className={styles.swatch} style={{ background: s.color }} />
               {s.label}
               <span className="mono">{format(s.values[idx] ?? 0)}</span>
@@ -109,7 +105,7 @@ export function LineChart({
       )}
 
       {!geo ? (
-        <p className={styles.empty}>{emptyText}</p>
+        <p className={styles.empty}>{emptyText ?? t.noData}</p>
       ) : (
         <>
           <div

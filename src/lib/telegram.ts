@@ -181,6 +181,16 @@ export const cloud = {
   },
 };
 
+/** Язык аккаунта Telegram («en», «ru», …). Вне Telegram - null. */
+export function telegramLanguage(): string | null {
+  if (!sdk) return null;
+  try {
+    return sdk.retrieveLaunchParams().tgWebAppData?.user?.language_code ?? null;
+  } catch {
+    return null;
+  }
+}
+
 // ---------- алерты в боте ----------
 
 /** Подписанная Telegram строка initData — по ней бэкенд узнаёт пользователя. Вне Telegram — null. */

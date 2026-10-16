@@ -97,6 +97,19 @@ export const RANKS: Record<string, string> = {
   LEADER: "Лидер",
 };
 
+const RANKS_EN: Record<string, string> = {
+  RECRUIT: "Recruit",
+  COMMONER: "Private",
+  SOLDIER: "Soldier",
+  SERGEANT: "Sergeant",
+  OFFICER: "Officer",
+  COLONEL: "Colonel",
+  LEADER: "Leader",
+};
+
+/** Звание в клане на языке интерфейса. */
+export const rankLabel = (rank: string, lang: "ru" | "en") => (lang === "en" ? RANKS_EN[rank] : RANKS[rank]) ?? rank;
+
 // ---------- метрики кланов (история с нашего сервера: снимки раз в час) ----------
 
 export type ClanPeriod = "week" | "month" | "all";
@@ -106,6 +119,15 @@ export const CLAN_PERIODS: { value: ClanPeriod; label: string }[] = [
   { value: "month", label: "Месяц" },
   { value: "all", label: "Всё время" },
 ];
+
+const CLAN_PERIODS_EN: typeof CLAN_PERIODS = [
+  { value: "week", label: "Week" },
+  { value: "month", label: "Month" },
+  { value: "all", label: "All time" },
+];
+
+/** Периоды графиков кланов с подписями на языке интерфейса. */
+export const clanPeriods = (lang: "ru" | "en") => (lang === "en" ? CLAN_PERIODS_EN : CLAN_PERIODS);
 
 /** Больше бойцов в клане не бывает (ограничение игры). */
 export const MAX_MEMBERS = 35;

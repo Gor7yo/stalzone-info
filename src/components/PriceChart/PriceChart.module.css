@@ -133,11 +133,11 @@
   min-width: 120px;
   padding: 8px 10px;
   border-radius: 12px;
-  background: rgb(14 16 19 / 0.88);
+  background: rgb(var(--panel-rgb) / 0.88);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border: 1px solid var(--line-2);
-  box-shadow: 0 12px 28px -10px rgb(0 0 0 / 0.85);
+  box-shadow: 0 12px 28px -10px rgb(var(--shadow-rgb) / 0.85);
   pointer-events: none;
   white-space: nowrap;
   /* по умолчанию — справа сверху от точки */

@@ -143,9 +143,9 @@
   min-width: 130px;
   padding: 8px 10px;
   border-radius: 12px;
-  background: rgb(14 16 19 / 0.94);
+  background: rgb(var(--panel-rgb) / 0.94);
   border: 1px solid var(--line-2);
-  box-shadow: 0 12px 30px -10px rgb(0 0 0 / 0.8);
+  box-shadow: 0 12px 30px -10px rgb(var(--shadow-rgb) / 0.8);
   transform: translateX(12px);
   pointer-events: none;
   font-size: 12px;
@@ -235,9 +235,9 @@
   gap: 2px;
   padding: 6px 9px;
   border-radius: 10px;
-  background: rgb(14 16 19 / 0.94);
+  background: rgb(var(--panel-rgb) / 0.94);
   border: 1px solid var(--line-2);
-  box-shadow: 0 12px 30px -10px rgb(0 0 0 / 0.8);
+  box-shadow: 0 12px 30px -10px rgb(var(--shadow-rgb) / 0.8);
   transform: translateX(-50%);
   white-space: nowrap;
   font-size: 11px;

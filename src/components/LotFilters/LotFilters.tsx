@@ -1,7 +1,8 @@
 "use client";
 
-import { lotUnitPrice, MAX_UPGRADE, pickedQualities, qualityOf, QUALITY, upgradeOf, type Lot, type LotFilter } from "@/features/auction";
+import { lotUnitPrice, MAX_UPGRADE, pickedQualities, qualities, qualityOf, upgradeOf, type Lot, type LotFilter } from "@/features/auction";
 import { isUniqueKey, variantOf, variantsOf } from "@/features/modules";
+import { useLang, useT } from "@/i18n/client";
 import { haptic } from "@/lib/telegram";
 import { ModuleStatPicker } from "../ModuleStat/ModuleStat";
 import styles from "./LotFilters.module.css";
@@ -30,22 +31,24 @@ export function LotFilters({
   onDeal: (deal: DealFilter) => void;
   dealCounts: { good: number; bad: number };
 }) {
+  const t = useT().filters;
+  const QUALITY = qualities(useLang());
   const pick = (next: LotFilter) => {
     haptic.select();
     onFilter(next);
   };
 
   // выбранные качества: тап по чипу включает/выключает, «Все» — сброс
-  const qualities = pickedQualities(filter);
+  const picked = pickedQualities(filter);
   const toggleQuality = (q: number) => {
-    const next = qualities.includes(q) ? qualities.filter((x) => x !== q) : [...qualities, q].sort((a, b) => a - b);
+    const next = picked.includes(q) ? picked.filter((x) => x !== q) : [...picked, q].sort((a, b) => a - b);
     pick({ ...filter, quality: null, qualities: next.length ? next : null });
   };
 
   // лучшая цена и число лотов на каждом уровне — с учётом выбранных качеств
   const byLevel = LEVELS.map((level) => {
     const list = lots.filter(
-      (l) => upgradeOf(l.additional) === level && (!qualities.length || qualities.includes(qualityOf(l.additional) ?? -1)),
+      (l) => upgradeOf(l.additional) === level && (!picked.length || picked.includes(qualityOf(l.additional) ?? -1)),
     );
     const prices = list.map(lotUnitPrice).filter((p) => p > 0);
     return { count: list.length, best: prices.length ? Math.min(...prices) : null };
@@ -58,7 +61,7 @@ export function LotFilters({
   const variantCounts: Record<string, number> = {};
   for (const l of lots) {
     const v = variantOf(l.additional);
-    if (v && (!qualities.length || qualities.includes(qualityOf(l.additional) ?? -1))) {
+    if (v && (!picked.length || picked.includes(qualityOf(l.additional) ?? -1))) {
       variantCounts[v] = (variantCounts[v] ?? 0) + 1;
     }
   }
@@ -70,26 +73,26 @@ export function LotFilters({
           variants={variants}
           counts={variantCounts}
           value={filter.variant ?? null}
-          quality={qualities.length === 1 ? qualities[0] : null}
+          quality={picked.length === 1 ? picked[0] : null}
           onChange={(variant) => onFilter({ ...filter, variant })}
         />
       )}
 
-      <div className={styles.row} role="group" aria-label="Качество (можно несколько)">
+      <div className={styles.row} role="group" aria-label={t.qualityAria}>
         <button
           type="button"
           className={styles.chip}
-          aria-pressed={!qualities.length}
+          aria-pressed={!picked.length}
           onClick={() => pick({ ...filter, quality: null, qualities: null })}
         >
-          Все
+          {t.all}
         </button>
         {QUALITY.map((q, i) => (
           <button
-            key={q.label}
+            key={q.color}
             type="button"
             className={styles.chip}
-            aria-pressed={qualities.includes(i)}
+            aria-pressed={picked.includes(i)}
             data-empty={!qualityCount(i) || undefined}
             style={{ "--c": q.color } as React.CSSProperties}
             onClick={() => toggleQuality(i)}
@@ -109,12 +112,12 @@ export function LotFilters({
         />
       )}
 
-      <div className={styles.deals} role="radiogroup" aria-label="Выгодность">
+      <div className={styles.deals} role="radiogroup" aria-label={t.dealAria}>
         {(
           [
-            ["all", "Все лоты", null],
-            ["good", "Выгодные", dealCounts.good],
-            ["bad", "Дорогие", dealCounts.bad],
+            ["all", t.allLots, null],
+            ["good", t.good, dealCounts.good],
+            ["bad", t.bad, dealCounts.bad],
           ] as const
         ).map(([value, label, count]) => (
           <button

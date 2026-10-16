@@ -1,6 +1,7 @@
 "use client";
 
 import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import type { Lang } from "@/i18n/lang";
 import { api } from "@/lib/api";
 import type { Region } from "@/lib/store";
 import { variantOf } from "./modules";
@@ -118,7 +119,17 @@ export const PERIODS: PeriodInfo[] = [
 /** Бесплатная версия: без графика, история продаж за месяц. */
 export const FREE_PERIOD: PeriodInfo = { value: "month", label: "Месяц", days: 30, title: "за месяц", bucketMs: 24 * HOUR };
 
-export const periodInfo = (p: HistoryPeriod) => (p === "month" ? FREE_PERIOD : PERIODS.find((x) => x.value === p)!);
+const PERIOD_EN: Record<HistoryPeriod, { label: string; title: string }> = {
+  day: { label: "Day", title: "in 24 hours" },
+  week: { label: "Week", title: "this week" },
+  month: { label: "Month", title: "this month" },
+};
+
+/** Период с подписями на языке интерфейса. */
+export const localizePeriod = (p: PeriodInfo, lang: Lang): PeriodInfo => (lang === "en" ? { ...p, ...PERIOD_EN[p.value] } : p);
+
+export const periodInfo = (p: HistoryPeriod, lang: Lang = "ru") =>
+  localizePeriod(p === "month" ? FREE_PERIOD : PERIODS.find((x) => x.value === p)!, lang);
 
 /**
  * Точки графика → медиана цены в каждой корзине времени (bucketMs = 0 — без изменений).
@@ -294,6 +305,18 @@ export const QUALITY: { label: string; short: string; color: string }[] = [
   { label: "Легендарный", short: "Легенд.", color: "#ffc94a" },
 ];
 
+const QUALITY_EN: typeof QUALITY = [
+  { label: "Common", short: "Common", color: "#a3a8a0" },
+  { label: "Uncommon", short: "Uncom.", color: "#7ee081" },
+  { label: "Special", short: "Special", color: "#5aa9ff" },
+  { label: "Rare", short: "Rare", color: "#b47cff" },
+  { label: "Exceptional", short: "Except.", color: "#ff5b79" },
+  { label: "Legendary", short: "Legend.", color: "#ffc94a" },
+];
+
+/** Качества с подписями на языке интерфейса (индексы те же, что у QUALITY). */
+export const qualities = (lang: Lang) => (lang === "en" ? QUALITY_EN : QUALITY);
+
 /** Номер качества лота/продажи или null, если у предмета нет качества. */
 export const qualityOf = (additional?: Additional): number | null =>
   typeof additional?.qlt === "number" && QUALITY[additional.qlt] ? additional.qlt : null;
@@ -342,9 +365,9 @@ export const pickedQualities = (f: Pick<LotFilter, "quality" | "qualities">) =>
   f.qualities?.length ? [...f.qualities].sort((a, b) => a - b) : f.quality !== null ? [f.quality] : [];
 
 /** «Редкий», «Особый, Редкий» */
-export const qualityLabel = (f: Pick<LotFilter, "quality" | "qualities">) =>
+export const qualityLabel = (f: Pick<LotFilter, "quality" | "qualities">, lang: Lang = "ru") =>
   pickedQualities(f)
-    .map((q) => QUALITY[q]?.label)
+    .map((q) => qualities(lang)[q]?.label)
     .filter(Boolean)
     .join(", ");
 

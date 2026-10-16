@@ -1,0 +1,58 @@
+.crumbs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-3);
+}
+
+.crumbs a {
+  color: var(--text-2);
+}
+
+.groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 14px 0;
+}
+
+.groups a[aria-current="page"] {
+  background: var(--acc);
+  color: var(--acc-ink);
+  border-color: transparent;
+}
+
+.list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  gap: 12px;
+  min-width: 0;
+}
+
+.icon {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  font-size: 13px;
+}
+
+.text span {
+  font-size: 11px;
+}

@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { marketItems } from "@/lib/items-server";
+import { marketGroups, marketItems } from "@/lib/items-server";
 
 const SITE = "https://stalzone-info.ru";
 
@@ -14,10 +14,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE}/character`, changeFrequency: "weekly", priority: 0.6 },
     { url: `${SITE}/pro`, changeFrequency: "monthly", priority: 0.4 },
   ];
+  const groups = marketGroups().map((g) => ({
+    url: `${SITE}/auction/c/${g.id}`,
+    changeFrequency: "weekly" as const,
+    priority: 0.8,
+  }));
   const items = marketItems().map((i) => ({
     url: `${SITE}/auction/${i.id}`,
     changeFrequency: "hourly" as const,
     priority: 0.6,
   }));
-  return [...sections, ...items];
+  return [...sections, ...groups, ...items];
 }

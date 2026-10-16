@@ -5,8 +5,10 @@ import { useAlerts, useCreatePriceAlert, useDeletePriceAlert, type PriceAlert } 
 import { hasUpgradeFilter, pickedQualities, qualityLabel, upgradeLabel, type LotFilter } from "@/features/auction";
 import { variantLabel as moduleLabel } from "@/features/modules";
 import { usePro } from "@/features/pro";
+import { useFormat, useLang, useT } from "@/i18n/client";
+import type { Lang } from "@/i18n/lang";
 import { isProRequired } from "@/lib/api";
-import { formatShort, parseGamePrice } from "@/lib/format";
+import { parseGamePrice } from "@/lib/format";
 import { REGIONS, type Region } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
 import { Icon } from "../Icon";
@@ -28,19 +30,25 @@ interface Props {
 
 const regionLabel = (r: string) => REGIONS.find((x) => x.value === r)?.label ?? r.toUpperCase();
 
-export const variantLabel = (a: {
-  quality: number | null;
-  qualities?: number[] | null;
-  upgrade?: number | null;
-  upgrades?: number[] | null;
-  variant?: string | null;
-}) =>
-  [a.variant ? moduleLabel(a.variant) : "", qualityLabel(a), upgradeLabel({ upgrade: a.upgrade ?? null, upgrades: a.upgrades })]
+export const variantLabel = (
+  a: {
+    quality: number | null;
+    qualities?: number[] | null;
+    upgrade?: number | null;
+    upgrades?: number[] | null;
+    variant?: string | null;
+  },
+  lang: Lang = "ru",
+) =>
+  [a.variant ? moduleLabel(a.variant, lang) : "", qualityLabel(a, lang), upgradeLabel({ upgrade: a.upgrade ?? null, upgrades: a.upgrades })]
     .filter(Boolean)
     .join(" ");
 
 /** «Сообщи в Telegram, когда этот предмет будет дешевле N». */
 export function PriceAlertPanel({ itemId, itemName, region, filter, variantItem, bestPrice, median }: Props) {
+  const t = useT().alerts;
+  const lang = useLang();
+  const { formatShort } = useFormat();
   const alerts = useAlerts();
   const { isPro } = usePro();
   const create = useCreatePriceAlert();
@@ -49,20 +57,20 @@ export function PriceAlertPanel({ itemId, itemName, region, filter, variantItem,
 
   if (alerts.pending) return null;
   if (!alerts.available) {
-    return <LoginCard text="Войдите через EXBO, чтобы получать в Telegram уведомление, когда предмет подешевеет." />;
+    return <LoginCard text={t.login} />;
   }
   if (!alerts.telegram) {
-    return <TelegramLinkCard text="Уведомления о цене приходят в Telegram-бота. Привяжите Telegram — это один клик в боте." />;
+    return <TelegramLinkCard text={t.linkTelegram} />;
   }
 
   const mine = (alerts.data?.price ?? []).filter((a) => a.itemId === itemId);
   const price = parseGamePrice(input);
-  const variant = variantLabel(filter);
+  const variant = variantLabel(filter, lang);
   // подсказки порога: чуть ниже лучшей цены и медианы
   const presets = [
-    bestPrice ? { label: "−5% от лучшей", value: Math.floor(bestPrice * 0.95) } : null,
-    median ? { label: "−10% от медианы", value: Math.floor(median * 0.9) } : null,
-    median ? { label: "−20% от медианы", value: Math.floor(median * 0.8) } : null,
+    bestPrice ? { label: t.presetBest, value: Math.floor(bestPrice * 0.95) } : null,
+    median ? { label: t.presetMedian(10), value: Math.floor(median * 0.9) } : null,
+    median ? { label: t.presetMedian(20), value: Math.floor(median * 0.8) } : null,
   ].filter((p): p is { label: string; value: number } => Boolean(p && p.value > 0));
 
   const submit = () => {
@@ -93,8 +101,8 @@ export function PriceAlertPanel({ itemId, itemName, region, filter, variantItem,
       <div className={styles.head}>
         <Icon name="bell" size={18} />
         <span>
-          Сообщить в Telegram, когда {variant ? <b>{filter.variant ? variant : `«${variant}»`}</b> : "лот"} на {regionLabel(region)} будет
-          дешевле
+          {t.headBefore} {variant ? <b>{filter.variant ? variant : lang === "en" ? `“${variant}”` : `«${variant}»`}</b> : t.lot}{" "}
+          {t.headAfter(regionLabel(region))}
         </span>
       </div>
 
@@ -110,14 +118,14 @@ export function PriceAlertPanel({ itemId, itemName, region, filter, variantItem,
           inputMode="decimal"
           enterKeyHint="done"
           autoComplete="off"
-          placeholder="например 4,5кк"
-          aria-label="Порог цены за штуку"
+          placeholder={t.placeholder}
+          aria-label={t.thresholdAria}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           data-invalid={(input && !price) || undefined}
         />
         <button type="submit" className="btn primary" disabled={!price || create.isPending}>
-          {create.isPending ? "…" : "Уведомить"}
+          {create.isPending ? "…" : t.notify}
         </button>
       </form>
 
@@ -131,18 +139,10 @@ export function PriceAlertPanel({ itemId, itemName, region, filter, variantItem,
         </div>
       )}
 
-      {variantItem && !filter.variant && (
-        <p className={styles.hint}>Выберите ключевую характеристику в фильтре выше - без неё сработает на любой модуль.</p>
-      )}
-      {!pickedQualities(filter).length && !hasUpgradeFilter(filter) && (
-        <p className={styles.hint}>
-          {isPro
-            ? "Без фильтра сработает на любой вариант. Качество и заточку выберите в фильтре выше."
-            : "Сработает на любое качество и заточку. Точный вариант и до 20 алертов — в Pro."}
-        </p>
-      )}
+      {variantItem && !filter.variant && <p className={styles.hint}>{t.pickVariant}</p>}
+      {!pickedQualities(filter).length && !hasUpgradeFilter(filter) && <p className={styles.hint}>{isPro ? t.anyPro : t.anyFree}</p>}
       {isProRequired(create.error) ? (
-        <ProTeaser compact title="Больше алертов" text={create.error!.message} />
+        <ProTeaser compact title={t.moreAlerts} text={create.error!.message} />
       ) : (
         create.error && <p className={styles.error}>{create.error.message}</p>
       )}
@@ -161,17 +161,19 @@ export function PriceAlertPanel({ itemId, itemName, region, filter, variantItem,
 }
 
 function AlertRow({ alert, pending, onDelete }: { alert: PriceAlert; pending: boolean; onDelete: () => void }) {
-  const variant = variantLabel(alert);
+  const t = useT().alerts;
+  const { formatShort } = useFormat();
+  const variant = variantLabel(alert, useLang());
   return (
     <li className={styles.row}>
       <span className="pill">{regionLabel(alert.region)}</span>
       <span className={styles.rowText}>
-        {variant || "любой вариант"} · до <b className="mono">{formatShort(alert.maxPrice)}</b>
+        {variant || t.anyVariant} · {t.upTo} <b className="mono">{formatShort(alert.maxPrice)}</b>
       </span>
       <button
         type="button"
         className={`icon-btn ${styles.del}`}
-        aria-label="Удалить алерт"
+        aria-label={t.delete}
         disabled={pending}
         onClick={() => {
           haptic.tap();

@@ -34,7 +34,8 @@
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgb(255 255 255 / 0.028) 1px, transparent 1px), linear-gradient(90deg, rgb(255 255 255 / 0.028) 1px, transparent 1px);
+    linear-gradient(color-mix(in srgb, var(--text) 3%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--text) 3%, transparent) 1px, transparent 1px);
   background-size: 44px 44px;
   mask-image: radial-gradient(ellipse 80% 55% at 50% 0%, #000 20%, transparent 75%);
 }
@@ -63,13 +64,13 @@
   display: grid;
   grid-template-columns: repeat(var(--count), 1fr);
   border-radius: 24px;
-  background: rgb(14 16 19 / 0.72);
+  background: rgb(var(--panel-rgb) / 0.72);
   backdrop-filter: blur(22px) saturate(160%);
   -webkit-backdrop-filter: blur(22px) saturate(160%);
   border: 1px solid var(--line-2);
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.06),
-    0 20px 50px -12px rgb(0 0 0 / 0.9);
+    0 20px 50px -12px rgb(var(--shadow-rgb) / 0.9);
   animation: dock-in 700ms 150ms var(--spring) both;
 }
 
@@ -172,13 +173,13 @@
   height: 36px;
   padding: 0 14px 0 10px;
   border-radius: 999px;
-  background: rgb(14 16 19 / 0.78);
+  background: rgb(var(--panel-rgb) / 0.78);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--line-2);
   font-size: 13px;
   font-weight: 800;
-  box-shadow: 0 12px 30px -10px rgb(0 0 0 / 0.8);
+  box-shadow: 0 12px 30px -10px rgb(var(--shadow-rgb) / 0.8);
   animation: rise 260ms var(--ease);
   transition: transform 160ms var(--ease);
 }
@@ -219,6 +220,49 @@
   text-underline-offset: 3px;
 }
 
+/* ---------- донаты и тема ---------- */
+
+.footerActions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+/* кнопка «Поддержать развитие» в подвале — на всех экранах */
+.donateBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid rgb(var(--red-rgb) / 0.35);
+  background: rgb(var(--red-rgb) / 0.1);
+  color: var(--text) !important;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-decoration: none !important;
+  transition: background 180ms;
+}
+
+.donateBtn svg {
+  color: var(--red);
+}
+
+.donateBtn:hover {
+  background: rgb(var(--red-rgb) / 0.18);
+}
+
+/* тема и донат в боковой панели широкого экрана; на телефоне — в подвале */
+.sideExtra {
+  display: none;
+}
+
 /* ---------- логотип боковой панели (на телефоне скрыт) ---------- */
 
 .brand {
@@ -247,7 +291,7 @@
     border-radius: 0;
     border: 0;
     border-right: 1px solid var(--line);
-    background: rgb(10 12 14 / 0.6);
+    background: rgb(var(--panel-rgb) / 0.6);
     box-shadow: none;
     animation: side-in 600ms var(--ease) both;
   }
@@ -310,6 +354,38 @@
     font-size: 14px;
     font-weight: 700;
     letter-spacing: 0;
+  }
+
+  /* под вкладками, над кнопкой «Назад» (она прижата к низу панели) */
+  .sideExtra {
+    display: grid;
+    gap: 4px;
+    margin-top: auto;
+    margin-bottom: 52px;
+  }
+
+  .sideDonate {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 42px;
+    padding: 0 12px;
+    border-radius: 14px;
+    color: var(--text-2);
+    font-size: 13px;
+    font-weight: 700;
+    transition:
+      color 200ms,
+      background 200ms;
+  }
+
+  .sideDonate svg {
+    color: var(--red);
+  }
+
+  .sideDonate:hover {
+    color: var(--text);
+    background: rgb(var(--red-rgb) / 0.1);
   }
 
   .back {

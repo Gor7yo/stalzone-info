@@ -1,8 +1,11 @@
 "use client";
 
 import { useId, useMemo, useRef, useState } from "react";
-import { QUALITY, type ChartPoint } from "@/features/auction";
-import { formatDateTime, formatNumber, formatPrice, plural } from "@/lib/format";
+import { qualities, type ChartPoint } from "@/features/auction";
+import { useFormat, useLang, useT } from "@/i18n/client";
+import type { Lang } from "@/i18n/lang";
+import type { Dict } from "@/i18n/ru";
+import { makeFormat } from "@/lib/format";
 import { haptic } from "@/lib/telegram";
 import styles from "./PriceChart.module.css";
 import { smoothPath } from "./smooth";
@@ -13,11 +16,11 @@ const H = 200;
 type Point = ChartPoint;
 
 /** «Редкий +15» для сделки, «медиана 12 сделок» для корзины. */
-export function describe(p: Point) {
+export function describe(p: Point, t: Dict["chart"], lang: Lang) {
   if (p.count !== undefined) {
-    return { text: `медиана ${formatNumber(p.count)} ${plural(p.count, ["сделки", "сделок", "сделок"])}`, color: undefined };
+    return { text: t.bucket(p.count, makeFormat(lang).formatNumber(p.count)), color: undefined };
   }
-  const q = p.quality != null ? QUALITY[p.quality] : undefined;
+  const q = p.quality != null ? qualities(lang)[p.quality] : undefined;
   if (!q) return null;
   return { text: `${q.label} +${p.upgrade ?? 0}`, color: q.color };
 }
@@ -27,6 +30,9 @@ export function describe(p: Point) {
  * Плавающая подсказка у точки — цена, время, качество и заточка сделки.
  */
 export function PriceChart({ points, median }: { points: Point[]; median: number }) {
+  const t = useT().chart;
+  const lang = useLang();
+  const { formatDateTime, formatPrice } = useFormat();
   const gradientId = useId();
   const boxRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState<number | null>(null);
@@ -68,7 +74,7 @@ export function PriceChart({ points, median }: { points: Point[]; median: number
 
   const point = active != null ? points[active] : points[points.length - 1];
   const [ax, ay] = active != null ? geo.xy[active] : geo.xy[geo.xy.length - 1];
-  const tag = describe(point);
+  const tag = describe(point, t, lang);
   // у правого края подсказка разворачивается влево, у верхнего — опускается под точку
   const flipX = ax > W * 0.62;
   const flipY = ay < H * 0.35;
@@ -78,7 +84,7 @@ export function PriceChart({ points, median }: { points: Point[]; median: number
       <div className={styles.readout}>
         <span className={styles.value}>
           <strong className="mono">{formatPrice(point.price)}</strong>
-          <span>{active != null ? formatDateTime(point.t) : "последняя сделка"}</span>
+          <span>{active != null ? formatDateTime(point.t) : t.lastDeal}</span>
         </span>
         {tag && (
           <span className={styles.tag} style={{ color: tag.color }}>
@@ -108,7 +114,7 @@ export function PriceChart({ points, median }: { points: Point[]; median: number
         </svg>
 
         <span className={styles.medianLabel} style={{ top: `${(geo.medianY / H) * 100}%` }}>
-          медиана
+          {t.median}
         </span>
 
         <span

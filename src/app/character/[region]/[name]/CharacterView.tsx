@@ -8,19 +8,21 @@ import { FavButton, ShareButton } from "@/components/ui/Buttons";
 import { StatTile } from "@/components/ui/PageHeader";
 import { SearchField } from "@/components/ui/SearchField";
 import { EmptyState, ErrorState } from "@/components/ui/States";
-import { allianceOf } from "@/features/alliances";
+import { allianceName, allianceOf } from "@/features/alliances";
 import { useCharacter, type Character, type Stat } from "@/features/character";
-import { RANKS } from "@/features/clans";
-import { STAT_CATEGORIES, useMeta, type Meta } from "@/features/meta";
+import { rankLabel } from "@/features/clans";
+import { STAT_CATEGORIES, STAT_CATEGORIES_EN, useMeta, type Meta } from "@/features/meta";
+import { useFormat, useLang, useT } from "@/i18n/client";
 import { isNotFound } from "@/lib/api";
 import { McText, stripMc } from "@/lib/mcText";
-import { formatDate, formatNumber, formatRelative } from "@/lib/format";
+import type { Format } from "@/lib/format";
 import { CREATOR, isCreator } from "@/lib/creator";
 import { actions, sameChar, useApp, type Region } from "@/lib/store";
 import { useNow } from "@/lib/useNow";
 import styles from "./character.module.css";
 
 export function CharacterView({ region, name }: { region: Region; name: string }) {
+  const t = useT().player;
   const { data, isLoading, error, refetch } = useCharacter(region, name);
   const isFav = useApp((s) => s.favCharacters.some((c) => sameChar(c, { region, name })));
   const { data: meta } = useMeta();
@@ -34,7 +36,7 @@ export function CharacterView({ region, name }: { region: Region; name: string }
       <div className={styles.toolbar}>
         <span className="pill dim">{region.toUpperCase()}</span>
         <div className="row" style={{ gap: 8 }}>
-          <ShareButton text={`Профиль игрока ${data?.username ?? name}`} />
+          <ShareButton text={t.shareText(data?.username ?? name)} />
           <FavButton
             active={isFav}
             onToggle={() =>
@@ -55,13 +57,9 @@ export function CharacterView({ region, name }: { region: Region; name: string }
         </div>
       ) : error ? (
         isNotFound(error) ? (
-          <EmptyState
-            icon="user"
-            title="Игрок не найден"
-            text={`Нет персонажа «${name}» в регионе ${region.toUpperCase()}. Проверьте ник или регион.`}
-          >
+          <EmptyState icon="user" title={t.notFound} text={t.notFoundText(name, region.toUpperCase())}>
             <Link href="/character" className="btn">
-              Новый поиск
+              {t.newSearch}
             </Link>
           </EmptyState>
         ) : (
@@ -75,8 +73,12 @@ export function CharacterView({ region, name }: { region: Region; name: string }
 }
 
 function Profile({ character: c, region, meta }: { character: Character; region: Region; meta?: Meta }) {
+  const t = useT().player;
+  const lang = useLang();
+  const { formatDate, formatNumber, formatRelative } = useFormat();
   const now = useNow(60_000);
   const alliance = allianceOf(c.alliance);
+  const allianceLabel = allianceName(alliance, lang);
   const stat = (id: string) => {
     const v = c.stats?.find((s) => s.id === id)?.value;
     return typeof v === "number" ? v : Number(v) || 0;
@@ -113,13 +115,13 @@ function Profile({ character: c, region, meta }: { character: Character; region:
                 {creator && (
                   <span className={styles.creatorBadge}>
                     <Icon name="star" size={14} filled />
-                    Создатель STALZONE INFO
+                    {t.creator}
                   </span>
                 )}
                 {media && (
                   <span className={styles.mediaBadge} data-tier={media}>
                     <Icon name="share" size={13} />
-                    {media === "advanced" ? "Медиа-партнёр · продвинутый" : "Медиа-партнёр"}
+                    {media === "advanced" ? t.mediaAdvanced : t.media}
                   </span>
                 )}
               </div>
@@ -127,7 +129,7 @@ function Profile({ character: c, region, meta }: { character: Character; region:
             <div className={`${styles.emblem} depth`}>
               {alliance.image ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={alliance.image} alt={alliance.label} width={72} height={72} />
+                <img src={alliance.image} alt={allianceLabel} width={72} height={72} />
               ) : (
                 <span className="display">{c.username.slice(0, 1).toUpperCase()}</span>
               )}
@@ -136,14 +138,18 @@ function Profile({ character: c, region, meta }: { character: Character; region:
             <div className="row" style={{ flexWrap: "wrap", gap: 6, justifyContent: "center" }}>
               <span className="pill" style={{ color: alliance.color }}>
                 <span className="dot" />
-                {alliance.label}
+                {allianceLabel}
               </span>
               <span className="pill" style={{ color: online ? "var(--green)" : "var(--text-3)" }}>
                 <span className={`dot ${online ? "live" : ""}`} />
-                {online ? "В сети" : now && c.lastLogin ? `был ${formatRelative(c.lastLogin, now)}` : "Не в сети"}
+                {online ? t.online : now && c.lastLogin ? t.lastSeen(formatRelative(c.lastLogin, now)) : t.offline}
               </span>
             </div>
-            {creator && <span className={styles.creatorNick}>автор сервиса · {CREATOR.nick}</span>}
+            {creator && (
+              <span className={styles.creatorNick}>
+                {t.author} · {CREATOR.nick}
+              </span>
+            )}
           </Tilt>
 
           {creator ? (
@@ -164,8 +170,8 @@ function Profile({ character: c, region, meta }: { character: Character; region:
                   <McText text={c.clan.info.name} />
                 </strong>
                 <span className="dim" style={{ fontSize: 12, fontWeight: 600 }}>
-                  {RANKS[c.clan.member.rank] ?? c.clan.member.rank}
-                  {c.clan.member.joinTime && ` · с ${formatDate(c.clan.member.joinTime)}`}
+                  {rankLabel(c.clan.member.rank, lang)}
+                  {c.clan.member.joinTime && ` · ${t.since(formatDate(c.clan.member.joinTime))}`}
                 </span>
               </span>
               <Icon name="chevron" size={18} className="dim" />
@@ -180,33 +186,35 @@ function Profile({ character: c, region, meta }: { character: Character; region:
               hint={`${formatNumber(kills)} / ${formatNumber(deaths)}`}
             />
             <StatTile
-              label="В игре"
-              value={playMs ? `${formatNumber(playMs / 3_600_000)} ч` : "—"}
-              hint={regTime ? `в Зоне с ${formatDate(regTime)}` : undefined}
+              label={t.played}
+              value={playMs ? t.hours(formatNumber(playMs / 3_600_000)) : "—"}
+              hint={regTime ? t.inZoneSince(formatDate(regTime)) : undefined}
             />
             <StatTile
-              label="Точность"
+              label={t.accuracy}
               value={shots ? `${((hits / shots) * 100).toFixed(1)}%` : "—"}
-              hint={hits ? `в голову ${((stat("sho-hea") / hits) * 100).toFixed(1)}%` : undefined}
+              hint={hits ? t.headshots(((stat("sho-hea") / hits) * 100).toFixed(1)) : undefined}
             />
-            <StatTile label="Макс. серия" value={formatNumber(stat("max-kil-ser"))} hint={`мутантов ${formatNumber(stat("mut-kil"))}`} />
+            <StatTile label={t.maxStreak} value={formatNumber(stat("max-kil-ser"))} hint={t.mutants(formatNumber(stat("mut-kil")))} />
           </section>
         </div>
         <div className="desk-side">
           {c.displayedAchievements?.length > 0 && (
             <section className="section">
               <h2 className="section-title">
-                Витрина достижений <small>{c.displayedAchievements.length}</small>
+                {t.achievements} <small>{c.displayedAchievements.length}</small>
               </h2>
               <div className={styles.achievements}>
                 {c.displayedAchievements.map((id) => {
                   const a = meta?.achievements[id];
+                  const title = (lang === "en" && a?.[3]) || a?.[0];
+                  const description = (lang === "en" && a?.[4]) || a?.[1];
                   return (
                     <div key={id} className={styles.achievement}>
                       <Icon name="trophy" size={18} />
                       <span style={{ minWidth: 0 }}>
-                        <strong>{a?.[0] ?? id}</strong>
-                        {a?.[1] && <small>{a[1]}</small>}
+                        <strong>{title ?? id}</strong>
+                        {description && <small>{description}</small>}
                       </span>
                       {a?.[2] ? <b className="mono">{a[2]}</b> : null}
                     </div>
@@ -232,6 +240,7 @@ const hasStatus = (status?: string) => Boolean(status && stripMc(status).trim())
  * блок с длинными строками (ASCII-арт, рамки) — моноширинно и с уменьшением под ширину карточки.
  */
 function Status({ status, divided = false }: { status?: string; divided?: boolean }) {
+  const t = useT().player;
   const blocks: string[][] = [];
   let current: string[] = [];
   for (const line of (status ?? "").split("\n")) {
@@ -247,7 +256,7 @@ function Status({ status, divided = false }: { status?: string; divided?: boolea
 
   return (
     <div className={styles.status} data-divided={divided || undefined}>
-      <span className={styles.statusLabel}>Описание</span>
+      <span className={styles.statusLabel}>{t.description}</span>
       {blocks.map((block, b) => {
         const width = Math.max(...block.map((l) => stripMc(l).length));
         if (width <= ART_LINE) {
@@ -273,17 +282,16 @@ function Status({ status, divided = false }: { status?: string; divided?: boolea
 
 /** Карточка автора сервиса: пара слов и описание персонажа. */
 function CreatorCard({ status }: { status?: string }) {
+  const t = useT().player;
   return (
     <section className={`glass ${styles.creatorCard}`}>
-      <p className={styles.creatorText}>
-        👋 Это профиль того, кто сделал STALZONE INFO: рынок, флиппер, алерты и всё остальное. Увидел в Зоне — передай привет.
-      </p>
+      <p className={styles.creatorText}>{t.creatorText}</p>
       <div className="row" style={{ flexWrap: "wrap", gap: 6 }}>
         <span className={`pill ${styles.creatorPill}`}>
-          <Icon name="sparkle" size={14} /> Автор сервиса
+          <Icon name="sparkle" size={14} /> {t.authorPill}
         </span>
         <Link href="/pro" className={`pill ${styles.creatorPill}`}>
-          <Icon name="star" size={14} /> Поддержать — Pro
+          <Icon name="star" size={14} /> {t.supportPro}
         </Link>
       </div>
       <Status status={status} divided />
@@ -291,14 +299,14 @@ function CreatorCard({ status }: { status?: string }) {
   );
 }
 
-function formatStat(stat: Stat) {
+function formatStat(stat: Stat, { formatDate, formatNumber }: Format, hours: (v: string) => string) {
   const v = stat.value;
   if (typeof v !== "number" && typeof v !== "string") return null;
   switch (stat.type) {
     case "DATE":
       return formatDate(v);
     case "DURATION":
-      return `${formatNumber(Number(v) / 3_600_000)} ч`;
+      return hours(formatNumber(Number(v) / 3_600_000));
     case "DECIMAL":
       return formatNumber(Number(v));
     case "INTEGER":
@@ -309,14 +317,19 @@ function formatStat(stat: Stat) {
 }
 
 function AllStats({ stats, meta }: { stats: Stat[]; meta?: Meta }) {
+  const t = useT().player;
+  const lang = useLang();
+  const format = useFormat();
   const [filter, setFilter] = useState("");
   const q = useDeferredValue(filter.trim().toLowerCase());
+  const categories = lang === "en" ? STAT_CATEGORIES_EN : STAT_CATEGORIES;
 
   const groups = new Map<string, { label: string; value: string }[]>();
   for (const s of stats) {
-    const value = formatStat(s);
+    const value = formatStat(s, format, t.hours);
     if (value == null) continue;
-    const [label, category] = meta?.stats[s.id] ?? [s.id, "NONE"];
+    const [labelRu, category, , labelEn] = meta?.stats[s.id] ?? [s.id, "NONE"];
+    const label = (lang === "en" && labelEn) || labelRu;
     if (q && !label.toLowerCase().includes(q)) continue;
     const list = groups.get(category) ?? [];
     list.push({ label, value });
@@ -325,13 +338,13 @@ function AllStats({ stats, meta }: { stats: Stat[]; meta?: Meta }) {
 
   return (
     <section className="section">
-      <h2 className="section-title">Вся статистика</h2>
-      <SearchField value={filter} onChange={setFilter} placeholder="Найти показатель" aria-label="Фильтр статистики" />
+      <h2 className="section-title">{t.allStats}</h2>
+      <SearchField value={filter} onChange={setFilter} placeholder={t.findStat} aria-label={t.statsFilterAria} />
       <div className="stack" style={{ marginTop: 12 }}>
         {[...groups].map(([category, list]) => (
           <details key={category} className={styles.group} open={!!q || category === "COMBAT" || category === "SURVIVAL"}>
             <summary>
-              {STAT_CATEGORIES[category] ?? category}
+              {categories[category] ?? category}
               <span className="dim mono">{list.length}</span>
             </summary>
             <dl>
@@ -344,7 +357,7 @@ function AllStats({ stats, meta }: { stats: Stat[]; meta?: Meta }) {
             </dl>
           </details>
         ))}
-        {!groups.size && <EmptyState title="Нет совпадений" />}
+        {!groups.size && <EmptyState title={t.noMatches} />}
       </div>
     </section>
   );

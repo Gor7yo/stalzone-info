@@ -1,18 +1,31 @@
 import type { Metadata } from "next";
-import { serverItem } from "@/lib/items-server";
+import { breadcrumbs, JsonLd } from "@/components/JsonLd";
+import { GROUPS } from "@/features/catalog";
+import { getLang } from "@/i18n/server";
+import { serverBestPrice, serverItem } from "@/lib/items-server";
+import { formatNumber, formatPrice, plural } from "@/lib/format";
 import { ItemView } from "./ItemView";
 
-/** Заголовок и описание с названием предмета — по ним страницу находят в поиске («Комета цена»). */
+/**
+ * Заголовок и описание с названием предмета — по ним страницу находят в поиске («Комета цена»).
+ * В описании — живая цена и число лотов на RU (из снимка бэкенда, кеш 10 минут): такой сниппет кликают чаще.
+ */
 export async function generateMetadata({ params }: PageProps<"/auction/[itemId]">): Promise<Metadata> {
   const { itemId } = await params;
   const id = decodeURIComponent(itemId);
   const item = serverItem(id);
   if (!item) return { title: "Предмет" };
+  const best = await serverBestPrice(id);
+  const now =
+    best?.price && best.total
+      ? `сейчас от ${formatPrice(best.price)} на аукционе RU, ${formatNumber(best.total)} ${plural(best.total, ["лот", "лота", "лотов"])}. `
+      : "";
+  const title = `${item.name} - цена на аукционе`;
   return {
-    title: `${item.name} - цена на аукционе`,
-    description: `${item.name}: цена на аукционе STALZONE сейчас, лоты, история продаж и график цен по регионам RU, EU, NA и SEA.`,
+    title,
+    description: `${item.name}: ${now}${now ? "Цены" : "цены"} на аукционе STALZONE, лоты, история продаж и график по регионам RU, EU, NA и SEA.`,
     alternates: { canonical: `/auction/${id}` },
-    openGraph: { title: `${item.name} - цена на аукционе`, url: `/auction/${id}` },
+    openGraph: { title, url: `/auction/${id}` },
   };
 }
 
@@ -34,5 +47,29 @@ export default async function ItemPage({ params, searchParams }: PageProps<"/auc
   const { itemId } = await params;
   const { q, u, v } = await searchParams;
   const id = decodeURIComponent(itemId);
-  return <ItemView id={id} name={serverItem(id)?.name} quality={level(q, 5)} upgrade={level(u, 15)} variant={variantParam(v)} />;
+  const item = serverItem(id);
+  const group = item && item.group !== "other" ? GROUPS.find((g) => g.id === item.group) : undefined;
+  // заголовок в HTML - на языке интерфейса; JSON-LD и метаданные остаются русскими
+  const lang = await getLang();
+  return (
+    <>
+      {item && group && (
+        <JsonLd
+          data={breadcrumbs([
+            ["Рынок", "/auction"],
+            [group.label, `/auction/c/${group.id}`],
+            [item.name, `/auction/${id}`],
+          ])}
+        />
+      )}
+      <ItemView
+        id={id}
+        name={lang === "en" ? item?.nameEn : item?.name}
+        group={group && { id: group.id, label: group.label }}
+        quality={level(q, 5)}
+        upgrade={level(u, 15)}
+        variant={variantParam(v)}
+      />
+    </>
+  );
 }

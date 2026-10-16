@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { MAX_UPGRADE, upgradeLabel, upgradeRuns } from "@/features/auction";
-import { formatShort, plural } from "@/lib/format";
+import { useFormat, useT } from "@/i18n/client";
 import { haptic } from "@/lib/telegram";
 import { Icon } from "../Icon";
 import styles from "./UpgradeDial.module.css";
@@ -32,6 +32,8 @@ export function UpgradeDial({
   value: number[];
   onChange: (value: number[]) => void;
 }) {
+  const { filters: t, item: tItem } = useT();
+  const { formatShort } = useFormat();
   const trackRef = useRef<HTMLDivElement>(null);
   const drag = useRef<{ start: number; base: Set<number>; erase: boolean; moved: boolean } | null>(null);
   const selected = new Set(value);
@@ -77,30 +79,29 @@ export function UpgradeDial({
   const best = prices.length ? Math.min(...prices) : null;
   const label = upgradeLabel({ upgrade: null, upgrades: value });
   // много разрозненных уровней в строку не влезут — коротко «8 уровней» (какие — видно по подсвеченным столбикам)
-  const short =
-    upgradeRuns(value).length > 2 ? `${value.length} ${plural(value.length, ["уровень", "уровня", "уровней"])}` : label;
+  const short = upgradeRuns(value).length > 2 ? t.levels(value.length) : label;
 
   return (
     <div className={styles.dial}>
       <div className={styles.readout} aria-live="polite">
         {/* слева: «Заточка», под ней — цена и число лотов выбранных уровней */}
         <span className={styles.head}>
-          <span className={styles.label}>Заточка</span>
+          <span className={styles.label}>{t.upgrade}</span>
           {value.length > 0 && (
             <span className={styles.value}>
-              {best ? `от ${formatShort(best)}` : "нет лотов"}
-              {count ? ` · ${count} ${plural(count, ["лот", "лота", "лотов"])}` : ""}
+              {best ? t.from(formatShort(best)) : t.noLots}
+              {count ? ` · ${tItem.lots(count, String(count))}` : ""}
             </span>
           )}
         </span>
         {!value.length ? (
-          <span className={styles.value}>любая · тапай или проведи</span>
+          <span className={styles.value}>{t.any}</span>
         ) : (
           <>
             <b className={`mono ${styles.picked}`} title={label}>
               {short}
             </b>
-            <button type="button" className={styles.reset} onClick={() => set([])} aria-label="Очистить заточку" title="Очистить">
+            <button type="button" className={styles.reset} onClick={() => set([])} aria-label={t.clearUpgrade} title={t.clearUpgrade}>
               <Icon name="close" size={12} />
             </button>
           </>
@@ -112,7 +113,7 @@ export function UpgradeDial({
         className={styles.track}
         role="group"
         tabIndex={0}
-        aria-label={`Уровни заточки: ${label || "любая"}`}
+        aria-label={t.levelsAria(label)}
         data-active={value.length > 0 || undefined}
         onPointerDown={(e) => {
           trackRef.current?.setPointerCapture(e.pointerId);

@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono, Manrope, Unbounded } from "next/font/google";
+import { JsonLd, SITE_URL } from "@/components/JsonLd";
 import { Shell } from "@/components/Shell/Shell";
+import { getSavedLang } from "@/i18n/server";
+import { THEME_SCRIPT } from "@/lib/theme";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -15,8 +18,19 @@ const jetbrains = JetBrains_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://stalzone-info.ru"),
-  title: { default: "STALZONE INFO", template: "%s · STALZONE INFO" },
-  description: "Цены аукциона, флиппер, алерты, кланы и выбросы STALZONE — на сайте и в Telegram.",
+  // главная: в заголовке — то, что ищут («цены аукциона»), а не только название
+  title: { default: "STALZONE INFO - аукцион STALZONE: цены, флиппер, выбросы", template: "%s · STALZONE INFO" },
+  description:
+    "Аукцион STALZONE: цены на все предметы сейчас, история продаж, флиппер выгодных лотов, алерты в Telegram, кланы и таймер выброса.",
+  keywords: [
+    "аукцион stalzone",
+    "stalzone аукцион",
+    "сталзон аукцион",
+    "цены stalzone",
+    "stalzone info",
+    "флиппер stalzone",
+    "выброс stalzone",
+  ],
   applicationName: "STALZONE INFO",
   appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "STALZONE INFO" },
   openGraph: { siteName: "STALZONE INFO", type: "website", locale: "ru_RU" },
@@ -31,17 +45,34 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // язык интерфейса из cookie: страница сразу рендерится на нём (SEO-метаданные всё равно русские)
+  const lang = await getSavedLang();
   return (
-    <html lang="ru" className={`${unbounded.variable} ${manrope.variable} ${jetbrains.variable}`}>
+    // data-theme ставит скрипт ниже до гидрации — расхождение атрибута с серверным HTML ожидаемо
+    <html lang={lang ?? "ru"} className={`${unbounded.variable} ${manrope.variable} ${jetbrains.variable}`} suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
         <link rel="preconnect" href="https://raw.githubusercontent.com" crossOrigin="" />
-        {process.env.NEXT_PUBLIC_API_URL && (
-          <link rel="preconnect" href={process.env.NEXT_PUBLIC_API_URL} crossOrigin="" />
-        )}
+        {process.env.NEXT_PUBLIC_API_URL && <link rel="preconnect" href={process.env.NEXT_PUBLIC_API_URL} crossOrigin="" />}
       </head>
       <body>
-        <Providers>
+        {/* сайт с поиском по рынку: Google может показать поле поиска прямо в выдаче */}
+        <JsonLd
+          data={{
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: "STALZONE INFO",
+            url: SITE_URL,
+            inLanguage: "ru",
+            potentialAction: {
+              "@type": "SearchAction",
+              target: { "@type": "EntryPoint", urlTemplate: `${SITE_URL}/auction?q={search_term_string}` },
+              "query-input": "required name=search_term_string",
+            },
+          }}
+        />
+        <Providers lang={lang}>
           <Shell>{children}</Shell>
         </Providers>
       </body>

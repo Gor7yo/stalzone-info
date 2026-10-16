@@ -1,3 +1,22 @@
+/* «Рынок › Артефакты» — путь к предмету (и ссылки для поисковиков) */
+.crumbs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-3);
+}
+
+.crumbs a {
+  color: var(--text-2);
+}
+
+.crumbs a:hover {
+  color: var(--text);
+}
+
 .toolbar {
   display: flex;
   align-items: center;

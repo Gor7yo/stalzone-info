@@ -1,7 +1,7 @@
 "use client";
 
 import { emissionState, type EmissionResponse } from "@/features/emission";
-import { formatDuration, formatTime } from "@/lib/format";
+import { useFormat, useT } from "@/i18n/client";
 import { useNow } from "@/lib/useNow";
 import styles from "./EmissionStatus.module.css";
 
@@ -17,6 +17,8 @@ export function EmissionStatus({
   isError?: boolean;
   size?: "lg" | "sm";
 }) {
+  const t = useT().emissionStatus;
+  const { formatDuration, formatTime } = useFormat();
   const now = useNow(1000);
   const state = emissionState(data);
 
@@ -34,10 +36,10 @@ export function EmissionStatus({
     return (
       <div className={styles.status} data-size={size} data-phase="unknown">
         <span className={styles.label}>
-          <span className="dot" /> нет сигнала
+          <span className="dot" /> {t.noSignal}
         </span>
-        <strong className={`display ${styles.title}`}>Тишина</strong>
-        <span className={styles.meta}>Данные о выбросах недоступны</span>
+        <strong className={`display ${styles.title}`}>{t.silence}</strong>
+        <span className={styles.meta}>{t.unavailable}</span>
       </div>
     );
   }
@@ -46,11 +48,11 @@ export function EmissionStatus({
     return (
       <div className={styles.status} data-size={size} data-phase="active" role="alert">
         <span className={styles.label}>
-          <span className="dot live" /> выброс идёт
+          <span className="dot live" /> {t.active}
         </span>
-        <strong className={`display ${styles.title}`}>В укрытие!</strong>
+        <strong className={`display ${styles.title}`}>{t.takeCover}</strong>
         <span className={styles.meta}>
-          уже <b className="mono">{formatDuration(now - state.since, true)}</b> · с {formatTime(state.since)}
+          {t.already} <b className="mono">{formatDuration(now - state.since, true)}</b> · {t.since(formatTime(state.since))}
         </span>
       </div>
     );
@@ -59,12 +61,12 @@ export function EmissionStatus({
   return (
     <div className={styles.status} data-size={size} data-phase="calm">
       <span className={styles.label}>
-        <span className="dot live" /> зона спокойна
+        <span className="dot live" /> {t.calm}
       </span>
       <strong className={`display mono ${styles.timer}`}>{formatDuration(now - state.since, true)}</strong>
       <span className={styles.meta}>
-        без выброса · последний в {formatTime(state.since)}
-        {state.lastDuration ? ` · длился ${formatDuration(state.lastDuration)}` : ""}
+        {t.lastAt(formatTime(state.since))}
+        {state.lastDuration ? ` · ${t.lasted(formatDuration(state.lastDuration))}` : ""}
       </span>
     </div>
   );

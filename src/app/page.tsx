@@ -18,67 +18,32 @@ import { allianceOf } from "@/features/alliances";
 import { CRAFT_ENABLED, LOOT_ENABLED } from "@/lib/flags";
 import { emissionState, useEmission } from "@/features/emission";
 import { searchItems, useItems, type Item } from "@/features/items";
-import { formatPrice } from "@/lib/format";
+import { useFormat, useT } from "@/i18n/client";
+import type { Dict } from "@/i18n/ru";
 import { useApp, type Region } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
 import styles from "./home.module.css";
 
 type Tile = {
   href: string;
-  title: string;
-  text: string;
+  key: keyof Dict["home"]["tiles"];
   icon: IconName;
   accent: string;
 };
 
 const TILES = (
   [
-    {
-      href: "/auction",
-      title: "Рынок",
-      text: "Цены, графики и выгодные лоты",
-      icon: "market",
-      accent: "#5aa9ff",
-    },
-    {
-      href: "/craft",
-      title: "Крафт",
-      text: "Что фармить и сколько это стоит",
-      icon: "sparkle",
-      accent: "var(--acc)",
-    },
-    {
-      href: "/character",
-      title: "Игроки",
-      text: "Профили и статистика",
-      icon: "user",
-      accent: "var(--cyan)",
-    },
-    {
-      href: "/clans",
-      title: "Кланы",
-      text: "Рейтинг и составы",
-      icon: "shield",
-      accent: "#c08bff",
-    },
-    {
-      href: "/emission",
-      title: "Выбросы",
-      text: "Все регионы онлайн",
-      icon: "radiation",
-      accent: "var(--ember)",
-    },
-    {
-      href: "/loot",
-      title: "Рюкзак",
-      text: "Сколько стоит лут",
-      icon: "bag",
-      accent: "#ffc94a",
-    },
+    { href: "/auction", key: "market", icon: "market", accent: "#5aa9ff" },
+    { href: "/craft", key: "craft", icon: "sparkle", accent: "var(--acc)" },
+    { href: "/character", key: "players", icon: "user", accent: "var(--cyan)" },
+    { href: "/clans", key: "clans", icon: "shield", accent: "#c08bff" },
+    { href: "/emission", key: "emission", icon: "radiation", accent: "var(--ember)" },
+    { href: "/loot", key: "loot", icon: "bag", accent: "#ffc94a" },
   ] satisfies Tile[]
 ).filter((t) => (CRAFT_ENABLED || t.href !== "/craft") && (LOOT_ENABLED || t.href !== "/loot"));
 
 export default function HomePage() {
+  const t = useT();
   const region = useApp((s) => s.region);
   const favItems = useApp((s) => s.favItems);
   const favCharacters = useApp((s) => s.favCharacters);
@@ -93,7 +58,9 @@ export default function HomePage() {
       <header className={styles.top}>
         <Link href="/" className={styles.logo} aria-label="STALZONE INFO">
           <span className={styles.logoMark} />
-          STALZONE <span style={{ color: "var(--acc)" }}>INFO</span>
+          <span>
+            STALZONE <span style={{ color: "var(--acc)" }}>INFO</span>
+          </span>
         </Link>
         <RegionSwitch />
       </header>
@@ -104,14 +71,14 @@ export default function HomePage() {
             <div className={styles.heroText}>
               <EmissionStatus data={emission.data} isLoading={emission.isLoading} isError={emission.isError} />
               <Link href="/emission" className={styles.heroLink}>
-                Все регионы <Icon name="chevron" size={14} />
+                {t.home.allRegions} <Icon name="chevron" size={14} />
               </Link>
             </div>
             <Anomaly
               className={styles.orb}
               mode={phase === "active" ? "active" : phase === "unknown" && !emission.isLoading ? "idle" : "calm"}
               onTap={() => haptic.tap("heavy")}
-              label="Аномалия: состояние Зоны"
+              label={t.home.anomalyAria}
             />
           </section>
 
@@ -132,8 +99,8 @@ export default function HomePage() {
                   <Icon name={tile.icon} size={22} />
                 </span>
                 <span className={styles.tileBody}>
-                  <strong className="display">{tile.title}</strong>
-                  <span>{tile.text}</span>
+                  <strong className="display">{t.home.tiles[tile.key][0]}</strong>
+                  <span>{t.home.tiles[tile.key][1]}</span>
                 </span>
                 <Icon name="chevron" size={18} className={styles.tileArrow} />
               </Tilt>
@@ -143,7 +110,7 @@ export default function HomePage() {
           {isAdmin && (
             <Link href="/admin" className="list-row" style={{ marginTop: 12 }} onClick={() => haptic.tap()}>
               <Icon name="shield" size={20} />
-              <strong style={{ flex: 1, fontSize: 14 }}>Админка</strong>
+              <strong style={{ flex: 1, fontSize: 14 }}>{t.home.admin}</strong>
               <Icon name="chevron" size={18} className="dim" />
             </Link>
           )}
@@ -155,7 +122,7 @@ export default function HomePage() {
           {favItems.length > 0 && (
             <section className="section">
               <h2 className="section-title">
-                Мой рынок <small>лучшая цена сейчас</small>
+                {t.home.myMarket} <small>{t.home.myMarketHint}</small>
               </h2>
               <Watchlist ids={favItems.slice(0, 8)} region={region} />
             </section>
@@ -163,7 +130,7 @@ export default function HomePage() {
 
           {(favCharacters.length > 0 || favClans.length > 0) && (
             <section className="section">
-              <h2 className="section-title">Избранное</h2>
+              <h2 className="section-title">{t.home.favorites}</h2>
               <div className="chips">
                 {favCharacters.map((c) => (
                   <Link key={`c-${c.region}-${c.name}`} href={`/character/${c.region}/${encodeURIComponent(c.name)}`} className="chip">
@@ -184,13 +151,14 @@ export default function HomePage() {
 
       <footer className={styles.footer}>
         <span>STALZONE INFO v0.2</span>
-        <span>данные: STALZONE API · EXBO</span>
+        <span>{t.home.dataSource}</span>
       </footer>
     </main>
   );
 }
 
 function UniversalSearch({ region, wantIndex }: { region: Region; wantIndex: boolean }) {
+  const t = useT();
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
@@ -206,8 +174,8 @@ function UniversalSearch({ region, wantIndex }: { region: Region; wantIndex: boo
         value={query}
         onChange={setQuery}
         onFocus={() => setFocused(true)}
-        placeholder="Предмет, игрок или клан…"
-        aria-label="Поиск по Зоне"
+        placeholder={t.home.searchPlaceholder}
+        aria-label={t.home.searchAria}
         onSubmit={() => {
           if (items[0]) router.push(`/auction/${items[0].id}`);
           else if (looksLikeNick) router.push(`/character/${region}/${encodeURIComponent(deferred)}`);
@@ -225,9 +193,9 @@ function UniversalSearch({ region, wantIndex }: { region: Region; wantIndex: boo
                 <Icon name="user" size={20} />
               </span>
               <span style={{ flex: 1, minWidth: 0 }}>
-                <strong className="truncate">Игрок «{deferred}»</strong>
+                <strong className="truncate">{t.home.playerResult(deferred)}</strong>
                 <span className="dim" style={{ display: "block", fontSize: 12, fontWeight: 600 }}>
-                  Открыть профиль · {region.toUpperCase()}
+                  {t.home.openProfile} · {region.toUpperCase()}
                 </span>
               </span>
               <Icon name="chevron" size={18} className="dim" />
@@ -235,7 +203,7 @@ function UniversalSearch({ region, wantIndex }: { region: Region; wantIndex: boo
           )}
           {!items.length && !looksLikeNick && (
             <p className="dim" style={{ fontSize: 13, padding: "4px 4px 0" }}>
-              Ничего не нашли. Попробуйте другое название.
+              {t.home.nothingFound}
             </p>
           )}
         </div>
@@ -257,6 +225,8 @@ function Watchlist({ ids, region }: { ids: string[]; region: Region }) {
 }
 
 function WatchCard({ item, id, region }: { item?: Item; id: string; region: Region }) {
+  const t = useT();
+  const { formatPrice } = useFormat();
   const { data, isLoading } = useBestPrice(region, id);
 
   return (
@@ -275,7 +245,7 @@ function WatchCard({ item, id, region }: { item?: Item; id: string; region: Regi
             color: data?.price ? "var(--acc)" : "var(--text-3)",
           }}
         >
-          {data?.price ? formatPrice(data.price) : "нет лотов"}
+          {data?.price ? formatPrice(data.price) : t.home.noLots}
         </strong>
       )}
     </Link>

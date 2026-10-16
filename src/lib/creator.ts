@@ -9,5 +9,8 @@ export const CREATOR = {
 
 export const creatorHref = `/character/${CREATOR.region}/${CREATOR.character}`;
 
+/** Донаты на развитие проекта (DonationAlerts). */
+export const DONATE_URL = "https://dalink.to/gor2210";
+
 export const isCreator = (region: Region, name: string) =>
   region === CREATOR.region && name.toLowerCase() === CREATOR.character.toLowerCase();

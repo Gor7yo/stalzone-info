@@ -3,8 +3,10 @@
 import { Icon } from "@/components/Icon";
 import { LoginCard, SentTo, TelegramLinkCard } from "@/components/Account/AccountGate";
 import { useAlerts, useDeleteFlipAlert, useSetFlipAlert, type FlipAlert, type FlipAlertInput } from "@/features/alerts";
-import { GROUPS } from "@/features/items";
-import { formatShort } from "@/lib/format";
+import { GROUPS, groupLabel } from "@/features/items";
+import { useFormat, useLang, useT } from "@/i18n/client";
+import type { Lang } from "@/i18n/lang";
+import type { Dict } from "@/i18n/ru";
 import type { FlipSettings, Region } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
 import styles from "./flips.module.css";
@@ -22,12 +24,24 @@ const same = (a: FlipAlert, b: FlipAlertInput) =>
   a.minProfit === b.minProfit && a.minConfidence === b.minConfidence && a.maxBudget === b.maxBudget && a.groups.join() === b.groups.join();
 
 /** «от 100к · надёжно · до 5кк · Артефакты» */
-function describe(a: Pick<FlipAlert, "minProfit" | "minConfidence" | "maxBudget" | "groups">) {
+export function describeFlipAlert(
+  a: Pick<FlipAlert, "minProfit" | "minConfidence" | "maxBudget" | "groups">,
+  t: Dict["flipAlert"],
+  formatShort: (v: number) => string,
+  lang: Lang,
+) {
   return [
-    `от +${formatShort(a.minProfit)}`,
-    a.minConfidence === "low" ? "любая надёжность" : a.minConfidence === "high" ? "только надёжные" : "надёжность средняя+",
-    a.maxBudget ? `выкуп до ${formatShort(a.maxBudget)}` : null,
-    a.groups.length ? a.groups.map((g) => GROUPS.find((x) => x.id === g)?.label ?? g).join(", ") : null,
+    t.from(formatShort(a.minProfit)),
+    a.minConfidence === "low" ? t.confAny : a.minConfidence === "high" ? t.confHigh : t.confMedium,
+    a.maxBudget ? t.budget(formatShort(a.maxBudget)) : null,
+    a.groups.length
+      ? a.groups
+          .map((g) => {
+            const group = GROUPS.find((x) => x.id === g);
+            return group ? groupLabel(group, lang) : g;
+          })
+          .join(", ")
+      : null,
   ]
     .filter(Boolean)
     .join(" · ");
@@ -35,18 +49,22 @@ function describe(a: Pick<FlipAlert, "minProfit" | "minConfidence" | "maxBudget"
 
 /** Флип-алерт региона: бот присылает новые выгодные лоты по фильтрам ленты. */
 export function FlipAlertCard({ region, settings }: { region: Region; settings: FlipSettings }) {
+  const t = useT().flipAlert;
+  const lang = useLang();
+  const { formatShort } = useFormat();
   const alerts = useAlerts();
   const save = useSetFlipAlert();
   const remove = useDeleteFlipAlert();
 
   if (alerts.pending) return null;
   if (!alerts.available) {
-    return <LoginCard text="Войдите через EXBO - бот сможет присылать новые флипы по вашим фильтрам." />;
+    return <LoginCard text={t.login} />;
   }
   if (!alerts.telegram) {
-    return <TelegramLinkCard text="Бот может присылать новые флипы по вашим фильтрам. Привяжите Telegram — это один клик в боте." />;
+    return <TelegramLinkCard text={t.linkTelegram} />;
   }
 
+  const describe = (a: Parameters<typeof describeFlipAlert>[0]) => describeFlipAlert(a, t, formatShort, lang);
   const alert = alerts.data?.flip?.find((f) => f.region === region);
   const wanted = inputOf(region, settings);
   const changed = alert && !same(alert, wanted);
@@ -64,22 +82,22 @@ export function FlipAlertCard({ region, settings }: { region: Region; settings: 
         <Icon name="bell" size={18} />
       </span>
       <div className={styles.alertBody}>
-        <strong>{alert ? "Флипы приходят в Telegram" : "Присылать новые флипы в Telegram"}</strong>
-        <span className="dim">{alert ? describe(alert) : `${describe(wanted)} · по текущим фильтрам`}</span>
-        {changed && <span className={styles.alertChanged}>Фильтры изменились: {describe(wanted)}</span>}
+        <strong>{alert ? t.on : t.off}</strong>
+        <span className="dim">{alert ? describe(alert) : `${describe(wanted)} · ${t.byFilters}`}</span>
+        {changed && <span className={styles.alertChanged}>{t.changed(describe(wanted))}</span>}
         {alerts.sentTo && <SentTo telegram={alerts.sentTo} />}
         {error && <span className={styles.alertError}>{error.message}</span>}
       </div>
       <div className={styles.alertActions}>
         {!alert ? (
           <button type="button" className="btn primary" disabled={busy || alerts.isLoading} onClick={enable}>
-            Включить
+            {t.enable}
           </button>
         ) : (
           <>
             {changed && (
               <button type="button" className="btn primary" disabled={busy} onClick={enable}>
-                Обновить
+                {t.update}
               </button>
             )}
             <button
@@ -91,7 +109,7 @@ export function FlipAlertCard({ region, settings }: { region: Region; settings: 
                 remove.mutate(region);
               }}
             >
-              Выключить
+              {t.disable}
             </button>
           </>
         )}

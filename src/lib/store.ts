@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import type { Lang } from "@/i18n/lang";
 import { isRegion, type Region } from "./regions";
 import { cloud } from "./telegram";
 
@@ -27,6 +28,8 @@ export interface CharacterRef {
 
 export interface AppState {
   region: Region;
+  /** язык интерфейса; не задан - ещё не выбирали (по умолчанию ru или язык Telegram) */
+  lang?: Lang;
   favItems: string[];
   favCharacters: CharacterRef[];
   favClans: ClanRef[];
@@ -132,17 +135,16 @@ export async function syncFromCloud() {
 const pushUnique = <T>(list: T[], value: T, same: (a: T, b: T) => boolean) =>
   [value, ...list.filter((x) => !same(x, value))].slice(0, RECENT_LIMIT);
 
-const sameChar = (a: CharacterRef, b: CharacterRef) =>
-  a.region === b.region && a.name.toLowerCase() === b.name.toLowerCase();
+const sameChar = (a: CharacterRef, b: CharacterRef) => a.region === b.region && a.name.toLowerCase() === b.name.toLowerCase();
 
 export const actions = {
   setRegion: (region: Region) => setState({ region }),
+  /** только из I18nProvider (useSetLang) - он же пишет cookie */
+  setLang: (lang: Lang) => setState({ lang }),
 
   toggleFavItem: (id: string) =>
     setState((s) => ({
-      favItems: s.favItems.includes(id)
-        ? s.favItems.filter((x) => x !== id)
-        : [id, ...s.favItems],
+      favItems: s.favItems.includes(id) ? s.favItems.filter((x) => x !== id) : [id, ...s.favItems],
     })),
 
   toggleFavCharacter: (ref: CharacterRef) =>
@@ -154,16 +156,12 @@ export const actions = {
 
   toggleFavClan: (ref: ClanRef) =>
     setState((s) => ({
-      favClans: s.favClans.some((x) => x.id === ref.id)
-        ? s.favClans.filter((x) => x.id !== ref.id)
-        : [ref, ...s.favClans],
+      favClans: s.favClans.some((x) => x.id === ref.id) ? s.favClans.filter((x) => x.id !== ref.id) : [ref, ...s.favClans],
     })),
 
-  pushRecentItem: (id: string) =>
-    setState((s) => ({ recentItems: pushUnique(s.recentItems, id, (a, b) => a === b) })),
+  pushRecentItem: (id: string) => setState((s) => ({ recentItems: pushUnique(s.recentItems, id, (a, b) => a === b) })),
 
-  pushRecentCharacter: (ref: CharacterRef) =>
-    setState((s) => ({ recentCharacters: pushUnique(s.recentCharacters, ref, sameChar) })),
+  pushRecentCharacter: (ref: CharacterRef) => setState((s) => ({ recentCharacters: pushUnique(s.recentCharacters, ref, sameChar) })),
 
   /** amount <= 0 убирает предмет из рюкзака */
   setLoot: (id: string, amount: number) =>
@@ -187,9 +185,7 @@ export const actions = {
     }),
   updatePlan: (index: number, patch: Partial<PlanEntry>) =>
     setState((s) => ({
-      plan: s.plan
-        .map((p, i) => (i === index ? { ...p, ...patch } : p))
-        .filter((p) => p.qty > 0),
+      plan: s.plan.map((p, i) => (i === index ? { ...p, ...patch } : p)).filter((p) => p.qty > 0),
     })),
   clearPlan: () => setState({ plan: [] }),
 

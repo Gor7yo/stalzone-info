@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
+import { tr } from "@/i18n/lang";
 import { api, ApiError } from "@/lib/api";
 import { session, useSession } from "@/lib/session";
 import type { Region } from "@/lib/store";
@@ -52,7 +53,7 @@ export const isTelegramRequired = (error: unknown) => error instanceof ApiError 
 export async function authed<T>(path: string, method = "GET", body?: unknown) {
   const current = session.get();
   const initData = current ? null : initDataRaw();
-  if (!current && !initData) throw new ApiError(401, "Войдите через EXBO", "login_required");
+  if (!current && !initData) throw new ApiError(401, tr("Войдите через EXBO", "Sign in with EXBO"), "login_required");
   try {
     return await api<T>(
       path,
@@ -107,7 +108,12 @@ export function useLogin() {
         const back = returnTo ?? window.location.pathname + window.location.search;
         localStorage.setItem(STATE_KEY, JSON.stringify({ state, at: Date.now(), returnTo: back }));
       } catch {
-        throw new Error("Браузер не даёт сохранить данные входа - выключите приватный режим");
+        throw new Error(
+          tr(
+            "Браузер не даёт сохранить данные входа - выключите приватный режим",
+            "The browser won't let us store your sign-in - turn off private mode",
+          ),
+        );
       }
       window.location.assign(url);
       // страница уходит на EXBO - держим кнопку в состоянии «загрузка»
@@ -129,7 +135,12 @@ export async function completeLogin(code: string, state: string) {
     /* нет доступа к localStorage - проверка ниже не пройдёт */
   }
   if (!saved?.state || saved.state !== state || Date.now() - (saved.at ?? 0) > STATE_TTL_MS) {
-    throw new Error("Эта ссылка входа начата не здесь или устарела. Нажмите «Войти через EXBO» ещё раз.");
+    throw new Error(
+      tr(
+        "Эта ссылка входа начата не здесь или устарела. Нажмите «Войти через EXBO» ещё раз.",
+        "This sign-in link was started elsewhere or has expired. Tap “Sign in with EXBO” again.",
+      ),
+    );
   }
   const { token, login } = await api<{ token: string; login: string }>(
     "/api/auth/exbo/complete",
@@ -185,7 +196,7 @@ export function useTelegramLink() {
   const poll = (until: number) => {
     timer.current = setTimeout(async () => {
       if (Date.now() > until) {
-        setState({ phase: "error", message: "Время вышло — попробуйте ещё раз" });
+        setState({ phase: "error", message: tr("Время вышло - попробуйте ещё раз", "Time's up - please try again") });
         return;
       }
       const me = await authed<Me>("/api/me").catch(() => null);
@@ -207,7 +218,10 @@ export function useTelegramLink() {
       poll(new Date(link.expiresAt).getTime());
     } catch (error) {
       tab?.close();
-      setState({ phase: "error", message: error instanceof Error ? error.message : "Не удалось начать привязку" });
+      setState({
+        phase: "error",
+        message: error instanceof Error ? error.message : tr("Не удалось начать привязку", "Couldn't start linking"),
+      });
     }
   };
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { tr } from "@/i18n/lang";
 import type { Region } from "@/lib/store";
 import { ensureWriteAccess, isTelegram } from "@/lib/telegram";
 import { authed, useMe } from "./account";
@@ -89,7 +90,12 @@ async function withWriteAccess() {
   // привязка через бота уже означает, что пользователь нажал Start — писать ему можно
   if (!isTelegram()) return;
   if (!(await ensureWriteAccess())) {
-    throw new Error("Разрешите боту присылать сообщения — иначе уведомления не дойдут");
+    throw new Error(
+      tr(
+        "Разрешите боту присылать сообщения - иначе уведомления не дойдут",
+        "Allow the bot to message you - otherwise alerts won't arrive",
+      ),
+    );
   }
 }
 

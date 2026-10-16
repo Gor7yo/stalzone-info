@@ -8,10 +8,12 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { RegionSwitch } from "@/components/ui/RegionSwitch";
 import { SearchField } from "@/components/ui/SearchField";
 import { EmptyState } from "@/components/ui/States";
+import { useT } from "@/i18n/client";
 import { actions, useApp, type CharacterRef } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
 
 export default function CharacterSearchPage() {
+  const t = useT();
   const router = useRouter();
   const region = useApp((s) => s.region);
   const favs = useApp((s) => s.favCharacters);
@@ -29,32 +31,32 @@ export default function CharacterSearchPage() {
 
   return (
     <main className="page">
-      <PageHeader eyebrow="Профили" title="Игроки" aside={<RegionSwitch />}>
-        Профиль, группировка, клан и вся статистика по нику.
+      <PageHeader eyebrow={t.players.eyebrow} title={t.players.title} aside={<RegionSwitch />}>
+        {t.players.lead}
       </PageHeader>
 
       <SearchField
         value={name}
         onChange={setName}
         onSubmit={open}
-        placeholder="Ник персонажа"
-        aria-label="Ник персонажа"
+        placeholder={t.players.nick}
+        aria-label={t.players.nick}
         autoCapitalize="off"
         action={
           <button type="submit" className="btn primary" style={{ height: 40, padding: "0 16px" }} disabled={!valid}>
-            Найти
+            {t.players.find}
           </button>
         }
       />
 
-      {favs.length > 0 && <People title="Избранные" people={favs} />}
+      {favs.length > 0 && <People title={t.players.favorites} people={favs} />}
       {recents.length > 0 && (
         <People
-          title="Недавние"
+          title={t.players.recent}
           people={recents}
           action={
             <button type="button" onClick={actions.clearRecentCharacters}>
-              Очистить
+              {t.common.clear}
             </button>
           }
         />
@@ -62,7 +64,7 @@ export default function CharacterSearchPage() {
 
       {!favs.length && !recents.length && (
         <div className="section">
-          <EmptyState icon="user" title="Кого ищем?" text="Введите точный ник персонажа и выберите регион сервера." />
+          <EmptyState icon="user" title={t.players.emptyTitle} text={t.players.emptyText} />
         </div>
       )}
     </main>

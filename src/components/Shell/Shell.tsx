@@ -4,21 +4,25 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useMe } from "@/features/account";
+import { useT } from "@/i18n/client";
+import type { Dict } from "@/i18n/ru";
 import { emissionState, useEmission } from "@/features/emission";
-import { CREATOR, creatorHref } from "@/lib/creator";
+import { CREATOR, creatorHref, DONATE_URL } from "@/lib/creator";
 import { useApp } from "@/lib/store";
 import { bindBackButton, haptic, useIsTelegram } from "@/lib/telegram";
 import { Icon, type IconName } from "../Icon";
+import { ThemeToggle } from "../Theme/ThemeToggle";
+import { LangSwitch } from "../ui/RegionSwitch";
 import styles from "./Shell.module.css";
 
-const TABS: { href: string; label: string; icon: IconName }[] = [
-  { href: "/", label: "Главная", icon: "home" },
-  { href: "/auction", label: "Рынок", icon: "market" },
-  { href: "/character", label: "Игроки", icon: "users" },
-  { href: "/clans", label: "Кланы", icon: "shield" },
-  { href: "/emission", label: "Выброс", icon: "radiation" },
+const TABS: { href: string; label: keyof Dict["shell"]; icon: IconName }[] = [
+  { href: "/", label: "home", icon: "home" },
+  { href: "/auction", label: "market", icon: "market" },
+  { href: "/character", label: "players", icon: "users" },
+  { href: "/clans", label: "clans", icon: "shield" },
+  { href: "/emission", label: "emission", icon: "radiation" },
   // подпись меняется: «Войти» / «Аккаунт»
-  { href: "/account", label: "Аккаунт", icon: "user" },
+  { href: "/account", label: "account", icon: "user" },
 ];
 
 const tabIndex = (path: string) => {
@@ -37,7 +41,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const active = tabIndex(pathname);
   // вкладка аккаунта: не вошли — «Войти»
   const { me, pending: mePending } = useMe();
-  const accountLabel = me || mePending ? "Аккаунт" : "Войти";
+  const t = useT();
+  const accountLabel = me || mePending ? t.shell.account : t.shell.signIn;
 
   // нативная кнопка «Назад» Telegram на вложенных экранах
   useEffect(() => {
@@ -74,18 +79,26 @@ export function Shell({ children }: { children: React.ReactNode }) {
       {children}
 
       <footer className={styles.credit}>
+        <div className={styles.footerActions}>
+          <a className={styles.donateBtn} href={DONATE_URL} target="_blank" rel="noopener" onClick={() => haptic.tap()}>
+            <Icon name="heart" size={15} />
+            {t.shell.donate}
+          </a>
+          <ThemeToggle compact />
+          <LangSwitch />
+        </div>
         STALZONE INFO · by{" "}
         <Link href={creatorHref} onClick={() => haptic.tap()}>
           {CREATOR.nick}
         </Link>
-        <span className={styles.disclaimer}>Неофициальный фан-проект · данные STALZONE API · EXBO</span>
+        <span className={styles.disclaimer}>{t.shell.disclaimer}</span>
       </footer>
 
       {canGoBack && (
         <button
           type="button"
           className={styles.back}
-          aria-label="Назад на прошлый экран"
+          aria-label={t.shell.backAria}
           onClick={() => {
             haptic.tap();
             const from = window.location.pathname;
@@ -98,15 +111,18 @@ export function Shell({ children }: { children: React.ReactNode }) {
           }}
         >
           <Icon name="back" size={18} />
-          Назад
+          {t.common.back}
         </button>
       )}
 
-      <nav className={styles.dock} aria-label="Навигация" style={{ "--index": active } as React.CSSProperties}>
+      <nav className={styles.dock} aria-label={t.shell.nav} style={{ "--index": active } as React.CSSProperties}>
         {/* логотип — только в боковой панели широкого экрана */}
-        <Link href="/" className={styles.brand} aria-label="STALZONE INFO — на главную">
+        <Link href="/" className={styles.brand} aria-label={t.shell.brandAria}>
           <span className={styles.brandMark} />
-          STALZONE <span style={{ color: "var(--acc)" }}>INFO</span>
+          {/* одним элементом: иначе gap флекса добавляется к пробелу между словами */}
+          <span>
+            STALZONE <span style={{ color: "var(--acc)" }}>INFO</span>
+          </span>
         </Link>
         <div className={styles.tabs}>
           <span className={styles.indicator} aria-hidden />
@@ -122,9 +138,18 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 <Icon name={tab.icon} size={21} strokeWidth={i === active ? 2.2 : 1.8} />
                 {tab.href === "/emission" && emissionActive && <span className={styles.alert} />}
               </span>
-              <span className={styles.tabLabel}>{tab.href === "/account" ? accountLabel : tab.label}</span>
+              <span className={styles.tabLabel}>{tab.href === "/account" ? accountLabel : t.shell[tab.label]}</span>
             </Link>
           ))}
+        </div>
+        {/* только в боковой панели широкого экрана; на телефоне — кнопка в подвале */}
+        <div className={styles.sideExtra}>
+          <ThemeToggle />
+          <LangSwitch />
+          <a className={styles.sideDonate} href={DONATE_URL} target="_blank" rel="noopener">
+            <Icon name="heart" size={18} />
+            {t.shell.donate}
+          </a>
         </div>
       </nav>
     </>

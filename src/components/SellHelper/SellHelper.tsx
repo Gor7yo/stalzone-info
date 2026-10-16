@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { MAX_UPGRADE, QUALITY, TIERS } from "@/features/auction";
+import { MAX_UPGRADE, qualities, TIERS } from "@/features/auction";
 import { usePro } from "@/features/pro";
 import { formatHours, hoursToSell, targetLabel, unitsAhead, useSellAdvice, type SellAdvice } from "@/features/sell";
-import { formatNumber, formatPrice, formatRelative, formatShort, parseGamePrice, plural } from "@/lib/format";
+import { useFormat, useLang, useT } from "@/i18n/client";
+import { parseGamePrice } from "@/lib/format";
 import type { Region } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
 import { Icon } from "../Icon";
@@ -32,19 +33,16 @@ interface Props {
 
 /** «По какой цене выставить, чтобы продалось за N часов» — Pro. */
 export function SellHelper(props: Props) {
+  const t = useT().sell;
   const { isPro, available, pending } = usePro();
   if (pending) return <div className="skeleton" style={{ height: 180, borderRadius: 22, marginTop: 12 }} />;
   if (!available) {
-    return <LoginCard text="Помощник продажи работает в Pro. Войдите через EXBO, чтобы оформить или взять пробные 3 дня." />;
+    return <LoginCard text={t.login} />;
   }
   if (!isPro) {
     return (
       <div style={{ marginTop: 12 }}>
-        <ProTeaser
-          compact
-          title="Помощник продажи"
-          text="По какой цене выставить лот, чтобы он ушёл за час, 6 часов или сутки - по очереди лотов и скорости сделок"
-        />
+        <ProTeaser compact title={t.title} text={t.teaser} />
       </div>
     );
   }
@@ -53,6 +51,9 @@ export function SellHelper(props: Props) {
 }
 
 function SellPanel({ itemId, region, hasQuality, hasUpgrade, stackable, initialQuality, initialUpgrade, variants, initialVariant }: Props) {
+  const t = useT().sell;
+  const lang = useLang();
+  const { formatNumber, formatShort } = useFormat();
   const [quality, setQuality] = useState(hasQuality ? (initialQuality ?? 0) : -1);
   const [upgrade, setUpgrade] = useState(initialUpgrade ?? 0);
   // модуль: без характеристики цену не посчитать — берём выбранную на странице или самую частую
@@ -78,14 +79,14 @@ function SellPanel({ itemId, region, hasQuality, hasUpgrade, stackable, initialQ
     <div className={`glass ${styles.panel}`}>
       <div className={styles.head}>
         <Icon name="tag" size={18} />
-        <span>По какой цене выставить, чтобы продалось быстро</span>
+        <span>{t.head}</span>
       </div>
 
       {hasQuality && (
-        <div className="chips" role="group" aria-label="Качество">
-          {QUALITY.map((q, i) => (
+        <div className="chips" role="group" aria-label={t.qualityAria}>
+          {qualities(lang).map((q, i) => (
             <button
-              key={q.label}
+              key={q.color}
               type="button"
               className="chip"
               aria-pressed={quality === i}
@@ -114,14 +115,14 @@ function SellPanel({ itemId, region, hasQuality, hasUpgrade, stackable, initialQ
       {(upgradable || stackable) && (
         <div className={styles.params}>
           {upgradable && (
-            <div className={styles.stepper} aria-label="Заточка">
-              <button type="button" aria-label="Меньше" disabled={upgrade <= 0} onClick={() => setUpgrade((u) => Math.max(0, u - 1))}>
+            <div className={styles.stepper} aria-label={t.upgradeAria}>
+              <button type="button" aria-label={t.less} disabled={upgrade <= 0} onClick={() => setUpgrade((u) => Math.max(0, u - 1))}>
                 −
               </button>
               <span className="mono">+{upgrade}</span>
               <button
                 type="button"
-                aria-label="Больше"
+                aria-label={t.more}
                 disabled={upgrade >= MAX_UPGRADE}
                 onClick={() => setUpgrade((u) => Math.min(MAX_UPGRADE, u + 1))}
               >
@@ -131,14 +132,14 @@ function SellPanel({ itemId, region, hasQuality, hasUpgrade, stackable, initialQ
           )}
           {stackable && (
             <label className={styles.amount}>
-              <span>штук</span>
+              <span>{t.pcs}</span>
               <input
                 className="mono"
                 inputMode="numeric"
                 autoComplete="off"
                 value={amountInput}
                 onChange={(e) => setAmountInput(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                aria-label="Сколько штук продаёте"
+                aria-label={t.amountAria}
               />
             </label>
           )}
@@ -156,16 +157,16 @@ function SellPanel({ itemId, region, hasQuality, hasUpgrade, stackable, initialQ
           <ul className={styles.list}>
             {a.quick && (
               <PriceRow
-                label="Быстрее всех"
-                hint={a.ladder.length ? "дешевле самого дешёвого лота" : "лотов нет - по медиане"}
+                label={t.quickest}
+                hint={a.ladder.length ? t.quickestHint : t.quickestNoLots}
                 price={a.quick.price}
                 hours={a.quick.hours}
                 amount={amount}
                 fee={a.fee}
               />
             )}
-            {a.targets.map((t) => (
-              <PriceRow key={t.hours} label={targetLabel(t.hours)} price={t.price} amount={amount} fee={a.fee} />
+            {a.targets.map((x) => (
+              <PriceRow key={x.hours} label={targetLabel(x.hours, lang)} price={x.price} amount={amount} fee={a.fee} />
             ))}
           </ul>
 
@@ -175,8 +176,8 @@ function SellPanel({ itemId, region, hasQuality, hasUpgrade, stackable, initialQ
               inputMode="decimal"
               enterKeyHint="done"
               autoComplete="off"
-              placeholder="Своя цена за штуку, например 4,5кк"
-              aria-label="Своя цена за штуку"
+              placeholder={t.myPlaceholder}
+              aria-label={t.myAria}
               value={myInput}
               onChange={(e) => setMyInput(e.target.value)}
               data-invalid={(myInput && !myPrice) || undefined}
@@ -185,13 +186,17 @@ function SellPanel({ itemId, region, hasQuality, hasUpgrade, stackable, initialQ
           {myPrice && <MyPrice a={a} price={myPrice} />}
 
           <p className={styles.hint}>
-            Посчитано по {formatNumber(a.deals)} {plural(a.deals, ["сделке", "сделкам", "сделкам"])} за {a.windowDays} дн. (медиана{" "}
-            {formatShort(a.sales.median)}
-            {a.basis === "tier" &&
-              `, вся ступень заточки ${TIERS.find((t) => upgrade >= t.min && upgrade <= t.max)?.label} - с +${upgrade} сделок мало`}
-            ) и {formatNumber(a.lotsTotal)} {plural(a.lotsTotal, ["лоту", "лотам", "лотам"])} на рынке. Оценка примерная: покупают самые
-            дешёвые лоты, а новые продавцы могут перебить цену. «На руки» - после комиссии аукциона {Math.round(a.fee * 100)} %. Нажмите на
-            цену, чтобы скопировать.
+            {t.basis({
+              deals: a.deals,
+              dealsText: formatNumber(a.deals),
+              days: a.windowDays,
+              median: formatShort(a.sales.median),
+              tier: a.basis === "tier" ? (TIERS.find((x) => upgrade >= x.min && upgrade <= x.max)?.label ?? "") : null,
+              upgrade,
+              lots: a.lotsTotal,
+              lotsText: formatNumber(a.lotsTotal),
+              fee: Math.round(a.fee * 100),
+            })}
           </p>
         </div>
       )}
@@ -214,6 +219,9 @@ function PriceRow({
   amount: number;
   fee: number;
 }) {
+  const t = useT().sell;
+  const lang = useLang();
+  const { formatPrice, formatShort } = useFormat();
   const [copied, setCopied] = useState(false);
   const copy = () => {
     if (!price) return;
@@ -228,18 +236,18 @@ function PriceRow({
   };
   return (
     <li>
-      <button type="button" className={styles.row} onClick={copy} disabled={!price} title={price ? "Скопировать цену" : undefined}>
+      <button type="button" className={styles.row} onClick={copy} disabled={!price} title={price ? t.copy : undefined}>
         <span className={styles.rowLabel}>
           <b>{label}</b>
-          <span>{copied ? "цена скопирована" : (hint ?? (hours != null ? formatHours(hours) : ""))}</span>
+          <span>{copied ? t.copied : (hint ?? (hours != null ? formatHours(hours, lang) : ""))}</span>
         </span>
         {price ? (
           <span className={styles.rowPrice}>
             <strong className="mono">{formatPrice(price)}</strong>
-            <span className="mono">на руки {formatShort(price * amount * (1 - fee))}</span>
+            <span className="mono">{t.net(formatShort(price * amount * (1 - fee)))}</span>
           </span>
         ) : (
-          <span className={styles.rowNone}>не успеть</span>
+          <span className={styles.rowNone}>{t.tooLate}</span>
         )}
       </button>
     </li>
@@ -247,32 +255,28 @@ function PriceRow({
 }
 
 function MyPrice({ a, price }: { a: SellAdvice; price: number }) {
+  const t = useT().sell;
+  const lang = useLang();
+  const { formatNumber, formatPrice } = useFormat();
   const hours = hoursToSell(a, price);
   const ahead = unitsAhead(a.ladder, price);
   return (
     <p className={styles.verdict} data-bad={hours == null || undefined}>
-      {hours == null ? (
-        <>Вряд ли продастся за 2 суток: по такой цене почти не покупают.</>
-      ) : (
-        <>
-          Продастся примерно {formatHours(hours).replace("≈", "за ")}
-          {ahead > 0
-            ? `, впереди ${formatNumber(ahead)} ${plural(ahead, ["штука", "штуки", "штук"])} дешевле`
-            : ", вы будете самым дешёвым"}
-          . На руки {formatPrice(price * a.amount * (1 - a.fee))}.
-        </>
-      )}
+      {hours == null
+        ? t.unlikely
+        : t.verdict(formatHours(hours, lang).replace("≈", ""), ahead, formatNumber(ahead), formatPrice(price * a.amount * (1 - a.fee)))}
     </p>
   );
 }
 
 function NoData({ a }: { a: SellAdvice }) {
+  const t = useT().sell;
+  const { formatNumber, formatPrice, formatRelative } = useFormat();
   return (
     <p className={styles.note}>
-      За {a.windowDays} дн.{" "}
-      {a.deals ? `всего ${formatNumber(a.deals)} ${plural(a.deals, ["сделка", "сделки", "сделок"])}` : "сделок не было"} - цену не оценить.
-      {a.ladder[0] && ` Самый дешёвый лот сейчас - ${formatPrice(a.ladder[0].unit)}.`}
-      {a.lastSale && ` Последняя продажа - ${formatRelative(a.lastSale)}.`}
+      {t.noData(a.windowDays, a.deals, formatNumber(a.deals))}
+      {a.ladder[0] && ` ${t.cheapestNow(formatPrice(a.ladder[0].unit))}`}
+      {a.lastSale && ` ${t.lastSale(formatRelative(a.lastSale))}`}
     </p>
   );
 }

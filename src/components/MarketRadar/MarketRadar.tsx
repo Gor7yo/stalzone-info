@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { QUALITY, TIERS } from "@/features/auction";
+import { qualities, TIERS } from "@/features/auction";
 import { useItems } from "@/features/items";
 import { useRadar, type RadarRow } from "@/features/market";
-import { formatShort } from "@/lib/format";
+import { useFormat, useLang, useT } from "@/i18n/client";
 import { actions, type Region } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
 import { Segmented } from "../ui/Segmented";
@@ -25,7 +25,8 @@ function hrefOf(r: RadarRow) {
   return `/auction/${r.itemId}${q ? `?${q}` : ""}`;
 }
 
-const pct = (x: number) => `${x > 0 ? "+" : x < 0 ? "−" : ""}${Math.abs(x).toLocaleString("ru-RU", { maximumFractionDigits: 1 })} %`;
+const pct = (x: number, locale = "ru-RU") =>
+  `${x > 0 ? "+" : x < 0 ? "−" : ""}${Math.abs(x).toLocaleString(locale, { maximumFractionDigits: 1 })} %`;
 
 /** Радар рынка на главной: что подорожало, подешевело и где больше всего сделок за сутки. */
 /**
@@ -33,6 +34,10 @@ const pct = (x: number) => `${x > 0 ? "+" : x < 0 ? "−" : ""}${Math.abs(x).toL
  * список прокручивается внутри (высоту задаёт соседняя колонка).
  */
 export function MarketRadar({ region, fill = false }: { region: Region; fill?: boolean }) {
+  const t = useT().radar;
+  const lang = useLang();
+  const QUALITY = qualities(lang);
+  const { formatShort, locale } = useFormat();
   const { data, isLoading, isError } = useRadar(region);
   const { data: index } = useItems();
   const [tab, setTab] = useState<Tab>("up");
@@ -45,34 +50,45 @@ export function MarketRadar({ region, fill = false }: { region: Region; fill?: b
   return (
     <section className={`section ${styles.radar}`} data-fill={fill || undefined}>
       <h2 className="section-title">
-        Радар рынка <small>за сутки · {region.toUpperCase()}</small>
+        {t.title}{" "}
+        <small>
+          {t.perDay} · {region.toUpperCase()}
+        </small>
       </h2>
 
       {data && !empty && (
         <div className={`glass ${styles.index}`} data-tone={data.index.change > 0 ? "up" : data.index.change < 0 ? "down" : undefined}>
-          <span className={styles.indexLabel}>Индекс рынка</span>
-          <strong className="mono">{pct(data.index.change)}</strong>
-          <span className="dim">по {data.index.groups} позициям, с учётом оборота</span>
+          <span className={styles.indexLabel}>{t.index}</span>
+          <strong className="mono">{pct(data.index.change, locale)}</strong>
+          <span className="dim">{t.indexHint(data.index.groups)}</span>
         </div>
       )}
 
       <div style={{ margin: "10px 0" }}>
         <Segmented
-          label="Радар"
+          label={t.tabsAria}
           size="sm"
           value={tab}
           onChange={(v) => (haptic.select(), setTab(v as Tab), setAll(false))}
           options={[
-            { value: "up", label: "Растут" },
-            { value: "down", label: "Падают" },
-            { value: "volume", label: "Оборот" },
+            { value: "up", label: t.up },
+            { value: "down", label: t.down },
+            { value: "volume", label: t.volume },
           ]}
         />
       </div>
 
       {isLoading && <div className={styles.skeleton} />}
-      {empty && <p className="dim" style={{ fontSize: 13 }}>Для этого региона пока мало сделок — радар появится, когда сборщик накопит историю.</p>}
-      {data && !empty && !rows.length && <p className="dim" style={{ fontSize: 13 }}>Сейчас таких позиций нет.</p>}
+      {empty && (
+        <p className="dim" style={{ fontSize: 13 }}>
+          {t.empty}
+        </p>
+      )}
+      {data && !empty && !rows.length && (
+        <p className="dim" style={{ fontSize: 13 }}>
+          {t.noRows}
+        </p>
+      )}
 
       {/* все позиции в разметке: на телефоне лишние скрыты до «Ещё», на широком экране с fill — прокрутка */}
       <ul className={styles.list} data-collapsed={!all || undefined}>
@@ -99,17 +115,17 @@ export function MarketRadar({ region, fill = false }: { region: Region; fill?: b
                       </span>
                     )}
                     {(q || r.tier > 0) && <span>{TIERS[r.tier]?.label}</span>}
-                    <span className="dim">{r.deals} сделок</span>
+                    <span className="dim">{t.deals(r.deals)}</span>
                   </span>
                 </span>
                 <span className={styles.nums}>
                   <strong className="mono">{formatShort(r.price)}</strong>
                   {tab === "volume" ? (
-                    <span className="mono dim">оборот {formatShort(r.turnover)}</span>
+                    <span className="mono dim">{t.turnover(formatShort(r.turnover))}</span>
                   ) : (
                     r.change != null && (
                       <span className="mono" data-tone={r.change > 0 ? "up" : "down"}>
-                        {pct(r.change)}
+                        {pct(r.change, locale)}
                       </span>
                     )
                   )}
@@ -122,7 +138,7 @@ export function MarketRadar({ region, fill = false }: { region: Region; fill?: b
 
       {rows.length > SHOWN && (
         <button type="button" className={`btn ${styles.more}`} onClick={() => setAll((v) => !v)}>
-          {all ? "Свернуть" : `Ещё ${rows.length - SHOWN}`}
+          {all ? t.collapse : t.more(rows.length - SHOWN)}
         </button>
       )}
     </section>

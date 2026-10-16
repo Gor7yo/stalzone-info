@@ -9,10 +9,10 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { RegionSwitch } from "@/components/ui/RegionSwitch";
 import { Segmented } from "@/components/ui/Segmented";
 import { EmptyState, ErrorState, RowSkeleton } from "@/components/ui/States";
-import { QUALITY, TIERS } from "@/features/auction";
+import { qualities, TIERS } from "@/features/auction";
 import { CONFIDENCE, useFlips, type Flip } from "@/features/flips";
-import { GROUPS, useItems, type Item } from "@/features/items";
-import { formatRelative, formatShort, plural } from "@/lib/format";
+import { GROUPS, groupLabel, useItems, type Item } from "@/features/items";
+import { useFormat, useLang, useT } from "@/i18n/client";
 import { actions, useApp, type FlipSettings } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
 import { ProTeaser } from "@/components/Pro/Pro";
@@ -58,6 +58,8 @@ function groupOffers(flips: Flip[]): Offer[] {
 
 /** Флиппер — функция Pro: без подписки показываем, что он умеет, и ведём на экран Pro. */
 export default function FlipsPage() {
+  const t = useT().flips;
+  const { formatShort } = useFormat();
   const pro = usePro();
   if (pro.pending) {
     return (
@@ -70,14 +72,10 @@ export default function FlipsPage() {
 
   return (
     <main className="page">
-      <PageHeader eyebrow="Аукцион · Pro" title="Флиппер">
-        Лоты дешевле рынка в реальном времени: выкупи и перепродай. Цена продажи — медиана сделок за 3 дня с тем же качеством и заточкой,
-        комиссия 5 % уже вычтена.
+      <PageHeader eyebrow={t.eyebrowPro} title={t.title}>
+        {t.leadPro}
       </PageHeader>
-      <ProTeaser
-        title="Флиппер — в Pro"
-        text="Каждую минуту ищем лоты, которые можно перепродать с прибылью, и оцениваем, насколько надёжна оценка. Плюс бот пришлёт выгодный лот, пока его не выкупили другие."
-      />
+      <ProTeaser title={t.teaserTitle} text={t.teaserText} />
       <div className={styles.preview} aria-hidden>
         {[0, 1, 2].map((i) => (
           <div key={i} className={styles.previewCard}>
@@ -87,7 +85,7 @@ export default function FlipsPage() {
               <span className="skeleton" style={{ width: "40%", height: 12 }} />
             </span>
             <strong className="mono" style={{ color: "var(--green)" }}>
-              +{["735", "244", "88"][i]}к
+              +{formatShort([735_000, 244_000, 88_000][i])}
             </strong>
           </div>
         ))}
@@ -97,6 +95,9 @@ export default function FlipsPage() {
 }
 
 function FlipsFeed() {
+  const t = useT().flips;
+  const lang = useLang();
+  const { formatRelative, formatShort, locale } = useFormat();
   const region = useApp((s) => s.region);
   const settings = useApp((s) => s.flips);
   const { data: index } = useItems();
@@ -135,25 +136,24 @@ function FlipsFeed() {
 
   return (
     <main className="page">
-      <PageHeader eyebrow="Аукцион" title="Флиппер" aside={<RegionSwitch />}>
-        Лоты дешевле рынка: выкупи и перепродай. Цена продажи — медиана сделок за {data?.windowDays ?? 3}{" "}
-        {plural(data?.windowDays ?? 3, ["день", "дня", "дней"])} с тем же качеством и заточкой, комиссия 5 % уже вычтена.
+      <PageHeader eyebrow={t.eyebrow} title={t.title} aside={<RegionSwitch />}>
+        {t.lead(data?.windowDays ?? 3)}
       </PageHeader>
 
       <section className={`glass ${styles.hero}`}>
         <div className={styles.heroMain}>
-          <span className={styles.heroLabel}>Лучший флип</span>
+          <span className={styles.heroLabel}>{t.bestFlip}</span>
           <strong className={`mono ${styles.heroValue}`}>{top ? `+${formatShort(top.profit)}` : isLoading ? "…" : "—"}</strong>
           <span className="dim" style={{ fontSize: 12, fontWeight: 600 }}>
-            {top ? `${index?.byId.get(top.itemId)?.name ?? top.itemId} · ${top.pct.toLocaleString("ru-RU")} %` : "по текущим фильтрам"}
+            {top ? `${index?.byId.get(top.itemId)?.name ?? top.itemId} · ${top.pct.toLocaleString(locale)} %` : t.byFilters}
           </span>
         </div>
         <div className={styles.heroStats} style={{ visibility: data ? undefined : "hidden" }}>
           <span>
-            <strong className="mono">{offers.length}</strong> {plural(offers.length, ["предмет", "предмета", "предметов"])}
+            <strong className="mono">{offers.length}</strong> {t.itemsWord(offers.length)}
           </span>
           <span>
-            <strong className="mono">{lotsCount}</strong> {plural(lotsCount, ["лот", "лота", "лотов"])}
+            <strong className="mono">{lotsCount}</strong> {t.lotsWord(lotsCount)}
           </span>
           {data && <span className="dim">{formatRelative(data.updatedAt)}</span>}
         </div>
@@ -162,13 +162,13 @@ function FlipsFeed() {
       <div className={styles.toolbar}>
         <Segmented
           size="sm"
-          label="Сортировка"
+          label={t.sortAria}
           value={settings.sort}
           onChange={(sort) => set({ sort })}
           options={[
-            { value: "profit", label: "Прибыль" },
-            { value: "pct", label: "Процент" },
-            { value: "fast", label: "Ходовые" },
+            { value: "profit", label: t.sortProfit },
+            { value: "pct", label: t.sortPct },
+            { value: "fast", label: t.sortFast },
           ]}
         />
         <button
@@ -181,27 +181,27 @@ function FlipsFeed() {
           }}
         >
           <Icon name="sort" size={16} />
-          Фильтры
+          {t.filters}
           {active > 0 && <span className={styles.badge}>{active}</span>}
         </button>
       </div>
 
       {open && (
         <section className={`glass ${styles.panel}`}>
-          <Filter label="Надёжность оценки">
+          <Filter label={t.confidence}>
             <Segmented
               size="sm"
-              label="Надёжность оценки"
+              label={t.confidence}
               value={settings.minConfidence}
               onChange={(minConfidence) => set({ minConfidence })}
               options={[
-                { value: "low", label: "Все" },
-                { value: "medium", label: "Средняя+" },
-                { value: "high", label: "Надёжные" },
+                { value: "low", label: t.confAll },
+                { value: "medium", label: t.confMedium },
+                { value: "high", label: t.confHigh },
               ]}
             />
           </Filter>
-          <Filter label="Прибыль от">
+          <Filter label={t.profitFrom}>
             <div className="chips">
               {MIN_PROFIT.map((v) => (
                 <button
@@ -216,20 +216,20 @@ function FlipsFeed() {
               ))}
             </div>
           </Filter>
-          <Filter label="Бюджет на лот">
+          <Filter label={t.budget}>
             <div className="chips">
               {BUDGET.map((v) => (
                 <button key={v} type="button" className="chip" aria-pressed={settings.budget === v} onClick={() => set({ budget: v })}>
-                  {v ? `до ${formatShort(v)}` : "любой"}
+                  {v ? t.upTo(formatShort(v)) : t.anyBudget}
                 </button>
               ))}
             </div>
           </Filter>
           {groups.length > 0 && (
-            <Filter label="Категория">
+            <Filter label={t.category}>
               <div className="chips">
                 <button type="button" className="chip" aria-pressed={!settings.group} onClick={() => set({ group: null })}>
-                  Все
+                  {t.all}
                 </button>
                 {groups.map((g) => (
                   <button
@@ -239,7 +239,7 @@ function FlipsFeed() {
                     aria-pressed={settings.group === g.id}
                     onClick={() => set({ group: g.id })}
                   >
-                    <span aria-hidden>{g.icon}</span> {g.label}
+                    <span aria-hidden>{g.icon}</span> {groupLabel(g, lang)}
                   </button>
                 ))}
               </div>
@@ -247,7 +247,7 @@ function FlipsFeed() {
           )}
           {active > 0 && (
             <button type="button" className={styles.resetBtn} onClick={() => set({ ...DEFAULTS, sort: settings.sort })}>
-              Сбросить фильтры
+              {t.reset}
             </button>
           )}
         </section>
@@ -257,7 +257,7 @@ function FlipsFeed() {
 
       <section className="section">
         {isError ? (
-          <ErrorState onRetry={() => refetch()} text="Не удалось загрузить флипы." />
+          <ErrorState onRetry={() => refetch()} text={t.loadError} />
         ) : isLoading || !data ? (
           <RowSkeleton />
         ) : offers.length ? (
@@ -269,27 +269,16 @@ function FlipsFeed() {
             </div>
             {offers.length > limit && (
               <button type="button" className="btn" style={{ width: "100%", marginTop: 12 }} onClick={() => setLimit((l) => l + STEP)}>
-                Показать ещё
+                {t.showMore}
               </button>
             )}
           </>
         ) : (
-          <EmptyState
-            icon="sparkle"
-            title="Флипов не нашлось"
-            text={
-              all.length
-                ? "Ослабьте фильтры: меньше прибыль, больше бюджет или все уровни надёжности."
-                : "Сейчас на рынке нет лотов заметно дешевле сделок. Загляните позже."
-            }
-          />
+          <EmptyState icon="sparkle" title={t.emptyTitle} text={all.length ? t.emptyFiltered : t.emptyMarket} />
         )}
       </section>
 
-      <p className={`dim ${styles.note}`}>
-        Оценка — по прошлым сделкам, а не обещание: лот могли уже выкупить, а цена — сдвинуться. «Надёжно» — много сделок с тем же качеством
-        и заточкой и небольшой разброс цен.
-      </p>
+      <p className={`dim ${styles.note}`}>{t.note}</p>
     </main>
   );
 }
@@ -314,10 +303,13 @@ function itemHref(f: Flip, item?: Item) {
 }
 
 function OfferCard({ offer, item }: { offer: Offer; item?: Item }) {
+  const t = useT().flips;
+  const lang = useLang();
+  const { formatRelative, formatShort, locale } = useFormat();
   const f = offer.best;
-  const quality = QUALITY[f.quality];
+  const quality = qualities(lang)[f.quality];
   const conf = CONFIDENCE[f.confidence];
-  const tier = TIERS.find((t) => f.upgrade >= t.min && f.upgrade <= t.max);
+  const tier = TIERS.find((x) => f.upgrade >= x.min && f.upgrade <= x.max);
   // полоска: какая доля ожидаемой выручки уходит на выкуп, какая — прибыль
   const revenue = f.sellUnit * f.amount * 0.95;
   const buyShare = Math.min(100, Math.max(0, (f.buyout / revenue) * 100));
@@ -345,13 +337,13 @@ function OfferCard({ offer, item }: { offer: Offer; item?: Item }) {
             {quality && <span className={styles.qualityTag}>{quality.label}</span>}
             {f.amount > 1 && <span className={styles.tag}>×{f.amount}</span>}
             <span className={styles.conf} style={{ color: conf.color }}>
-              ● {conf.label}
+              ● {t.conf[f.confidence]}
             </span>
           </span>
         </span>
         <span className={styles.profit}>
           <strong className="mono">+{formatShort(f.profit)}</strong>
-          <span className="mono">{f.pct.toLocaleString("ru-RU")} %</span>
+          <span className="mono">{f.pct.toLocaleString(locale)} %</span>
         </span>
       </div>
 
@@ -361,26 +353,22 @@ function OfferCard({ offer, item }: { offer: Offer; item?: Item }) {
 
       <div className={`mono ${styles.prices}`}>
         <span>
-          <small>выкуп</small> {formatShort(f.unitPrice)}
+          <small>{t.buyout}</small> {formatShort(f.unitPrice)}
         </span>
         <Icon name="chevron" size={14} className="dim" />
         <span>
-          <small>продажа</small> ~{formatShort(f.sellUnit)}
-          {f.amount > 1 && <small> /шт</small>}
+          <small>{t.sale}</small> ~{formatShort(f.sellUnit)}
+          {f.amount > 1 && <small> {t.perPcs}</small>}
         </span>
       </div>
 
       <div className={styles.meta}>
         <span>
-          {f.deals} {plural(f.deals, ["сделка", "сделки", "сделок"])}
-          {f.basis === "tier" && tier ? ` (${tier.label})` : ""} · {f.perDay}/сут
+          {t.deals(f.deals)}
+          {f.basis === "tier" && tier ? ` (${tier.label})` : ""} · {t.perDay(f.perDay)}
         </span>
-        {others > 0 && (
-          <span className={styles.more}>
-            ещё {others} {plural(others, ["лот", "лота", "лотов"])}
-          </span>
-        )}
-        <span>видели {formatRelative(f.seenAt)}</span>
+        {others > 0 && <span className={styles.more}>{t.moreLots(others)}</span>}
+        <span>{t.seen(formatRelative(f.seenAt))}</span>
       </div>
     </Link>
   );

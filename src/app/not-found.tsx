@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { EmptyState } from "@/components/ui/States";
+import { getT } from "@/i18n/server";
 
-export default function NotFound() {
+export default async function NotFound() {
+  const { t } = await getT();
   return (
     <main className="page" style={{ paddingTop: "20vh" }}>
-      <EmptyState icon="radiation" title="Сюда не ходят" text="Такой страницы нет даже на картах Зоны.">
+      <EmptyState icon="radiation" title={t.common.notFoundTitle} text={t.common.notFoundText}>
         <Link href="/" className="btn primary">
-          На главную
+          {t.common.toHome}
         </Link>
       </EmptyState>
     </main>

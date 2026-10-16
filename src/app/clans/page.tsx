@@ -10,12 +10,15 @@ import { RegionSwitch } from "@/components/ui/RegionSwitch";
 import { SearchField } from "@/components/ui/SearchField";
 import { EmptyState, ErrorState, RowSkeleton } from "@/components/ui/States";
 import { CLANS_PAGE, useClans, useClanSearch, useDebounced, type Clan } from "@/features/clans";
-import { formatNumber, plural } from "@/lib/format";
+import { useFormat, useT } from "@/i18n/client";
 import { stripMc } from "@/lib/mcText";
 import { actions, useApp, type Region } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
 
 export default function ClansPage() {
+  const tAll = useT();
+  const t = tAll.clans;
+  const { formatNumber } = useFormat();
   const region = useApp((s) => s.region);
   const favClans = useApp((s) => s.favClans);
   const [page, setPage] = useState(0);
@@ -32,14 +35,13 @@ export default function ClansPage() {
   const searching = q.length > 0;
   const serverSearch = searching && search.data?.syncedAt !== null;
   const lq = q.toLowerCase();
-  const pageClans = (data?.data ?? [])
-    .filter(
-      (c) =>
-        !searching ||
-        stripMc(c.name).toLowerCase().includes(lq) ||
-        stripMc(c.tag).toLowerCase().includes(lq) ||
-        c.leader?.toLowerCase().includes(lq),
-    );
+  const pageClans = (data?.data ?? []).filter(
+    (c) =>
+      !searching ||
+      stripMc(c.name).toLowerCase().includes(lq) ||
+      stripMc(c.tag).toLowerCase().includes(lq) ||
+      c.leader?.toLowerCase().includes(lq),
+  );
   const clans = serverSearch ? (search.data?.data ?? []) : pageClans;
   const state = serverSearch ? search : { isLoading, isError, refetch, isPlaceholderData };
   const found = search.data?.total ?? 0;
@@ -53,8 +55,8 @@ export default function ClansPage() {
   return (
     <main className="page">
       <PageHeader
-        eyebrow="Реестр"
-        title="Кланы"
+        eyebrow={t.eyebrow}
+        title={t.title}
         aside={
           <RegionSwitch
             onChange={(r) => {
@@ -64,12 +66,12 @@ export default function ClansPage() {
           />
         }
       >
-        {total ? `${formatNumber(total)} ${plural(total, ["клан", "клана", "кланов"])} в регионе ${region.toUpperCase()}` : "Составы, уровни и лидеры кланов."}
+        {total ? t.inRegion(t.clansCount(total, formatNumber(total)), region.toUpperCase()) : t.lead}
       </PageHeader>
 
       {favClans.filter((c) => c.region === region).length > 0 && (
         <section style={{ marginBottom: 20 }}>
-          <h2 className="section-title">Избранные</h2>
+          <h2 className="section-title">{t.favorites}</h2>
           <div className="chips">
             {favClans
               .filter((c) => c.region === region)
@@ -98,27 +100,25 @@ export default function ClansPage() {
           <Icon name="market" size={20} />
         </span>
         <span style={{ flex: 1, minWidth: 0 }}>
-          <strong style={{ fontSize: 14 }}>Аналитика кланов</strong>
+          <strong style={{ fontSize: 14 }}>{t.analytics}</strong>
           <span className="dim" style={{ display: "block", fontSize: 12, fontWeight: 600 }}>
-            Кто растёт и теряет бойцов, группировки, новые и распущенные
+            {t.analyticsHint}
           </span>
         </span>
         <Icon name="chevron" size={18} className="dim" />
       </Link>
 
-      <SearchField value={filter} onChange={setFilter} placeholder="Название, тег или ник лидера" aria-label="Поиск клана" />
+      <SearchField value={filter} onChange={setFilter} placeholder={t.searchPlaceholder} aria-label={t.searchAria} />
 
       <section className="section" style={{ marginTop: 16 }}>
         {serverSearch && search.data && (
           <p className="dim" style={{ fontSize: 13, fontWeight: 600, margin: "0 2px 10px" }}>
-            {found
-              ? `Найдено ${formatNumber(found)} ${plural(found, ["клан", "клана", "кланов"])}${found > clans.length ? ` · показаны первые ${clans.length}, уточните запрос` : ""}`
-              : null}
+            {found ? t.found(t.clansCount(found, formatNumber(found)), found > clans.length ? clans.length : null) : null}
           </p>
         )}
         {searching && !serverSearch && search.data && (
           <p className="dim" style={{ fontSize: 13, fontWeight: 600, margin: "0 2px 10px" }}>
-            Список кланов ещё загружается на сервер - пока ищем только на этой странице.
+            {t.syncing}
           </p>
         )}
 
@@ -127,33 +127,33 @@ export default function ClansPage() {
         ) : state.isLoading ? (
           <RowSkeleton count={8} />
         ) : clans.length ? (
-          <div className="stack stagger desk-grid" style={{ gap: 8, opacity: state.isPlaceholderData ? 0.5 : 1, transition: "opacity 200ms" }}>
+          <div
+            className="stack stagger desk-grid"
+            style={{ gap: 8, opacity: state.isPlaceholderData ? 0.5 : 1, transition: "opacity 200ms" }}
+          >
             {clans.map((clan) => (
               <ClanRow key={clan.id} clan={clan} region={region} />
             ))}
           </div>
         ) : (
-          <EmptyState
-            title="Кланов не найдено"
-            text={
-              serverSearch
-                ? "Проверьте название или тег. Ищем по всем кланам региона, раскладка не важна."
-                : searching
-                  ? "На этой странице нет совпадений — попробуйте другие страницы."
-                  : undefined
-            }
-          />
+          <EmptyState title={t.notFound} text={serverSearch ? t.notFoundSearch : searching ? t.notFoundPage : undefined} />
         )}
 
         {!serverSearch && pages > 1 && !isError && (
-          <nav className="row" style={{ marginTop: 16, justifyContent: "space-between" }} aria-label="Страницы">
-            <button type="button" className="btn" disabled={page === 0} onClick={() => go(page - 1)} aria-label="Назад">
+          <nav className="row" style={{ marginTop: 16, justifyContent: "space-between" }} aria-label={tAll.chart.pages}>
+            <button type="button" className="btn" disabled={page === 0} onClick={() => go(page - 1)} aria-label={tAll.chart.prevPage}>
               <Icon name="back" size={18} />
             </button>
             <span className="mono muted" style={{ fontSize: 13, fontWeight: 700 }}>
               {page + 1} / {pages}
             </span>
-            <button type="button" className="btn" disabled={page >= pages - 1} onClick={() => go(page + 1)} aria-label="Вперёд">
+            <button
+              type="button"
+              className="btn"
+              disabled={page >= pages - 1}
+              onClick={() => go(page + 1)}
+              aria-label={tAll.chart.nextPage}
+            >
               <Icon name="chevron" size={18} />
             </button>
           </nav>
@@ -164,6 +164,8 @@ export default function ClansPage() {
 }
 
 function ClanRow({ clan, region }: { clan: Clan; region: Region }) {
+  const t = useT().clans;
+  const { formatNumber } = useFormat();
   const isFav = useApp((s) => s.favClans.some((c) => c.id === clan.id));
 
   return (
@@ -174,7 +176,7 @@ function ClanRow({ clan, region }: { clan: Clan; region: Region }) {
           [{stripMc(clan.tag)}] {stripMc(clan.name)}
         </strong>
         <span className="dim truncate" style={{ fontSize: 12, fontWeight: 600 }}>
-          ур. {clan.level} · {formatNumber(clan.memberCount)} {plural(clan.memberCount, ["боец", "бойца", "бойцов"])} · {clan.leader}
+          {t.lvl(clan.level)} · {t.fighters(clan.memberCount, formatNumber(clan.memberCount))} · {clan.leader}
         </span>
       </span>
       <FavButton

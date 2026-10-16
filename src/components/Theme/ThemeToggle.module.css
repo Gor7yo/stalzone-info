@@ -1,0 +1,39 @@
+.icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--line-2);
+  background: var(--surface);
+  color: var(--text-2);
+  transition:
+    color 180ms,
+    background 180ms;
+}
+
+.icon:hover {
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 42px;
+  padding: 0 12px;
+  border-radius: 14px;
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+  transition:
+    color 200ms,
+    background 200ms;
+}
+
+.row:hover {
+  color: var(--text);
+  background: var(--surface);
+}

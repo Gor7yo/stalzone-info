@@ -35,7 +35,10 @@ const indexOf = (list, value) => {
 
 // [id, ru, en, colorIdx, categoryIdx]
 const items = listing.map((entry) => {
-  const parts = entry.data.replace(/^\/items\//, "").replace(/\.json$/, "").split("/");
+  const parts = entry.data
+    .replace(/^\/items\//, "")
+    .replace(/\.json$/, "")
+    .split("/");
   const id = parts.pop();
   return [
     id,
@@ -46,18 +49,19 @@ const items = listing.map((entry) => {
   ];
 });
 
-await writeFile(
-  new URL("../public/items.json", import.meta.url),
-  JSON.stringify({ colors, categories, items }),
-);
+await writeFile(new URL("../public/items.json", import.meta.url), JSON.stringify({ colors, categories, items }));
 
-// stats: id → [название, категория, тип]; achievements: id → [название, описание, очки]
+// английский вариант для интерфейса на en ("" - совпадает с русским или его нет)
+const en = (t) => {
+  const s = t?.lines?.en ?? "";
+  return s && s !== ru(t) ? s : "";
+};
+
+// stats: id → [название, категория, тип, название en]; achievements: id → [название, описание, очки, название en, описание en]
 const meta = {
-  stats: Object.fromEntries(
-    stats.filter((x) => ru(x.name)).map((x) => [x.id, [ru(x.name), x.category, x.type]]),
-  ),
+  stats: Object.fromEntries(stats.filter((x) => ru(x.name)).map((x) => [x.id, [ru(x.name), x.category, x.type, en(x.name)]])),
   achievements: Object.fromEntries(
-    achievements.map((x) => [x.id, [ru(x.title), ru(x.description), x.points ?? 0]]),
+    achievements.map((x) => [x.id, [ru(x.title), ru(x.description), x.points ?? 0, en(x.title), en(x.description)]]),
   ),
 };
 
@@ -67,18 +71,20 @@ await writeFile(new URL("../public/meta.json", import.meta.url), JSON.stringify(
 // В базе есть поселения-двойники («Бар», «Фракции Севера») с теми же рецептами — схлопываем.
 const settlements = [];
 const seen = new Set();
-const recipes = barter.flatMap((settlement) => {
-  const s = indexOf(settlements, ru(settlement.settlementTitle));
-  return settlement.recipes.map((r) => [
-    r.item,
-    s,
-    r.settlementRequiredLevel ?? 0,
-    r.offers.map((o) => [o.currency, o.cost ?? 0, o.requiredItems.map((i) => [i.item, i.amount])]),
-  ]);
-}).filter((r) => {
-  const key = JSON.stringify(r);
-  return seen.has(key) ? false : (seen.add(key), true);
-});
+const recipes = barter
+  .flatMap((settlement) => {
+    const s = indexOf(settlements, ru(settlement.settlementTitle));
+    return settlement.recipes.map((r) => [
+      r.item,
+      s,
+      r.settlementRequiredLevel ?? 0,
+      r.offers.map((o) => [o.currency, o.cost ?? 0, o.requiredItems.map((i) => [i.item, i.amount])]),
+    ]);
+  })
+  .filter((r) => {
+    const key = JSON.stringify(r);
+    return seen.has(key) ? false : (seen.add(key), true);
+  });
 
 const byId = new Map(listing.map((e) => [e.data.split("/").pop().replace(".json", ""), e]));
 const byName = new Map(listing.map((e) => [ru(e.name), e.data.split("/").pop().replace(".json", "")]));
@@ -107,16 +113,13 @@ async function buyerPrice(id) {
   }
   return null;
 }
-const buyer = Object.fromEntries(
-  (await Promise.all(farm.map(async (id) => [id, await buyerPrice(id)]))).filter(([, p]) => p),
-);
+const buyer = Object.fromEntries((await Promise.all(farm.map(async (id) => [id, await buyerPrice(id)]))).filter(([, p]) => p));
 
-await writeFile(
-  new URL("../public/barter.json", import.meta.url),
-  JSON.stringify({ settlements, recipes, farm, packs, buyer }),
-);
+await writeFile(new URL("../public/barter.json", import.meta.url), JSON.stringify({ settlements, recipes, farm, packs, buyer }));
 
-console.log(`barter: ${farm.length} фармовых ресурсов, ${Object.keys(packs).length} пересоздаются, ${Object.keys(buyer).length} с ценой скупщика`);
+console.log(
+  `barter: ${farm.length} фармовых ресурсов, ${Object.keys(packs).length} пересоздаются, ${Object.keys(buyer).length} с ценой скупщика`,
+);
 // Версия справочников в URL: после пересборки браузеры не возьмут старый кеш
 const hash = createHash("sha1");
 for (const f of ["items.json", "meta.json", "barter.json"]) hash.update(await readFile(new URL(`../public/${f}`, import.meta.url)));

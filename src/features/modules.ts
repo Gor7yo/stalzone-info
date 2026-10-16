@@ -135,7 +135,7 @@ export function variantOf(additional?: Additional): string {
 export const variantName = (id: string) => MODULE_ATTRS[id]?.name ?? id.replace(/_(aff|op|pre|suf)$/, "").replace(/_/g, " ");
 
 /** «Снайпер» — в кавычках, как в игре */
-export const variantLabel = (id: string) => `«${variantName(id)}»`;
+export const variantLabel = (id: string, lang: "ru" | "en" = "ru") => (lang === "en" ? `“${variantName(id)}”` : `«${variantName(id)}»`);
 
 /** Характеристики, которые встречаются в лотах и сделках, — самые частые первыми. */
 export function variantsOf(...lists: { additional?: Additional }[][]): string[] {

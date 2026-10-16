@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useT } from "@/i18n/client";
 import { haptic } from "@/lib/telegram";
 import { Icon } from "../Icon";
 import styles from "./SwipePager.module.css";
@@ -20,6 +21,7 @@ const SWIPE_PX = 60;
  * Вертикальная прокрутка не мешает: жест засчитывается, только если он скорее горизонтальный.
  */
 export function SwipePager({ page, pages, onPage, children }: Props) {
+  const t = useT().chart;
   const start = useRef<{ x: number; y: number; horizontal: boolean | null } | null>(null);
   const [dx, setDx] = useState(0);
   const [enter, setEnter] = useState<"left" | "right" | null>(null);
@@ -75,8 +77,8 @@ export function SwipePager({ page, pages, onPage, children }: Props) {
       </div>
 
       {pages > 1 && (
-        <nav className={styles.nav} aria-label="Страницы">
-          <button type="button" className="icon-btn" aria-label="Предыдущая страница" disabled={page === 0} onClick={() => go(page - 1)}>
+        <nav className={styles.nav} aria-label={t.pages}>
+          <button type="button" className="icon-btn" aria-label={t.prevPage} disabled={page === 0} onClick={() => go(page - 1)}>
             <Icon name="back" size={18} />
           </button>
           <div className={styles.dots}>
@@ -87,7 +89,7 @@ export function SwipePager({ page, pages, onPage, children }: Props) {
               <span style={{ width: `${((page + 1) / pages) * 100}%` }} />
             </span>
           </div>
-          <button type="button" className="icon-btn" aria-label="Следующая страница" disabled={page >= pages - 1} onClick={() => go(page + 1)}>
+          <button type="button" className="icon-btn" aria-label={t.nextPage} disabled={page >= pages - 1} onClick={() => go(page + 1)}>
             <Icon name="chevron" size={18} />
           </button>
         </nav>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/i18n/client";
 import { Icon } from "../Icon";
 import styles from "./ui.module.css";
 
@@ -12,6 +13,7 @@ interface Props extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "onCha
 }
 
 export function SearchField({ value, onChange, onSubmit, action, className, ref, ...rest }: Props) {
+  const t = useT();
   return (
     <form
       role="search"
@@ -34,7 +36,7 @@ export function SearchField({ value, onChange, onSubmit, action, className, ref,
         {...rest}
       />
       {value && (
-        <button type="button" className={styles.searchClear} aria-label="Очистить" onClick={() => onChange("")}>
+        <button type="button" className={styles.searchClear} aria-label={t.common.clear} onClick={() => onChange("")}>
           <Icon name="close" size={16} />
         </button>
       )}

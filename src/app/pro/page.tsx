@@ -5,42 +5,40 @@ import { Icon } from "@/components/Icon";
 import { ProBadge } from "@/components/Pro/Pro";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { PRO_BUY_URL, PRO_FEATURES, usePro, useStartTrial } from "@/features/pro";
-import { formatDate } from "@/lib/format";
+import { useFormat, useT } from "@/i18n/client";
 import styles from "./pro.module.css";
 
 export default function ProPage() {
+  const t = useT().pro;
+  const { formatDate } = useFormat();
   const pro = usePro();
   const trial = useStartTrial();
 
   return (
     <main className="page">
-      <PageHeader eyebrow="Подписка" title="STALZONE INFO Pro">
-        Всё, что нужно трейдеру Зоны: флиппер, алерты в Telegram, графики и точные цены по качеству и заточке.
+      <PageHeader eyebrow={t.eyebrow} title="STALZONE INFO Pro">
+        {t.lead}
       </PageHeader>
 
       <section className={`glass ${styles.hero}`}>
         <span className={styles.heroBadge}>
           <ProBadge />
         </span>
-        <strong className={styles.heroTitle}>{pro.isPro ? "Pro активен" : "Pro — это имба"}</strong>
-        <span className={styles.heroText}>
-          {pro.isPro && pro.data?.proUntil
-            ? `Действует до ${formatDate(pro.data.proUntil)}`
-            : "Один выгодный флип окупает подписку. Остальные — чистая прибыль."}
-        </span>
+        <strong className={styles.heroTitle}>{pro.isPro ? t.active : t.heroTitle}</strong>
+        <span className={styles.heroText}>{pro.isPro && pro.data?.proUntil ? t.until(formatDate(pro.data.proUntil)) : t.heroText}</span>
       </section>
 
       <section className="section">
-        <h2 className="section-title">Что входит</h2>
+        <h2 className="section-title">{t.included}</h2>
         <div className="stack desk-grid" style={{ gap: 8 }}>
           {PRO_FEATURES.map((f) => (
-            <div key={f.title} className={styles.feature}>
+            <div key={f.key} className={styles.feature}>
               <span className={styles.featureIcon}>
                 <Icon name={f.icon} size={20} />
               </span>
               <span className={styles.featureBody}>
-                <strong>{f.title}</strong>
-                <span>{f.text}</span>
+                <strong>{t.features[f.key][0]}</strong>
+                <span>{t.features[f.key][1]}</span>
               </span>
             </div>
           ))}
@@ -49,14 +47,14 @@ export default function ProPage() {
 
       <section className="section">
         {pro.pending ? null : !pro.available ? (
-          <LoginCard text="Pro живёт на вашем аккаунте EXBO — работает и на сайте, и в мини-приложении. Войдите, чтобы оформить или взять пробные 3 дня." />
+          <LoginCard text={t.login} />
         ) : pro.isPro ? null : (
           <div className="stack" style={{ gap: 12 }}>
             <div className={`glass ${styles.buy}`}>
               {pro.data?.trialAvailable && (
                 <>
                   <button type="button" className="btn primary" disabled={trial.isPending} onClick={() => trial.mutate()}>
-                    {trial.isPending ? "Включаем…" : "Попробовать 3 дня бесплатно"}
+                    {trial.isPending ? t.trialPending : t.trial}
                   </button>
                   {trial.error && <span className="dim">{trial.error.message}</span>}
                 </>
@@ -70,27 +68,20 @@ export default function ProPage() {
                     className={pro.data.trialAvailable ? "btn" : "btn primary"}
                     onClick={() => setTimeout(() => pro.refetch(), 30_000)}
                   >
-                    Оформить Pro — 199 ₽ / 30 дней
+                    {t.buy}
                   </a>
-                  <span className="dim">
-                    Оплата через Tribute картой или Telegram Stars из Telegram, привязанного к аккаунту. Pro включится сразу после оплаты,
-                    бот пришлёт подтверждение.
-                  </span>
+                  <span className="dim">{t.payHint}</span>
                 </>
               )}
             </div>
-            {!pro.data?.telegram && (
-              <TelegramLinkCard text="Оплата Pro идёт через Tribute в Telegram — привяжите Telegram, чтобы оплата дошла до вашего аккаунта." />
-            )}
+            {!pro.data?.telegram && <TelegramLinkCard text={t.linkTelegram} />}
           </div>
         )}
       </section>
 
       <section className="section">
-        <h2 className="section-title">Бесплатно остаётся</h2>
-        <p className={`dim ${styles.free}`}>
-          Поиск и цены на рынке, лоты, история продаж за месяц, кланы, профили игроков, уведомления о выбросе и один ценовой алерт.
-        </p>
+        <h2 className="section-title">{t.freeTitle}</h2>
+        <p className={`dim ${styles.free}`}>{t.freeText}</p>
       </section>
     </main>
   );

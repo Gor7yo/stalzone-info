@@ -1,6 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useLang } from "@/i18n/client";
+import { pick, type Lang } from "@/i18n/lang";
 import { DATA_VERSION } from "@/lib/dataVersion";
 
 /**
@@ -8,32 +10,28 @@ import { DATA_VERSION } from "@/lib/dataVersion";
  * Грузится лениво один раз и живёт в кеше всю сессию.
  */
 
-const DB = "https://raw.githubusercontent.com/EXBO-Studio/stalcraft-database/main/ru";
+export type Rarity = "RANK_NEWBIE" | "RANK_STALKER" | "RANK_VETERAN" | "RANK_MASTER" | "RANK_LEGEND" | "QUEST_ITEM" | "DEFAULT";
 
-export type Rarity =
-  | "RANK_NEWBIE"
-  | "RANK_STALKER"
-  | "RANK_VETERAN"
-  | "RANK_MASTER"
-  | "RANK_LEGEND"
-  | "QUEST_ITEM"
-  | "DEFAULT";
-
-export const RARITY: Record<string, { label: string; color: string }> = {
-  RANK_NEWBIE: { label: "Отмычка", color: "#7ee081" },
-  RANK_STALKER: { label: "Сталкер", color: "#5aa9ff" },
-  RANK_VETERAN: { label: "Ветеран", color: "#b47cff" },
-  RANK_MASTER: { label: "Мастер", color: "#ff5b79" },
-  RANK_LEGEND: { label: "Легенда", color: "#ffc94a" },
-  QUEST_ITEM: { label: "Квестовый", color: "#48d6c8" },
-  DEFAULT: { label: "Обычный", color: "#a3a8a0" },
+export const RARITY: Record<string, { label: string; labelEn: string; color: string }> = {
+  RANK_NEWBIE: { label: "Отмычка", labelEn: "Newbie", color: "#7ee081" },
+  RANK_STALKER: { label: "Сталкер", labelEn: "Stalker", color: "#5aa9ff" },
+  RANK_VETERAN: { label: "Ветеран", labelEn: "Veteran", color: "#b47cff" },
+  RANK_MASTER: { label: "Мастер", labelEn: "Master", color: "#ff5b79" },
+  RANK_LEGEND: { label: "Легенда", labelEn: "Legend", color: "#ffc94a" },
+  QUEST_ITEM: { label: "Квестовый", labelEn: "Quest", color: "#48d6c8" },
+  DEFAULT: { label: "Обычный", labelEn: "Common", color: "#a3a8a0" },
 };
 
 export const rarityOf = (r: string) => RARITY[r] ?? RARITY.DEFAULT;
 
+export const rarityLabel = (r: string, lang: Lang) => pick(lang, rarityOf(r).label, rarityOf(r).labelEn);
+
 export interface Item {
   id: string;
+  /** название на языке интерфейса (useItems подменяет на английское) */
   name: string;
+  /** русское название - для SEO и подписи-перевода под заголовком */
+  nameRu: string;
   nameEn: string;
   rarity: Rarity;
   category: string;
@@ -47,69 +45,8 @@ export interface ItemIndex {
   byId: Map<string, Item>;
 }
 
-/** Группы для фильтра на рынке (порядок = порядок чипов). */
-export const GROUPS: { id: string; label: string; icon: string }[] = [
-  { id: "artefact", label: "Артефакты", icon: "✺" },
-  { id: "weapon", label: "Оружие", icon: "⌖" },
-  { id: "armor", label: "Броня", icon: "⛉" },
-  { id: "attachment", label: "Обвесы", icon: "⚙" },
-  { id: "weapon_modules", label: "Модули", icon: "⬡" },
-  { id: "bullet", label: "Патроны", icon: "⁝" },
-  { id: "containers", label: "Контейнеры", icon: "▣" },
-  { id: "backpacks", label: "Рюкзаки", icon: "◫" },
-  { id: "supply", label: "Расходники", icon: "✚" },
-  { id: "grenade", label: "Гранаты", icon: "◉" },
-  { id: "misc", label: "Разное", icon: "◇" },
-  { id: "other", label: "Прочее", icon: "···" },
-];
-
-const SUBCATEGORY: Record<string, string> = {
-  "artefact/electrophysical": "Электрофизический артефакт",
-  "artefact/thermal": "Термический артефакт",
-  "artefact/gravity": "Гравитационный артефакт",
-  "artefact/biochemical": "Биохимический артефакт",
-  "artefact/other_arts": "Артефакт",
-  "weapon/assault_rifle": "Штурмовая винтовка",
-  "weapon/submachine_gun": "Пистолет-пулемёт",
-  "weapon/machine_gun": "Пулемёт",
-  "weapon/sniper_rifle": "Снайперская винтовка",
-  "weapon/shotgun_rifle": "Дробовик",
-  "weapon/pistol": "Пистолет",
-  "weapon/heavy": "Тяжёлое оружие",
-  "weapon/melee": "Холодное оружие",
-  "weapon/device": "Устройство",
-  "weapon_modules/weapon_module": "Оружейный модуль",
-  "weapon_modules/weapon_module_core": "Ядро модуля",
-  "weapon_modules/weapon_module_remover": "Демонтаж модуля",
-  "armor/combat": "Боевая броня",
-  "armor/combined": "Комбинированная броня",
-  "armor/scientist": "Научная броня",
-  "armor/clothes": "Одежда",
-  "armor/device": "Устройство",
-  "attachment/barrel": "Дульное устройство",
-  "attachment/collimator_sights": "Прицел",
-  "attachment/mag": "Магазин",
-  "attachment/forend": "Цевьё",
-  "attachment/handgrips": "Рукоять",
-  "attachment/pistol_handle": "Пистолетная рукоять",
-  "attachment/accessory": "Аксессуар",
-  "supply/medicine": "Медицина",
-  "supply/food": "Еда",
-  "supply/drink": "Напиток",
-  bullet: "Патроны",
-  containers: "Контейнер",
-  backpacks: "Рюкзак",
-  grenade: "Граната",
-  misc: "Разное",
-};
-
-export const categoryLabel = (category: string) =>
-  SUBCATEGORY[category] ??
-  GROUPS.find((g) => g.id === category.split("/")[0])?.label ??
-  "Предмет";
-
-export const iconUrl = (item: Pick<Item, "id" | "category">) =>
-  `${DB}/icons/${item.category}/${item.id}.png`;
+// категории и иконка — в catalog.ts (без "use client", нужны и серверу)
+export { categoryLabel, groupLabel, GROUPS, iconUrl } from "./catalog";
 
 // ---------- нормализация и «неправильная раскладка» ----------
 
@@ -126,8 +63,7 @@ export const normalize = (s: string) =>
     .trim();
 
 /** «fhntafrn» → «артефакт»: юзер забыл переключить раскладку */
-const fixLayout = (s: string) =>
-  [...s.toLowerCase()].map((c) => layoutMap.get(c) ?? c).join("");
+const fixLayout = (s: string) => [...s.toLowerCase()].map((c) => layoutMap.get(c) ?? c).join("");
 
 // ---------- загрузка ----------
 
@@ -151,6 +87,7 @@ export function loadItems(): Promise<ItemIndex> {
         return {
           id,
           name,
+          nameRu: name,
           nameEn,
           rarity: colors[c] as Rarity,
           category,
@@ -167,14 +104,32 @@ export function loadItems(): Promise<ItemIndex> {
   return pending;
 }
 
-export const useItems = (enabled = true) =>
-  useQuery({
+/** Тот же индекс с английскими названиями (поиск понимает оба языка, но английский - первым). */
+const englishIndex = new WeakMap<ItemIndex, ItemIndex>();
+function toEnglish(index: ItemIndex): ItemIndex {
+  let en = englishIndex.get(index);
+  if (!en) {
+    const list = index.list.map((i): Item => {
+      const name = i.nameEn || i.nameRu;
+      return { ...i, name, haystack: `${normalize(name)} | ${normalize(i.nameRu)} | ${i.id}` };
+    });
+    en = { list, byId: new Map(list.map((i) => [i.id, i])) };
+    englishIndex.set(index, en);
+  }
+  return en;
+}
+
+export const useItems = (enabled = true) => {
+  const lang = useLang();
+  return useQuery({
     queryKey: ["items-index"],
     queryFn: loadItems,
+    select: lang === "en" ? toEnglish : undefined,
     staleTime: Infinity,
     gcTime: Infinity,
     enabled,
   });
+};
 
 export function useItem(id: string) {
   const { data, ...rest } = useItems();

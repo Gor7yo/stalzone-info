@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useMemo, useRef, useState } from "react";
-import { formatDateTime } from "@/lib/format";
+import { useFormat } from "@/i18n/client";
 import { haptic } from "@/lib/telegram";
 // оформление — как у графика цены: та же карточка, подсказка и курсор
 import styles from "../PriceChart/PriceChart.module.css";
@@ -19,6 +19,7 @@ export interface TrendPoint {
  * изменения, поэтому линия идёт ступеньками, а не сглаживается. Скраб пальцем/мышью.
  */
 export function TrendChart({ points, format, caption }: { points: TrendPoint[]; format: (v: number) => string; caption: string }) {
+  const { formatDateTime } = useFormat();
   const gradientId = useId();
   const boxRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState<number | null>(null);
