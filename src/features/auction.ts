@@ -67,8 +67,9 @@ export function useLots(region: Region, item: string, sort: LotSort, order: Sort
       }),
     initialPageParam: 0,
     getNextPageParam: (last, pages) => {
-      const loaded = pages.length * pageSize;
-      return loaded < last.total ? loaded : undefined;
+      // считаем пришедшие лоты, а не запрошенные: из EXBO приходит не больше 200 за раз
+      const loaded = pages.reduce((n, p) => n + p.lots.length, 0);
+      return last.lots.length && loaded < last.total ? loaded : undefined;
     },
     placeholderData: keepPreviousData,
     refetchInterval: 60_000,

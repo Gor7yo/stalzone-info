@@ -147,11 +147,20 @@ export function ItemView({
   const mixed = qualityItem && (qualities.length !== 1 || (variantItem && filter.variant == null));
 
   const history = useHistory(region, id, period, tradable);
-  // модули: ~4 тыс. лотов из снимка сборщика — по 1000 за запрос (4 запроса вместо 20)
-  const lots = useLots(region, id, sort.sort, sort.order, tradable, variantItem ? 1000 : qualityItem ? 200 : undefined);
-  // артефакт с сортировкой «Дешевле» и так грузит 200 самых дешёвых лотов — лучшая цена
-  // считается из них, отдельный запрос не нужен
-  const bestFromLots = qualityItem && sort.sort === "buyout_price" && sort.order === "asc";
+  // У артефактов и модулей грузим весь рынок (для фильтра качества) один раз «по выкупу» и сортируем
+  // на месте — смена «Дешевле / Скоро конец / Новые» мгновенная. Остальные — сортировка сервером
+  // и догрузка по мере листания. Модули: ~4 тыс. лотов из снимка сборщика, по 1000 за запрос.
+  const localSort = qualityItem;
+  const lots = useLots(
+    region,
+    id,
+    localSort ? "buyout_price" : sort.sort,
+    localSort ? "asc" : sort.order,
+    tradable,
+    variantItem ? 1000 : qualityItem ? 200 : undefined,
+  );
+  // артефакт и модуль и так грузят лоты по возрастанию выкупа — лучшая цена считается из них
+  const bestFromLots = qualityItem;
   const bestQuery = useBestPrice(region, id, tradable && !bestFromLots);
   const lotsBest = useMemo(() => {
     if (!bestFromLots || !lots.data) return undefined;
@@ -175,7 +184,19 @@ export function ItemView({
   // у артефакта подсветка карточки — цвет выбранного качества (из нескольких — самого высокого)
   const pickedQualityList = qualityItem ? qualities.map((q) => QUALITY[q]).filter(Boolean) : [];
   const accent = pickedQualityList[pickedQualityList.length - 1]?.color ?? rarity?.color ?? "var(--text-3)";
-  const allLots = lots.data?.pages.flatMap((p) => p.lots) ?? [];
+  const allLots = useMemo(() => {
+    const list = lots.data?.pages.flatMap((p) => p.lots) ?? [];
+    if (!localSort || (sort.sort === "buyout_price" && sort.order === "asc")) return list;
+    const key: Record<LotSort, (l: Lot) => number> = {
+      buyout_price: (l) => l.buyoutPrice,
+      current_price: (l) => l.currentPrice || l.startPrice,
+      time_created: (l) => new Date(l.startTime).getTime(),
+      time_left: (l) => new Date(l.endTime).getTime(),
+    };
+    const k = key[sort.sort];
+    const dir = sort.order === "desc" ? -1 : 1;
+    return [...list].sort((a, b) => (k(a) - k(b)) * dir);
+  }, [lots.data, localSort, sort.sort, sort.order]);
   const totalLots = lots.data?.pages[0]?.total ?? 0;
   const hasQuality = qualityItem || allLots.some((l) => qualityOf(l.additional) !== null);
 
