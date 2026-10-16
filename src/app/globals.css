@@ -260,6 +260,11 @@ img {
   white-space: nowrap;
 }
 
+/* цвета качества и редкости подобраны под тёмный фон — на светлом плашки с цветом затемняем */
+:root[data-theme="light"] .pill[style*="color"] {
+  filter: brightness(0.7) saturate(1.5);
+}
+
 .dot {
   width: 7px;
   height: 7px;

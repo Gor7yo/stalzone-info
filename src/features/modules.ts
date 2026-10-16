@@ -17,6 +17,8 @@ export type ModuleSlot = "pre" | "suf" | "key";
 export interface ModuleEffect {
   /** «Отдача»; у особых эффектов может быть пустым */
   label: string;
+  /** то же на английском (интерфейс на en) */
+  labelEn: string;
   /** эффект в плюс (зелёный) или в минус (красный) */
   good: boolean;
   /** значение, % — при 0% качества атрибута */
@@ -25,10 +27,12 @@ export interface ModuleEffect {
   max: number;
   /** особый эффект: «Урон увеличивается на {bonus}%…» */
   text?: string;
+  textEn?: string;
 }
 
 export interface ModuleAttrInfo {
   name: string;
+  nameEn: string;
   slot: ModuleSlot;
   effects: ModuleEffect[];
 }
@@ -60,19 +64,26 @@ export function attrPercent(quality: number, statsRandom: number): number {
 
 const valueAt = (e: ModuleEffect, percent: number) => e.min + ((e.max - e.min) * percent) / MAX_PERCENT;
 
-const pct = (n: number, sign = true) => {
+type Lang = "ru" | "en";
+const locale = (lang: Lang) => (lang === "en" ? "en-US" : "ru-RU");
+
+const pct = (n: number, sign = true, lang: Lang = "ru") => {
   const digits = Math.abs(n) < 1 ? 2 : 1;
-  const s = Math.abs(n).toLocaleString("ru-RU", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  const s = Math.abs(n).toLocaleString(locale(lang), { minimumFractionDigits: digits, maximumFractionDigits: digits });
   return sign ? `${n < 0 ? "−" : "+"}${s}` : s;
 };
 
-export const formatPercent = (p: number) => `${p.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
+export const formatPercent = (p: number, lang: Lang = "ru") =>
+  `${p.toLocaleString(locale(lang), { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
+
+/** Подпись эффекта на языке интерфейса. */
+export const effectLabel = (e: ModuleEffect, lang: Lang = "ru") => (lang === "en" ? e.labelEn || e.label : e.label);
 
 /**
  * Значение эффекта: при известном проценте качества — точное («−4,95%»),
  * иначе — диапазон ранга качества («+12,5…+15,1%»; null — по всем рангам).
  */
-export function effectText(e: ModuleEffect, at: { percent: number } | { quality: number | null }): string {
+export function effectText(e: ModuleEffect, at: { percent: number } | { quality: number | null }, lang: Lang = "ru"): string {
   let a: number, b: number;
   if ("percent" in at) {
     a = b = valueAt(e, at.percent);
@@ -82,8 +93,9 @@ export function effectText(e: ModuleEffect, at: { percent: number } | { quality:
     b = valueAt(e, q === null ? QUALITY_PERCENT[6] : (QUALITY_PERCENT[q + 1] ?? MAX_PERCENT));
   }
   const one = Math.abs(a - b) < 1e-9;
-  if (e.text) return e.text.replaceAll("{bonus}", one ? pct(a, false) : `${pct(a, false)}…${pct(b, false)}`);
-  return one ? `${pct(a)}%` : `${pct(a)}…${pct(b)}%`;
+  const text = lang === "en" ? (e.textEn ?? e.text) : e.text;
+  if (text) return text.replaceAll("{bonus}", one ? pct(a, false, lang) : `${pct(a, false, lang)}…${pct(b, false, lang)}`);
+  return one ? `${pct(a, true, lang)}%` : `${pct(a, true, lang)}…${pct(b, true, lang)}%`;
 }
 
 /** Атрибут конкретного модуля из лота: процент — если в лоте есть statsRandom. */
@@ -132,10 +144,14 @@ export function variantOf(additional?: Additional): string {
 }
 
 /** Название характеристики для показа: из справочника или id без служебного хвоста («hip_spread_aff» → «hip spread»). */
-export const variantName = (id: string) => MODULE_ATTRS[id]?.name ?? id.replace(/_(aff|op|pre|suf)$/, "").replace(/_/g, " ");
+export const variantName = (id: string, lang: Lang = "ru") => {
+  const info = MODULE_ATTRS[id];
+  if (info) return lang === "en" ? info.nameEn : info.name;
+  return id.replace(/_(aff|op|pre|suf)$/, "").replace(/_/g, " ");
+};
 
 /** «Снайпер» — в кавычках, как в игре */
-export const variantLabel = (id: string, lang: "ru" | "en" = "ru") => (lang === "en" ? `“${variantName(id)}”` : `«${variantName(id)}»`);
+export const variantLabel = (id: string, lang: Lang = "ru") => (lang === "en" ? `“${variantName(id, "en")}”` : `«${variantName(id)}»`);
 
 /** Характеристики, которые встречаются в лотах и сделках, — самые частые первыми. */
 export function variantsOf(...lists: { additional?: Additional }[][]): string[] {

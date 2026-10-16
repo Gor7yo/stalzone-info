@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import { qualities } from "@/features/auction";
-import { effectText, formatPercent, moduleAttr, variantLabel, variantName, type ModuleAttr } from "@/features/modules";
+import { effectLabel, effectText, formatPercent, moduleAttr, variantLabel, variantName, type ModuleAttr } from "@/features/modules";
 import { useLang, useT } from "@/i18n/client";
 import { haptic } from "@/lib/telegram";
 import { Icon } from "../Icon";
@@ -11,6 +11,7 @@ import styles from "./ModuleStat.module.css";
 
 function Effects({ id, at }: { id: string; at: Parameters<typeof effectText>[1] }) {
   const t = useT().module;
+  const lang = useLang();
   const info = moduleAttr(id);
   if (!info) return <span className={styles.empty}>{t.noData}</span>;
   return (
@@ -18,11 +19,11 @@ function Effects({ id, at }: { id: string; at: Parameters<typeof effectText>[1] 
       {info.effects.map((e, i) => (
         <li key={i} data-good={e.good || undefined}>
           {e.text ? (
-            <b>{effectText(e, at)}</b>
+            <b>{effectText(e, at, lang)}</b>
           ) : (
             <>
-              <span>{e.label}</span>
-              <b className="mono">{effectText(e, at)}</b>
+              <span>{effectLabel(e, lang)}</span>
+              <b className="mono">{effectText(e, at, lang)}</b>
             </>
           )}
         </li>
@@ -31,14 +32,16 @@ function Effects({ id, at }: { id: string; at: Parameters<typeof effectText>[1] 
   );
 }
 
-const nameOf = (a: { id: string; slot: string }) => (a.slot === "key" ? variantLabel(a.id) : variantName(a.id));
+const nameOf = (a: { id: string; slot: string }, lang: "ru" | "en") =>
+  a.slot === "key" ? variantLabel(a.id, lang) : variantName(a.id, lang);
 
 /**
  * Что даёт модуль. С атрибутами лота — все три (приставка, суффикс, ключевая) с точными процентами,
  * как в игре; без них — только ключевая характеристика с диапазоном для ранга качества (null — для любого).
  */
 export function ModuleStatCard({ id, quality, attrs }: { id: string; quality: number | null; attrs?: ModuleAttr[] }) {
-  const QUALITY = qualities(useLang());
+  const lang = useLang();
+  const QUALITY = qualities(lang);
   if (attrs?.length) {
     return (
       <div className={styles.card}>
@@ -47,8 +50,8 @@ export function ModuleStatCard({ id, quality, attrs }: { id: string; quality: nu
           return (
             <div key={a.slot} className={styles.attr}>
               <div className={styles.cardHead} style={color ? { color } : undefined}>
-                <b>{nameOf(a)}</b>
-                {a.percent !== null && <span className="mono">{formatPercent(a.percent)}</span>}
+                <b>{nameOf(a, lang)}</b>
+                {a.percent !== null && <span className="mono">{formatPercent(a.percent, lang)}</span>}
               </div>
               <Effects id={a.id} at={a.percent !== null ? { percent: a.percent } : { quality: a.quality }} />
             </div>
@@ -61,7 +64,7 @@ export function ModuleStatCard({ id, quality, attrs }: { id: string; quality: nu
   return (
     <div className={styles.card}>
       <div className={styles.cardHead}>
-        <b>{variantName(id)}</b>
+        <b>{variantName(id, lang)}</b>
         {q && <span style={{ color: q.color }}>{q.label}</span>}
       </div>
       <Effects id={id} at={{ quality }} />
@@ -143,6 +146,7 @@ export function ModuleStatBadge({
   size?: "sm" | "md";
 }) {
   const t = useT().module;
+  const lang = useLang();
   // атрибуты без названия в справочнике не показываем (английский id из EXBO ничего не скажет)
   const known = attrs?.filter((a) => moduleAttr(a.id));
   const pre = known?.find((a) => a.slot === "pre");
@@ -163,7 +167,7 @@ export function ModuleStatBadge({
         aria-expanded={pop.openId !== null}
         aria-label={`${[pre?.id, suf?.id, key ?? undefined]
           .filter((x): x is string => Boolean(x))
-          .map(variantName)
+          .map((x) => variantName(x, lang))
           .join(" ")} - ${t.whatGives}`}
         onPointerDown={(e) => (pointer.current = e.pointerType)}
         onPointerEnter={(e) => e.pointerType === "mouse" && pop.show(id, e.currentTarget)}
@@ -180,9 +184,9 @@ export function ModuleStatBadge({
           else pop.show(id, e.currentTarget);
         }}
       >
-        {pre && <span className={styles.pre}>{variantName(pre.id)}</span>}
-        {suf && <span className={styles.suf}>{variantName(suf.id)}</span>}
-        {key && variantLabel(key)}
+        {pre && <span className={styles.pre}>{variantName(pre.id, lang)}</span>}
+        {suf && <span className={styles.suf}>{variantName(suf.id, lang)}</span>}
+        {key && variantLabel(key, lang)}
       </button>
       {pop.render(quality, known)}
     </>
@@ -209,6 +213,7 @@ export function ModuleStatPicker({
   onChange: (value: string | null) => void;
 }) {
   const t = useT().module;
+  const lang = useLang();
   const ref = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const pop = useStatPopover(ref);
@@ -236,7 +241,7 @@ export function ModuleStatPicker({
         }}
       >
         <span className={styles.triggerLabel}>{t.stat}</span>
-        <b>{value ? variantName(value) : t.any}</b>
+        <b>{value ? variantName(value, lang) : t.any}</b>
         <span className={styles.chevron}>
           <Icon name="down" size={16} />
         </span>
@@ -259,7 +264,7 @@ export function ModuleStatPicker({
               onPointerLeave={(e) => e.pointerType === "mouse" && pop.hide()}
               onClick={() => pick(v)}
             >
-              <span className="truncate">{variantName(v)}</span>
+              <span className="truncate">{variantName(v, lang)}</span>
               {counts?.[v] ? <span className={`mono ${styles.count}`}>{counts[v]}</span> : null}
             </button>
           ))}
