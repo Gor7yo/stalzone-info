@@ -50,31 +50,32 @@ export default function ProPage() {
           <LoginCard text={t.login} />
         ) : pro.isPro ? null : (
           <div className="stack" style={{ gap: 12 }}>
-            <div className={`glass ${styles.buy}`}>
-              {pro.data?.trialAvailable && (
-                <>
-                  <button type="button" className="btn primary" disabled={trial.isPending} onClick={() => trial.mutate()}>
-                    {trial.isPending ? t.trialPending : t.trial}
-                  </button>
-                  {trial.error && <span className="dim">{trial.error.message}</span>}
-                </>
-              )}
-              {pro.data?.telegram && (
-                <>
-                  <a
-                    href={PRO_BUY_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={pro.data.trialAvailable ? "btn" : "btn primary"}
-                    onClick={() => setTimeout(() => pro.refetch(), 30_000)}
-                  >
-                    {t.buy}
-                  </a>
-                  <span className="dim">{t.payHint}</span>
-                </>
-              )}
-            </div>
-            {!pro.data?.telegram && <TelegramLinkCard text={t.linkTelegram} />}
+            {/* без Telegram — сначала привязка: пробный выдаётся один на Telegram */}
+            {pro.data?.telegram ? (
+              <div className={`glass ${styles.buy}`}>
+                {pro.data.trialAvailable && (
+                  <>
+                    <button type="button" className="btn primary" disabled={trial.isPending} onClick={() => trial.mutate()}>
+                      {trial.isPending ? t.trialPending : t.trial}
+                    </button>
+                    {trial.error && <span className="dim">{trial.error.message}</span>}
+                  </>
+                )}
+                <a
+                  href={PRO_BUY_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={pro.data.trialAvailable ? "btn" : "btn primary"}
+                  onClick={() => setTimeout(() => pro.refetch(), 30_000)}
+                >
+                  {t.buy}
+                </a>
+                <span className="dim">{t.payHint}</span>
+              </div>
+            ) : (
+              <TelegramLinkCard text={pro.data?.trialAvailable ? t.linkTelegramTrial : t.linkTelegram} />
+            )}
+            <p className={`dim ${styles.free}`}>{t.safe}</p>
           </div>
         )}
       </section>
