@@ -84,7 +84,25 @@ function SellPanel({ itemId, region, hasQuality, hasUpgrade, stackable, initialQ
         <span>{t.head}</span>
       </div>
 
-      {hasQuality && <QualityPicker value={quality} onChange={setQuality} />}
+      {(hasQuality || upgradable || stackable) && (
+        <div className={styles.params}>
+          {hasQuality && <QualityPicker value={quality} onChange={setQuality} />}
+          {upgradable && <UpgradeSlider value={upgrade} onChange={setUpgrade} />}
+          {stackable && (
+            <label className={styles.amount}>
+              <span>{t.pcs}</span>
+              <input
+                className="mono"
+                inputMode="numeric"
+                autoComplete="off"
+                value={amountInput}
+                onChange={(e) => setAmountInput(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                aria-label={t.amountAria}
+              />
+            </label>
+          )}
+        </div>
+      )}
 
       {variants.length > 0 && (
         <ModuleStatPicker
@@ -96,24 +114,6 @@ function SellPanel({ itemId, region, hasQuality, hasUpgrade, stackable, initialQ
         />
       )}
 
-      {upgradable && <UpgradeSlider value={upgrade} onChange={setUpgrade} />}
-
-      {stackable && (
-        <div className={styles.params}>
-          <label className={styles.amount}>
-            <span>{t.pcs}</span>
-            <input
-              className="mono"
-              inputMode="numeric"
-              autoComplete="off"
-              value={amountInput}
-              onChange={(e) => setAmountInput(e.target.value.replace(/\D/g, "").slice(0, 6))}
-              aria-label={t.amountAria}
-            />
-          </label>
-        </div>
-      )}
-
       {advice.isError ? (
         <p className={styles.error}>{advice.error.message}</p>
       ) : !a ? (
@@ -122,9 +122,11 @@ function SellPanel({ itemId, region, hasQuality, hasUpgrade, stackable, initialQ
         <NoData a={a} />
       ) : (
         <div style={{ opacity: advice.isPlaceholderData ? 0.5 : 1, transition: "opacity 200ms" }}>
+          {/* «быстрее всех» — во всю ширину, сроки — плитками 2×2 */}
           <ul className={styles.list}>
             {a.quick && (
               <PriceRow
+                wide
                 label={t.quickest}
                 hint={a.ladder.length ? t.quickestHint : t.quickestNoLots}
                 price={a.quick.price}
@@ -153,7 +155,8 @@ function SellPanel({ itemId, region, hasQuality, hasUpgrade, stackable, initialQ
           </form>
           {myPrice && <MyPrice a={a} price={myPrice} />}
 
-          <p className={styles.hint}>
+          <details className={styles.hint}>
+            <summary>{t.howCounted}</summary>
             {t.basis({
               deals: a.deals,
               dealsText: formatNumber(a.deals),
@@ -165,7 +168,7 @@ function SellPanel({ itemId, region, hasQuality, hasUpgrade, stackable, initialQ
               lotsText: formatNumber(a.lotsTotal),
               fee: Math.round(a.fee * 100),
             })}
-          </p>
+          </details>
         </div>
       )}
 
@@ -181,6 +184,7 @@ function SellPanel({ itemId, region, hasQuality, hasUpgrade, stackable, initialQ
 }
 
 function PriceRow({
+  wide,
   label,
   hint,
   price,
@@ -188,6 +192,8 @@ function PriceRow({
   amount,
   fee,
 }: {
+  /** строка во всю ширину; без него — плитка */
+  wide?: boolean;
   label: string;
   hint?: string;
   price: number | null;
@@ -210,12 +216,13 @@ function PriceRow({
       })
       .catch(() => {});
   };
+  const sub = copied ? t.copied : (hint ?? (hours != null ? formatHours(hours, lang) : ""));
   return (
-    <li>
+    <li data-wide={wide || undefined}>
       <button type="button" className={styles.row} onClick={copy} disabled={!price} title={price ? t.copy : undefined}>
         <span className={styles.rowLabel}>
           <b>{label}</b>
-          <span>{copied ? t.copied : (hint ?? (hours != null ? formatHours(hours, lang) : ""))}</span>
+          {sub && <span>{sub}</span>}
         </span>
         {price ? (
           <span className={styles.rowPrice}>

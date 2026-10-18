@@ -294,6 +294,7 @@ export const ru = {
         evening: { name: "Вечер", when: "вечером" },
       },
       busy: { busy: "Покупателей много", normal: "Покупателей средне", quiet: "Покупателей мало" },
+      details: "По времени суток",
       byDay: "По дням недели",
       days: ["пн", "вт", "ср", "чт", "пт", "сб", "вс"],
       fewWeeks: (w: number) => `Дни недели появятся, когда накопится 8 недель сделок (сейчас ${w}).`,
@@ -317,6 +318,7 @@ export const ru = {
     quickestNoLots: "лотов нет - по медиане",
     myPlaceholder: "Своя цена за штуку, например 4,5кк",
     myAria: "Своя цена за штуку",
+    howCounted: "Как считаем",
     basis: (b: {
       deals: number;
       dealsText: string;

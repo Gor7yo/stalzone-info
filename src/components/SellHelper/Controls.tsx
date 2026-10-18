@@ -73,15 +73,12 @@ export function QualityPicker({ value, onChange }: { value: number; onChange: (q
   );
 }
 
-/** Заточка +0…+15 — ползунок с подсвеченной заполненной частью и делениями. */
+/** Заточка +0…+15 — одна строка: подпись, ползунок с подсвеченной заполненной частью, значение. */
 export function UpgradeSlider({ value, onChange }: { value: number; onChange: (u: number) => void }) {
   const t = useT().sell;
   return (
     <label className={styles.upgrade}>
-      <span className={styles.upgradeHead}>
-        <span className={styles.label}>{t.upgradeLabel}</span>
-        <strong className="mono">+{value}</strong>
-      </span>
+      <span className={styles.label}>{t.upgradeLabel}</span>
       <span className={styles.track} style={{ "--f": value / MAX_UPGRADE } as React.CSSProperties}>
         <input
           type="range"
@@ -95,14 +92,8 @@ export function UpgradeSlider({ value, onChange }: { value: number; onChange: (u
             onChange(Number(e.target.value));
           }}
         />
-        <span className={styles.ticks} aria-hidden>
-          {[0, 5, 10, 15].map((n) => (
-            <span key={n} style={{ left: `${(n / MAX_UPGRADE) * 100}%` }} data-on={value >= n || undefined}>
-              {n}
-            </span>
-          ))}
-        </span>
       </span>
+      <strong className="mono">+{value}</strong>
     </label>
   );
 }

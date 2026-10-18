@@ -2,25 +2,25 @@
 
 .timing {
   display: grid;
-  gap: 12px;
-  margin-top: 16px;
-  padding-top: 14px;
+  gap: 8px;
+  margin-top: 4px;
+  padding-top: 12px;
   border-top: 1px solid var(--line);
   transition: opacity 200ms;
 }
 
 .title {
   margin: 0;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
 }
 
 /* главный вывод одной фразой */
 .verdict {
   margin: 0;
-  padding: 12px 14px;
+  padding: 10px 12px;
   border-radius: 14px;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   line-height: 1.45;
   background: color-mix(in srgb, var(--green) 10%, var(--surface));
@@ -30,6 +30,19 @@
 .verdict[data-flat] {
   background: var(--surface);
   border-color: var(--line);
+}
+
+/* «По времени суток» — части суток и дни недели, по нажатию */
+.more summary {
+  width: fit-content;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+.more > * + * {
+  margin-top: 12px;
 }
 
 /* четыре части суток: 2×2 на телефоне, в ряд на широком */

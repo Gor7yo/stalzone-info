@@ -88,28 +88,29 @@
 /* ---------- заточка ---------- */
 
 .upgrade {
-  display: grid;
+  flex: 1 1 200px;
+  display: flex;
+  align-items: center;
   gap: 10px;
-  padding: 12px 14px 22px;
+  height: 42px;
+  padding: 0 12px 0 14px;
   border-radius: 14px;
   background: var(--surface);
   border: 1px solid var(--line);
 }
 
-.upgradeHead {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-}
-
-.upgradeHead strong {
-  font-size: 20px;
+.upgrade strong {
+  min-width: 34px;
+  text-align: right;
+  font-size: 16px;
   color: var(--acc);
   text-shadow: 0 0 14px rgb(var(--acc-rgb) / 0.5);
 }
 
 .track {
   position: relative;
+  flex: 1;
+  min-width: 0;
   height: 22px;
 }
 
@@ -197,25 +198,4 @@
   box-shadow:
     0 0 0 6px rgb(var(--acc-rgb) / 0.3),
     0 0 18px rgb(var(--acc-rgb) / 0.7);
-}
-
-.ticks {
-  position: absolute;
-  left: 11px;
-  right: 11px;
-  top: 100%;
-  pointer-events: none;
-}
-
-.ticks span {
-  position: absolute;
-  top: 4px;
-  transform: translateX(-50%);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--text-3);
-}
-
-.ticks span[data-on] {
-  color: var(--text-2);
 }

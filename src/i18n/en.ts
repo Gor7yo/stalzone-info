@@ -291,6 +291,7 @@ export const en: Dict = {
         evening: { name: "Evening", when: "in the evening" },
       },
       busy: { busy: "Many buyers", normal: "Some buyers", quiet: "Few buyers" },
+      details: "By time of day",
       byDay: "By day of week",
       days: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
       fewWeeks: (w: number) => `Days of the week will appear once there are 8 weeks of deals (now ${w}).`,
@@ -314,6 +315,7 @@ export const en: Dict = {
     quickestNoLots: "no lots - by median",
     myPlaceholder: "Your price per unit, e.g. 4.5kk",
     myAria: "Your price per unit",
+    howCounted: "How it's calculated",
     basis: (b) =>
       `Based on ${b.dealsText} ${pluralEn(b.deals, "deal", "deals")} over ${b.days} days (median ${b.median}` +
       (b.tier !== null ? `, whole upgrade tier ${b.tier} - too few deals at +${b.upgrade}` : "") +
