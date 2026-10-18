@@ -8,6 +8,8 @@ import type { Region } from "@/lib/store";
 
 export interface RadarRow {
   itemId: string;
+  /** русское название с сервера — пока не загружен индекс предметов */
+  name?: string;
   /** -1 — без качества */
   quality: number;
   /** ступень заточки — индекс в TIERS */

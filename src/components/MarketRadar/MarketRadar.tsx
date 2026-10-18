@@ -107,7 +107,7 @@ export function MarketRadar({ region, fill = false }: { region: Region; fill?: b
               >
                 <ItemIcon item={item} size={36} />
                 <span className={styles.body}>
-                  <strong className="truncate">{item?.name ?? r.itemId}</strong>
+                  <strong className="truncate">{item?.name ?? r.name ?? r.itemId}</strong>
                   <span className={styles.tags}>
                     {q && (
                       <span className={styles.q} style={{ "--q": q.color } as React.CSSProperties}>

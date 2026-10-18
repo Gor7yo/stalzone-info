@@ -23,7 +23,10 @@ export function ItemIcon({ item, size = 48 }: { item?: Item; size?: number }) {
           onError={() => setFailed(true)}
         />
       ) : (
-        <span className={styles.itemIconFallback}>{item?.name.replace(/[«»"]/g, "").slice(0, 1) ?? "?"}</span>
+        // пока индекс не загружен — пустая заглушка: «?» поисковики читали как текст страницы
+        <span className={styles.itemIconFallback} aria-hidden>
+          {item?.name.replace(/[«»"]/g, "").slice(0, 1)}
+        </span>
       )}
     </span>
   );
