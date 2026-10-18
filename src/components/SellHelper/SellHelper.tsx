@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MAX_UPGRADE, qualities, TIERS } from "@/features/auction";
+import { TIERS } from "@/features/auction";
 import { usePro } from "@/features/pro";
 import { formatHours, hoursToSell, targetLabel, unitsAhead, useSellAdvice, type SellAdvice } from "@/features/sell";
 import { useFormat, useLang, useT } from "@/i18n/client";
@@ -10,6 +10,7 @@ import type { Region } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
 import { Icon } from "../Icon";
 import { ModuleStatPicker } from "../ModuleStat/ModuleStat";
+import { QualityPicker, UpgradeSlider } from "./Controls";
 import { SaleTiming } from "./SaleTiming";
 import { ProTeaser } from "../Pro/Pro";
 import { LoginCard } from "../Account/AccountGate";
@@ -83,25 +84,7 @@ function SellPanel({ itemId, region, hasQuality, hasUpgrade, stackable, initialQ
         <span>{t.head}</span>
       </div>
 
-      {hasQuality && (
-        <div className="chips" role="group" aria-label={t.qualityAria}>
-          {qualities(lang).map((q, i) => (
-            <button
-              key={q.color}
-              type="button"
-              className="chip"
-              aria-pressed={quality === i}
-              style={quality === i ? undefined : { color: q.color }}
-              onClick={() => {
-                haptic.tap();
-                setQuality(i);
-              }}
-            >
-              {q.label}
-            </button>
-          ))}
-        </div>
-      )}
+      {hasQuality && <QualityPicker value={quality} onChange={setQuality} />}
 
       {variants.length > 0 && (
         <ModuleStatPicker
@@ -113,37 +96,21 @@ function SellPanel({ itemId, region, hasQuality, hasUpgrade, stackable, initialQ
         />
       )}
 
-      {(upgradable || stackable) && (
+      {upgradable && <UpgradeSlider value={upgrade} onChange={setUpgrade} />}
+
+      {stackable && (
         <div className={styles.params}>
-          {upgradable && (
-            <div className={styles.stepper} aria-label={t.upgradeAria}>
-              <button type="button" aria-label={t.less} disabled={upgrade <= 0} onClick={() => setUpgrade((u) => Math.max(0, u - 1))}>
-                −
-              </button>
-              <span className="mono">+{upgrade}</span>
-              <button
-                type="button"
-                aria-label={t.more}
-                disabled={upgrade >= MAX_UPGRADE}
-                onClick={() => setUpgrade((u) => Math.min(MAX_UPGRADE, u + 1))}
-              >
-                +
-              </button>
-            </div>
-          )}
-          {stackable && (
-            <label className={styles.amount}>
-              <span>{t.pcs}</span>
-              <input
-                className="mono"
-                inputMode="numeric"
-                autoComplete="off"
-                value={amountInput}
-                onChange={(e) => setAmountInput(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                aria-label={t.amountAria}
-              />
-            </label>
-          )}
+          <label className={styles.amount}>
+            <span>{t.pcs}</span>
+            <input
+              className="mono"
+              inputMode="numeric"
+              autoComplete="off"
+              value={amountInput}
+              onChange={(e) => setAmountInput(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              aria-label={t.amountAria}
+            />
+          </label>
         </div>
       )}
 

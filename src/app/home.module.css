@@ -280,19 +280,64 @@
 
 /* ---------- watchlist ---------- */
 
+/* избранные предметы — сетка карточек с 3D-наклоном (Tilt) */
 .watchlist {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
   gap: 10px;
-  padding-bottom: 4px;
 }
 
 .watch {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex: none;
-  width: 148px;
-  padding: 12px;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 10px;
+  padding: 16px 10px 14px;
   border-radius: 18px;
+  text-align: center;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+/* мягкое свечение цвета сайта снизу — «объём» карточки */
+.watch::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  bottom: -50px;
+  width: 120px;
+  height: 90px;
+  border-radius: 50%;
+  background: var(--acc);
+  opacity: 0.08;
+  filter: blur(28px);
+  transform: translateX(-50%);
+  transition:
+    opacity 300ms,
+    transform 500ms var(--ease);
+}
+
+.watch:hover::before,
+.watch[data-active]::before {
+  opacity: 0.2;
+  transform: translateX(-50%) scale(1.25);
+}
+
+.watchIcon {
+  display: grid;
+  place-items: center;
+  filter: drop-shadow(0 10px 14px rgb(0 0 0 / 0.45));
+}
+
+.watchName {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
 }
 
 .footer {

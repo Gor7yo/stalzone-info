@@ -29,14 +29,13 @@
   margin-top: 1px;
 }
 
-/* заточка и количество */
+/* количество (заточка — ползунок в Controls) */
 .params {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.stepper,
 .amount {
   display: flex;
   align-items: center;
@@ -44,24 +43,6 @@
   border-radius: 12px;
   background: var(--surface);
   border: 1px solid var(--line);
-}
-
-.stepper button {
-  width: 40px;
-  height: 100%;
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text-2);
-}
-
-.stepper button:disabled {
-  opacity: 0.3;
-}
-
-.stepper span {
-  min-width: 36px;
-  text-align: center;
-  font-weight: 700;
 }
 
 .amount {
@@ -89,25 +70,64 @@
   margin: 0;
 }
 
+/* варианты цены — каждый со своим мягким цветом: быстро → дольше */
+.list li:nth-child(1) {
+  --tint: #c8ff3d;
+}
+.list li:nth-child(2) {
+  --tint: #3ee0d0;
+}
+.list li:nth-child(3) {
+  --tint: #9b8cff;
+}
+.list li:nth-child(4) {
+  --tint: #ffb547;
+}
+.list li:nth-child(n + 5) {
+  --tint: #ff7ab6;
+}
+
 .row {
+  position: relative;
   display: flex;
   width: 100%;
   align-items: center;
   gap: 10px;
-  padding: 10px 12px;
+  padding: 10px 12px 10px 16px;
   border-radius: 14px;
-  background: var(--surface);
-  border: 1px solid var(--line);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--tint) 13%, transparent), transparent 70%), var(--surface);
+  border: 1px solid color-mix(in srgb, var(--tint) 22%, var(--line));
   text-align: left;
-  transition: border-color 200ms;
+  overflow: hidden;
+  transition:
+    border-color 200ms,
+    transform 150ms var(--ease);
+}
+
+/* цветная метка слева */
+.row::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--tint);
+  box-shadow: 0 0 10px var(--tint);
+}
+
+.row:not(:disabled):hover {
+  border-color: color-mix(in srgb, var(--tint) 45%, transparent);
 }
 
 .row:not(:disabled):active {
-  border-color: rgb(var(--acc-rgb) / 0.5);
+  transform: scale(0.99);
 }
 
-.list li:first-child .row {
-  border-color: rgb(var(--acc-rgb) / 0.3);
+.row:disabled {
+  --tint: var(--text-3);
+  opacity: 0.7;
 }
 
 .rowLabel {

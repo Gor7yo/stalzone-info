@@ -1,4 +1,4 @@
-/* «Когда выгоднее продавать» — внутри помощника продажи. */
+/* «Когда выгоднее продавать» — внутри помощника продажи: вывод, части суток, дни недели. */
 
 .timing {
   display: grid;
@@ -15,119 +15,155 @@
   font-weight: 700;
 }
 
-.summary {
-  display: grid;
-  gap: 6px;
+/* главный вывод одной фразой */
+.verdict {
   margin: 0;
-  padding: 0;
-  list-style: none;
-  font-size: 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  font-size: 15px;
   font-weight: 600;
   line-height: 1.45;
+  background: color-mix(in srgb, var(--green) 10%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--green) 30%, transparent);
 }
 
-.summary li {
-  padding: 8px 10px;
-  border-radius: 12px;
+.verdict[data-flat] {
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+/* четыре части суток: 2×2 на телефоне, в ряд на широком */
+.periods {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+@media (min-width: 640px) {
+  .periods {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.period {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 14px;
   background: var(--surface);
   border: 1px solid var(--line);
+  transition: border-color 200ms;
 }
 
-.summary li[data-tone="up"] {
-  border-color: color-mix(in srgb, var(--green) 35%, transparent);
+.period[data-best] {
+  border-color: color-mix(in srgb, var(--green) 55%, transparent);
+  box-shadow: 0 10px 26px -16px var(--green);
 }
 
-.summary li[data-tone="down"] {
-  border-color: color-mix(in srgb, var(--red) 35%, transparent);
+.periodHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
 }
 
-.chart {
-  margin: 0;
+.periodHead span:last-child {
+  display: grid;
+  line-height: 1.15;
+}
+
+.periodHead b {
+  font-size: 14px;
+}
+
+.periodHead small {
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+.delta {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-2);
+}
+
+.period[data-tone="up"] .delta {
+  color: var(--green);
+}
+
+.period[data-tone="down"] .delta {
+  color: var(--red);
+}
+
+/* «сколько покупателей» — полоска */
+.meter {
+  height: 5px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.07);
+  overflow: hidden;
+}
+
+.meter span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--cyan, #3ee0d0);
+}
+
+.meter span[data-level="quiet"] {
+  background: var(--text-3);
+}
+
+.busy {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+/* дни недели — плашки в ряд */
+.days {
   display: grid;
   gap: 6px;
 }
 
-.chart figcaption {
+.daysLabel {
   font-size: 12px;
   font-weight: 700;
   color: var(--text-2);
 }
 
-.chart[data-dim] .bars {
-  opacity: 0.6;
-}
-
-.bars {
-  position: relative;
+.dayRow {
   display: grid;
-  grid-template-columns: repeat(var(--n), 1fr);
-  gap: 3px;
-  height: 96px;
-  padding-bottom: 18px;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
 }
 
-/* нулевая линия — «обычная цена для этого дня» */
-.bars::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: calc((100% - 18px) / 2);
-  height: 1px;
-  background: var(--line-2, var(--line));
+.day {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 8px 2px;
+  border-radius: 10px;
+  font-size: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
 }
 
-.slot {
-  position: relative;
-  border-radius: 4px;
+.day span {
+  font-size: 11px;
+  color: var(--text-2);
 }
 
-.slot[data-current] {
-  background: rgb(var(--acc-rgb) / 0.1);
-  outline: 1px solid rgb(var(--acc-rgb) / 0.5);
+.day[data-tone="up"] span {
+  color: var(--green);
 }
 
-.bar {
-  position: absolute;
-  left: 15%;
-  right: 15%;
-  border-radius: 3px;
-  opacity: var(--alpha);
+.day[data-tone="down"] span {
+  color: var(--red);
 }
 
-/* высота считается от области графика без подписей */
-.slot > .bar {
-  max-height: 50%;
-}
-
-.bar[data-tone="up"] {
-  background: var(--green);
-}
-
-.bar[data-tone="down"] {
-  background: var(--red);
-}
-
-.none {
-  position: absolute;
-  left: 30%;
-  right: 30%;
-  top: calc(50% - 2px);
-  height: 4px;
-  border-radius: 2px;
-  background: var(--text-3);
-  opacity: 0.4;
-}
-
-.tick {
-  position: absolute;
-  left: 50%;
-  bottom: -18px;
-  transform: translateX(-50%);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--text-3);
-  white-space: nowrap;
+.day[data-best] {
+  border-color: color-mix(in srgb, var(--green) 55%, transparent);
 }
 
 .note {

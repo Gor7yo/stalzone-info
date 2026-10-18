@@ -13,12 +13,11 @@ import { ItemIcon } from "@/components/ui/ItemIcon";
 import { RegionSwitch } from "@/components/ui/RegionSwitch";
 import { SearchField } from "@/components/ui/SearchField";
 import { useIsAdmin } from "@/features/admin";
-import { useBestPrice } from "@/features/auction";
 import { allianceOf } from "@/features/alliances";
 import { CRAFT_ENABLED, LOOT_ENABLED } from "@/lib/flags";
 import { emissionState, useEmission } from "@/features/emission";
 import { searchItems, useItems, type Item } from "@/features/items";
-import { useFormat, useT } from "@/i18n/client";
+import { useT } from "@/i18n/client";
 import type { Dict } from "@/i18n/ru";
 import { useApp, type Region } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
@@ -134,16 +133,14 @@ export default function HomePage() {
 
           {favItems.length > 0 && (
             <section className="section">
-              <h2 className="section-title">
-                {t.home.myMarket} <small>{t.home.myMarketHint}</small>
-              </h2>
-              <Watchlist ids={favItems.slice(0, 8)} region={region} />
+              <h2 className="section-title">{t.home.favorites}</h2>
+              <Watchlist ids={favItems.slice(0, 8)} />
             </section>
           )}
 
           {(favCharacters.length > 0 || favClans.length > 0) && (
             <section className="section">
-              <h2 className="section-title">{t.home.favorites}</h2>
+              <h2 className="section-title">{t.home.favPeople}</h2>
               <div className="chips">
                 {favCharacters.map((c) => (
                   <Link key={`c-${c.region}-${c.name}`} href={`/character/${c.region}/${encodeURIComponent(c.name)}`} className="chip">
@@ -225,42 +222,26 @@ function UniversalSearch({ region, wantIndex }: { region: Region; wantIndex: boo
   );
 }
 
-function Watchlist({ ids, region }: { ids: string[]; region: Region }) {
+/** Избранные предметы — карточки с 3D-наклоном: иконка и название, цена — на странице предмета. */
+function Watchlist({ ids }: { ids: string[] }) {
   const { data: index } = useItems();
 
   return (
-    <div className={`chips ${styles.watchlist}`}>
+    <div className={`${styles.watchlist} stagger`}>
       {ids.map((id) => (
-        <WatchCard key={id} item={index?.byId.get(id)} id={id} region={region} />
+        <WatchCard key={id} item={index?.byId.get(id)} id={id} />
       ))}
     </div>
   );
 }
 
-function WatchCard({ item, id, region }: { item?: Item; id: string; region: Region }) {
-  const t = useT();
-  const { formatPrice } = useFormat();
-  const { data, isLoading } = useBestPrice(region, id);
-
+function WatchCard({ item, id }: { item?: Item; id: string }) {
   return (
-    <Link href={`/auction/${id}`} className={`glass ${styles.watch}`} onClick={() => haptic.tap()}>
-      <ItemIcon item={item} size={40} />
-      <span className="truncate" style={{ fontSize: 13, fontWeight: 700 }}>
-        {item?.name ?? id}
+    <Tilt as={Link} href={`/auction/${id}`} max={14} className={`glass ${styles.watch}`} onClick={() => haptic.tap()}>
+      <span className={`${styles.watchIcon} depth`}>
+        <ItemIcon item={item} size={48} />
       </span>
-      {isLoading ? (
-        <span className="skeleton" style={{ height: 16, width: "70%" }} />
-      ) : (
-        <strong
-          className="mono"
-          style={{
-            fontSize: 15,
-            color: data?.price ? "var(--acc)" : "var(--text-3)",
-          }}
-        >
-          {data?.price ? formatPrice(data.price) : t.home.noLots}
-        </strong>
-      )}
-    </Link>
+      <span className={styles.watchName}>{item?.name ?? id}</span>
+    </Tilt>
   );
 }

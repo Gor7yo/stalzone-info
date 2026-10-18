@@ -58,7 +58,7 @@ export const SECTIONS_EN: DocSection[] = [
           </li>
         </ul>
         <p className={styles.tip}>
-          ⭐ Tap the star - the item&apos;s best price appears on the home page in «My market». The home page also has the{" "}
+          ⭐ Tap the star - the item appears on the home page in «Favorites», one tap away. The home page also has the{" "}
           <strong>Market radar</strong>: what got pricier, cheaper and where most deals happened in the last 24 hours.
         </p>
       </>

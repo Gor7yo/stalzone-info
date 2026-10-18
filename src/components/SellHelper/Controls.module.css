@@ -1,0 +1,221 @@
+/* Выбор качества и ползунок заточки помощника продажи. */
+
+.label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+/* ---------- качество ---------- */
+
+.quality {
+  position: relative;
+  justify-self: start;
+}
+
+.qualityBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 14px;
+  border-radius: 14px;
+  font-size: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  transition: border-color 200ms;
+}
+
+.qualityBtn:hover,
+.qualityBtn[aria-expanded="true"] {
+  border-color: var(--line-2);
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--q);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--q) 70%, transparent);
+}
+
+.caret {
+  color: var(--text-3);
+  transition: transform 200ms var(--ease);
+}
+
+.caret[data-open] {
+  transform: rotate(180deg);
+}
+
+.menu {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 100%;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  border-radius: 16px;
+  background: rgb(var(--panel-rgb) / 0.96);
+  border: 1px solid var(--line-2);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 18px 40px -16px rgb(0 0 0 / 0.6);
+  animation: rise 180ms var(--ease);
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.option:hover,
+.option[aria-selected="true"] {
+  background: var(--surface);
+}
+
+/* ---------- заточка ---------- */
+
+.upgrade {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px 22px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.upgradeHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.upgradeHead strong {
+  font-size: 20px;
+  color: var(--acc);
+  text-shadow: 0 0 14px rgb(var(--acc-rgb) / 0.5);
+}
+
+.track {
+  position: relative;
+  height: 22px;
+}
+
+/* дорожка: заполненная часть — градиент акцента со свечением */
+.track::before,
+.track::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  height: 6px;
+  border-radius: 999px;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.track::before {
+  right: 0;
+  background: rgb(255 255 255 / 0.08);
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.4);
+}
+
+/* центр ползунка ходит от 11px до (ширина − 11px) — заливка до него же */
+.track::after {
+  width: calc(11px + (100% - 22px) * var(--f));
+  background: linear-gradient(90deg, rgb(var(--acc-rgb) / 0.35), var(--acc));
+  box-shadow: 0 0 12px rgb(var(--acc-rgb) / 0.55);
+}
+
+.track input {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  margin: 0;
+  background: transparent;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.track input::-webkit-slider-runnable-track {
+  height: 22px;
+  background: transparent;
+}
+
+.track input::-moz-range-track {
+  height: 22px;
+  background: transparent;
+}
+
+.track input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fff, var(--acc) 55%);
+  border: 2px solid rgb(0 0 0 / 0.35);
+  box-shadow:
+    0 0 0 4px rgb(var(--acc-rgb) / 0.18),
+    0 0 18px rgb(var(--acc-rgb) / 0.7);
+  transition: transform 150ms var(--ease);
+}
+
+.track input::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fff, var(--acc) 55%);
+  border: 2px solid rgb(0 0 0 / 0.35);
+  box-shadow:
+    0 0 0 4px rgb(var(--acc-rgb) / 0.18),
+    0 0 18px rgb(var(--acc-rgb) / 0.7);
+}
+
+.track input:active::-webkit-slider-thumb {
+  transform: scale(1.15);
+}
+
+.track input:focus-visible {
+  outline: none;
+}
+
+.track input:focus-visible::-webkit-slider-thumb {
+  box-shadow:
+    0 0 0 6px rgb(var(--acc-rgb) / 0.3),
+    0 0 18px rgb(var(--acc-rgb) / 0.7);
+}
+
+.ticks {
+  position: absolute;
+  left: 11px;
+  right: 11px;
+  top: 100%;
+  pointer-events: none;
+}
+
+.ticks span {
+  position: absolute;
+  top: 4px;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-3);
+}
+
+.ticks span[data-on] {
+  color: var(--text-2);
+}
