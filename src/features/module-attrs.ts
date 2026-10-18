@@ -265,4 +265,127 @@ export const MODULE_ATTRS: Record<string, ModuleAttrInfo> = {
     slot: "key",
     effects: [{ label: "Скорость", labelEn: "Speed", good: true, min: 0.58, max: 2.326 }],
   },
+
+  // ---- 8 ключевых, у которых в лотах EXBO свои id (не как у Hub: thermos → acceleration и т.д.) ----
+  // Соответствие id ↔ название и тексты эффектов — по скриншотам из игры (18.10.2026), min/max — Hub,
+  // сверено с игрой по формуле min + (max − min) · процент / 190 (Термос 7,18% → 1,64%, Губитель 30,7% → 5,4% и 16,19%…).
+  // Строк «останавливающая сила», «разброс», «нарастание отдачи» у Hub нет: min = значение / (1 + 3·процент/190)
+  // по одному скриншоту (у всех атрибутов Hub max = 4·min).
+  acceleration: {
+    name: "Термос",
+    nameEn: "Thermos",
+    slot: "key",
+    effects: [
+      {
+        label: "",
+        labelEn: "",
+        good: true,
+        min: 1.472,
+        max: 5.889,
+        text: "Первые 5 патронов в магазине получают бонус {bonus}% к урону",
+        textEn: "The first 5 rounds in the magazine get a {bonus}% damage bonus",
+      },
+    ],
+  },
+  finish: {
+    name: "Завершитель",
+    nameEn: "Finisher",
+    slot: "key",
+    effects: [
+      {
+        label: "",
+        labelEn: "",
+        good: true,
+        min: 1.472,
+        max: 5.889,
+        text: "Последние 5 патронов в магазине получают бонус {bonus}% к урону",
+        textEn: "The last 5 rounds in the magazine get a {bonus}% damage bonus",
+      },
+    ],
+  },
+  inside: {
+    name: "Компрессор",
+    nameEn: "Compressor",
+    slot: "key",
+    effects: [
+      { label: "Урон", labelEn: "Damage", good: true, min: 1.227, max: 4.908 },
+      { label: "Урон вдали", labelEn: "Damage at range", good: false, min: -1.227, max: -4.908 },
+    ],
+  },
+  inside2: {
+    name: "Декомпрессор",
+    nameEn: "Decompressor",
+    slot: "key",
+    effects: [
+      { label: "Урон", labelEn: "Damage", good: false, min: -1.227, max: -4.908 },
+      { label: "Урон вдали", labelEn: "Damage at range", good: true, min: 1.227, max: 4.908 },
+      { label: "Нарастание отдачи", labelEn: "Recoil buildup", good: true, min: -2.725, max: -10.9 },
+    ],
+  },
+  equalizer_op: {
+    name: "Палач",
+    nameEn: "Headsman",
+    slot: "key",
+    effects: [{ label: "Модификатор урона по конечностям", labelEn: "Limb damage modifier", good: true, min: 6.18, max: 24.721 }],
+  },
+  surge: {
+    name: "Пробойник",
+    nameEn: "Breacher",
+    slot: "key",
+    effects: [
+      {
+        label: "",
+        labelEn: "",
+        good: true,
+        min: 3.49,
+        max: 13.96,
+        text: "Скорость передвижения увеличивается на {bonus}% на 15 секунд после убийства игрока",
+        textEn: "Movement speed increases by {bonus}% for 15 seconds after killing a player",
+      },
+    ],
+  },
+  berserk: {
+    name: "Агрессор",
+    nameEn: "Aggressor",
+    slot: "key",
+    effects: [
+      { label: "Модификатор останавливающей силы", labelEn: "Stopping power modifier", good: true, min: 6, max: 24 },
+      {
+        label: "",
+        labelEn: "",
+        good: true,
+        min: 3.635,
+        max: 14.542,
+        text: "Регенерация здоровья увеличивается на {bonus}% на 15 секунд после убийства игрока",
+        textEn: "Health regeneration increases by {bonus}% for 15 seconds after killing a player",
+      },
+    ],
+  },
+  concentration: {
+    name: "Губитель",
+    nameEn: "Blighter",
+    slot: "key",
+    effects: [
+      { label: "Разброс", labelEn: "Spread", good: true, min: -2.047, max: -8.19 },
+      { label: "Разброс от бедра", labelEn: "Hip-fire spread", good: true, min: -2.047, max: -8.19 },
+      {
+        label: "",
+        labelEn: "",
+        good: true,
+        min: 3.635,
+        max: 14.542,
+        text: "Время перезарядки уменьшается на {bonus}% на 15 секунд после убийства игрока",
+        textEn: "Reload time decreases by {bonus}% for 15 seconds after killing a player",
+      },
+      {
+        label: "",
+        labelEn: "",
+        good: true,
+        min: 10.906,
+        max: 43.625,
+        text: "Отдача уменьшается на {bonus}% на 15 секунд после убийства игрока",
+        textEn: "Recoil decreases by {bonus}% for 15 seconds after killing a player",
+      },
+    ],
+  },
 };
