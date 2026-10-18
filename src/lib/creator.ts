@@ -10,8 +10,8 @@ export const CREATOR = {
 export const creatorHref = `/character/${CREATOR.region}/${CREATOR.character}`;
 
 /** Связь с автором: вопросы, жалобы, запросы на удаление данных (правила и политика конфиденциальности). */
-export const CONTACT_URL = "https://t.me/stalzoneinfo_bot";
-export const CONTACT_LABEL = "Telegram @stalzoneinfo_bot";
+export const CONTACT_URL = "https://t.me/stalzoneinfo_bot?start=support";
+export const CONTACT_LABEL = "@stalzoneinfo_bot → Поддержка";
 
 /** Донаты на развитие проекта (DonationAlerts). */
 export const DONATE_URL = "https://dalink.to/gor2210";
