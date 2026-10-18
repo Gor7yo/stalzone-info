@@ -88,6 +88,8 @@
 /* «Пригласи друга» */
 .referral {
   display: grid;
+  /* minmax(0, …) — иначе длинная ссылка (nowrap) распирает колонку шире экрана на телефоне */
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
   padding: 16px;
   font-size: 14px;

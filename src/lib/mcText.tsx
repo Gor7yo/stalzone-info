@@ -44,7 +44,16 @@ export function McText({ text }: { text: string }) {
     else if (code === "m") style = { ...style, textDecoration: "line-through" };
     else if (code === "r") style = {};
 
-    if (rest) nodes.push(Object.keys(style).length ? <span key={i} style={style}>{rest}</span> : rest);
+    if (rest)
+      nodes.push(
+        Object.keys(style).length ? (
+          <span key={i} style={style}>
+            {rest}
+          </span>
+        ) : (
+          rest
+        ),
+      );
   });
 
   return <>{nodes}</>;

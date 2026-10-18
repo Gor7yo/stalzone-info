@@ -6,6 +6,10 @@
   transition: opacity 200ms;
 }
 
+.recap {
+  justify-self: start;
+}
+
 .window {
   margin: 0;
   font-size: 13px;

@@ -1,4 +1,4 @@
-import type { Character, Progress } from "@/features/character";
+import type { Character, MonthRecap, PlayerRating, Progress } from "@/features/character";
 
 /**
  * Профиль игрока, прогресс и клан на сервере — для картинок-превью и заголовков страниц.
@@ -23,6 +23,11 @@ export const serverCharacter = (region: string, username: string) => get<Charact
 
 export const serverProgress = (region: string, username: string) =>
   get<Progress>("/api/character/progress", { region, username, period: "week" });
+
+export const serverRating = (region: string, username: string) => get<PlayerRating>("/api/character/rating", { region, username });
+
+export const serverRecap = (region: string, username: string, month: string) =>
+  get<MonthRecap>("/api/character/recap", { region, username, month });
 
 export interface ServerClan {
   id: string;

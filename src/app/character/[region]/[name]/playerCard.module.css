@@ -1,0 +1,269 @@
+/* Карточка игрока как в FIFA + архетип + «лучше, чем X% игроков». */
+
+.wait {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+}
+
+.wait span {
+  font-size: 26px;
+}
+
+.wait p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text-2);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  justify-items: center;
+}
+
+@media (min-width: 640px) {
+  .layout {
+    grid-template-columns: 260px minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+/* ---------- карточка ---------- */
+
+.card {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  width: 260px;
+  height: 380px;
+  padding: 18px 18px 16px;
+  border-radius: 28px 28px 34px 34px;
+  overflow: hidden;
+  isolation: isolate;
+  color: var(--ink);
+  background:
+    radial-gradient(120% 70% at 50% 0%, color-mix(in srgb, var(--edge) 35%, transparent), transparent 60%),
+    linear-gradient(160deg, var(--from), var(--to));
+  border: 2px solid var(--edge);
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--edge) 18%, transparent),
+    0 26px 60px -22px var(--glow),
+    inset 0 0 40px -10px color-mix(in srgb, var(--edge) 40%, transparent);
+}
+
+/* тонкие «гильош»-линии фона, как на коллекционных картах */
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: repeating-linear-gradient(115deg, transparent 0 10px, rgb(255 255 255 / 0.035) 10px 11px);
+}
+
+.card[data-tier="neon"] {
+  animation: pulse 3.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    box-shadow:
+      0 0 0 4px color-mix(in srgb, var(--edge) 28%, transparent),
+      0 26px 70px -16px var(--glow),
+      inset 0 0 50px -8px color-mix(in srgb, var(--edge) 55%, transparent);
+  }
+}
+
+.cardTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.overall {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  line-height: 1;
+}
+
+.overall strong {
+  font-family: var(--font-display, inherit);
+  font-size: 58px;
+  font-weight: 800;
+  text-shadow: 0 0 22px color-mix(in srgb, var(--edge) 60%, transparent);
+}
+
+.overall span {
+  font-size: 26px;
+}
+
+.overall small {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  opacity: 0.75;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--edge) 30%, transparent), transparent 70%);
+}
+
+.avatar img {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 20px rgb(0 0 0 / 0.5));
+}
+
+.avatar span {
+  font-size: 72px;
+  font-weight: 800;
+}
+
+.cardName {
+  margin: 10px 0 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid color-mix(in srgb, var(--edge) 45%, transparent);
+  text-align: center;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.attrs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 18px;
+  align-content: start;
+  padding: 0 8px;
+}
+
+.attrs div {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.attrs b {
+  min-width: 30px;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.attrs span {
+  font-size: 14px;
+  font-weight: 700;
+  opacity: 0.8;
+}
+
+/* ---------- архетип и процентили ---------- */
+
+.side {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+}
+
+.archetype {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 14px;
+  border-color: color-mix(in srgb, var(--arch) 40%, var(--line));
+  background: linear-gradient(120deg, color-mix(in srgb, var(--arch) 16%, transparent), transparent 70%);
+}
+
+.archEmoji {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  font-size: 28px;
+  background: color-mix(in srgb, var(--arch) 18%, transparent);
+  box-shadow: 0 0 22px -6px var(--arch);
+}
+
+.archetype > span:last-child {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.archetype small {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.archetype b {
+  font-size: 18px;
+  color: var(--arch);
+}
+
+.archetype span span {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text-2);
+}
+
+.better {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.betterRow {
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.betterBar {
+  height: 5px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.07);
+  overflow: hidden;
+}
+
+.betterBar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgb(var(--acc-rgb) / 0.35), var(--acc));
+}
+
+.betterRow[data-top] {
+  color: var(--text);
+}
+
+.betterRow[data-top] .betterBar i {
+  box-shadow: 0 0 10px rgb(var(--acc-rgb) / 0.6);
+}
+
+.download {
+  justify-self: start;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card[data-tier="neon"] {
+    animation: none;
+  }
+}

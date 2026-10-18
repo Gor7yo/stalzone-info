@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { Segmented } from "@/components/ui/Segmented";
 import { useProgress, type Progress, type ProgressPeriod } from "@/features/character";
@@ -53,9 +54,22 @@ export function PlayerProgress({ region, name, meta }: { region: Region; name: s
           <p>{t.empty}</p>
         </div>
       ) : (
-        <Body p={data} meta={meta} />
+        <>
+          <Body p={data} meta={meta} />
+          {data.to && <RecapLink region={region} name={name} month={data.to.slice(0, 7)} />}
+        </>
       )}
     </section>
+  );
+}
+
+/** Ссылка на итоги месяца последнего снимка (день снимка — по Москве) — картинка-сторис. */
+function RecapLink({ region, name, month }: { region: Region; name: string; month: string }) {
+  const t = useT().player.recap;
+  return (
+    <Link href={`/character/${region}/${encodeURIComponent(name)}/recap/${month}`} className={`btn ${styles.recap}`}>
+      {t.link(t.months[Number(month.slice(5)) - 1])}
+    </Link>
   );
 }
 

@@ -104,10 +104,7 @@ export const useBarter = () =>
 
 // ---------- как достать ингредиент ----------
 
-export type Source =
-  | { kind: "market" }
-  | { kind: "pack"; pack: string; per: number }
-  | { kind: "farm" };
+export type Source = { kind: "market" } | { kind: "pack"; pack: string; per: number } | { kind: "farm" };
 
 export function sourceOf(index: BarterIndex, id: string): Source {
   const pack = index.packs.get(id);

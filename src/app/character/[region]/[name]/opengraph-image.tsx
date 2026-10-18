@@ -3,7 +3,9 @@ import { allianceOf } from "@/features/alliances";
 import { playerStats } from "@/features/compare";
 import { stripMc } from "@/lib/mcText";
 import { int, OG_ACC, OG_BG, ogFonts, ogText } from "@/lib/og";
-import { serverCharacter, serverProgress } from "@/lib/players-server";
+import { OgFifaCard, ogCardTexts } from "@/lib/og-card";
+import { serverCharacter, serverProgress, serverRating } from "@/lib/players-server";
+import { ARCHETYPES } from "@/features/archetypes";
 
 /**
  * Картинка-превью профиля для ссылок (Telegram, Discord, VK): ник, группировка, клан,
@@ -19,7 +21,10 @@ const HOUR = 3_600_000;
 export default async function Image({ params }: { params: Promise<{ region: string; name: string }> }) {
   const { region, name: raw } = await params;
   const name = decodeURIComponent(raw);
-  const [c, p] = await Promise.all([serverCharacter(region, name), serverProgress(region, name)]);
+  const [c, p, r] = await Promise.all([serverCharacter(region, name), serverProgress(region, name), serverRating(region, name)]);
+  const rating = r?.status === "ready" ? r : null;
+  const arch = rating ? ARCHETYPES[rating.archetype] : null;
+  const archLine = rating && arch ? `${arch.emoji} ${arch.ru} · рейтинг ${rating.overall}` : null;
 
   const nick = c?.username ?? name;
   const ally = allianceOf(c?.alliance);
@@ -43,6 +48,8 @@ export default async function Image({ params }: { params: Promise<{ region: stri
     subtitle,
     ...tiles.flatMap((t) => [t.label, t.value]),
     week ?? "",
+    archLine ?? "",
+    ...ogCardTexts(nick, region),
     "профиль, статистика и прогресс",
     "stalzone-info.ru",
   ]);
@@ -61,31 +68,48 @@ export default async function Image({ params }: { params: Promise<{ region: stri
         fontFamily: "Manrope",
       }}
     >
-      {/* буква ника в цвете группировки */}
-      <div
-        style={{
-          width: 280,
-          height: 280,
-          flexShrink: 0,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          borderRadius: 64,
-          background: "rgba(255,255,255,0.05)",
-          border: `3px solid ${ally.color}99`,
-          boxShadow: `0 30px 80px -30px ${ally.color}`,
-          fontSize: 150,
-          fontWeight: 800,
-          color: ally.color,
-        }}
-      >
-        {nick.slice(0, 1).toUpperCase()}
-      </div>
+      {/* карточка FIFA, если рейтинг посчитан; иначе — буква ника в цвете группировки */}
+      {rating ? (
+        <div style={{ display: "flex", flexShrink: 0 }}>
+          <OgFifaCard
+            w={330}
+            name={nick}
+            region={region}
+            overall={rating.overall}
+            tier={rating.tier}
+            archetype={rating.archetype}
+            attributes={rating.attributes}
+          />
+        </div>
+      ) : (
+        <div
+          style={{
+            width: 280,
+            height: 280,
+            flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: 64,
+            background: "rgba(255,255,255,0.05)",
+            border: `3px solid ${ally.color}99`,
+            boxShadow: `0 30px 80px -30px ${ally.color}`,
+            fontSize: 150,
+            fontWeight: 800,
+            color: ally.color,
+          }}
+        >
+          {nick.slice(0, 1).toUpperCase()}
+        </div>
+      )}
 
       <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: 4, color: OG_ACC }}>STALZONE INFO</div>
         <div style={{ marginTop: 14, fontSize: nick.length > 16 ? 60 : 76, fontWeight: 800, lineHeight: 1.05 }}>{nick}</div>
         <div style={{ marginTop: 10, fontSize: 28, fontWeight: 600, color: ally.color }}>{subtitle}</div>
+        {archLine && arch && (
+          <div style={{ display: "flex", marginTop: 12, fontSize: 32, fontWeight: 800, color: arch.color }}>{archLine}</div>
+        )}
 
         {tiles.length > 0 ? (
           <div style={{ display: "flex", gap: 18, marginTop: 36 }}>

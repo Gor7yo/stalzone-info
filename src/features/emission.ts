@@ -11,9 +11,7 @@ export interface EmissionResponse {
 }
 
 export type EmissionState =
-  | { phase: "active"; since: number }
-  | { phase: "calm"; since: number; lastDuration: number | null }
-  | { phase: "unknown" };
+  { phase: "active"; since: number } | { phase: "calm"; since: number; lastDuration: number | null } | { phase: "unknown" };
 
 export function emissionState(data?: EmissionResponse): EmissionState {
   if (data?.currentStart) return { phase: "active", since: new Date(data.currentStart).getTime() };

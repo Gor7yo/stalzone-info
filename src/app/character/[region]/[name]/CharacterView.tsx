@@ -20,6 +20,7 @@ import { CREATOR, isCreator } from "@/lib/creator";
 import { actions, sameChar, useApp, type Region } from "@/lib/store";
 import { useNow } from "@/lib/useNow";
 import { CompareEntry } from "./CompareEntry";
+import { PlayerCard } from "./PlayerCard";
 import { PlayerProgress } from "./Progress";
 import styles from "./character.module.css";
 
@@ -199,6 +200,8 @@ function Profile({ character: c, region, meta }: { character: Character; region:
             />
             <StatTile label={t.maxStreak} value={formatNumber(stat("max-kil-ser"))} hint={t.mutants(formatNumber(stat("mut-kil")))} />
           </section>
+
+          <PlayerCard region={region} character={c} />
 
           <PlayerProgress region={region} name={c.username} meta={meta} />
 

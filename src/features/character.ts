@@ -3,6 +3,7 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { api, isNotFound } from "@/lib/api";
 import type { Region } from "@/lib/store";
+import type { Archetype, Attribute, Tier } from "./archetypes";
 import type { Clan } from "./clans";
 
 export interface Stat {
@@ -23,6 +24,53 @@ export interface Character {
     member: { name: string; rank: string; joinTime: string };
   };
   stats: Stat[];
+}
+
+export type Metric = "kd" | "kills" | "damage" | "accuracy" | "headshots" | "streak" | "mutants" | "played" | "survival";
+
+/** Карточка игрока: рейтинг против всех, кого видел наш сервер. */
+export type PlayerRating =
+  | { status: "newbie" | "collecting"; username: string; population: number }
+  | {
+      status: "ready";
+      username: string;
+      population: number;
+      metrics: Record<Metric, number>;
+      /** процентили, 0–100 */
+      percentiles: Record<Metric, number>;
+      attributes: Record<Attribute, number>;
+      overall: number;
+      tier: Tier;
+      archetype: Archetype;
+    };
+
+export function useRating(region: Region, name: string, enabled = true) {
+  return useQuery({
+    queryKey: ["character-rating", region, name.toLowerCase()],
+    queryFn: () => api<PlayerRating>("/api/character/rating", { region, username: name }),
+    enabled: enabled && name.length > 0,
+    staleTime: 5 * 60_000,
+    retry: (count, error) => !isNotFound(error) && count < 1,
+  });
+}
+
+/** Итоги месяца. */
+export interface MonthRecap {
+  username: string;
+  region: string;
+  month: string;
+  from: string;
+  to: string;
+  full: boolean;
+  kills: number;
+  deaths: number;
+  hours: number;
+  mutants: number;
+  damage: number;
+  activeDays: number;
+  bestDay: { day: string; kills: number; hours: number } | null;
+  archetype: Archetype | null;
+  overall: number | null;
 }
 
 export type ProgressPeriod = "week" | "month";

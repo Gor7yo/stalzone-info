@@ -40,5 +40,4 @@ export async function api<T>(path: string, params: Params = {}, init?: RequestIn
   return response.json() as Promise<T>;
 }
 
-export const isNotFound = (error: unknown) =>
-  error instanceof ApiError && (error.status === 404 || error.status === 400);
+export const isNotFound = (error: unknown) => error instanceof ApiError && (error.status === 404 || error.status === 400);

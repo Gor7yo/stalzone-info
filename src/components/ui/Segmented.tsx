@@ -22,7 +22,10 @@ export function Segmented<T extends string>({
   size?: "sm" | "md";
   label: string;
 }) {
-  const index = Math.max(0, options.findIndex((o) => o.value === value));
+  const index = Math.max(
+    0,
+    options.findIndex((o) => o.value === value),
+  );
 
   return (
     <div
