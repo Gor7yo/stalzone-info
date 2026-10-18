@@ -85,6 +85,55 @@
   font-weight: 600;
 }
 
+/* «Пригласи друга» */
+.referral {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  font-size: 14px;
+  line-height: 1.55;
+  border-color: rgb(var(--acc-rgb) / 0.35);
+}
+
+.referral p {
+  margin: 0;
+}
+
+.refLink {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px 6px 12px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.refLink code {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.refLink button {
+  flex: none;
+}
+
+.refStats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.refStats strong {
+  color: var(--text);
+}
+
 .free {
   font-size: 13px;
   font-weight: 600;

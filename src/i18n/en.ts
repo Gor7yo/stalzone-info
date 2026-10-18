@@ -220,6 +220,17 @@ export const en: Dict = {
     linkTelegramTrial:
       "Link Telegram and the 3-day trial turns on with one tap. Alerts arrive there too, and Pro is paid through it. One trial per Telegram.",
     safe: "🔒 Safe: you sign in only on the official EXBO site, we never see your password. Game data comes from the official EXBO API. Payments go through Tribute - card details never reach us.",
+    referral: {
+      title: "🤝 Invite a friend",
+      text: (trial: number, bonus: number) =>
+        `Your friend gets ${trial} days of Pro for free, and you get +${bonus} day of Pro for everyone who comes via your link and links Telegram. Up to 10 bonuses per 30 days.`,
+      copy: "Copy",
+      copied: "Copied ✓",
+      share: "Share in Telegram",
+      shareText: (trial: number) => `STALZONE prices, flipper and alerts in Telegram. ${trial} days of Pro free via this link.`,
+      invited: "Invited:",
+      month: "Bonuses in 30 days:",
+    },
     freeTitle: "Free forever",
     freeText: "Market search and prices, lots, monthly sales history, clans, player profiles, emission notifications and one price alert.",
   },

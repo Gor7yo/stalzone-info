@@ -136,6 +136,11 @@ export const SECTIONS_EN: DocSection[] = [
           <strong>The trial</strong> is 3 free days, given after linking Telegram, once per account and per Telegram.
         </li>
         <li>
+          <strong>Invitations</strong>: via your referral link a friend gets the trial as soon as they link Telegram, and you get +1 day of
+          Pro. The bonus is given at most 10 times per 30 days and only if the friend hasn&apos;t had the trial before. Inviting yourself
+          through other accounts breaks the rules.
+        </li>
+        <li>
           Features may change: we keep developing the service and sometimes rework things. The current list of Pro features is on the Pro
           page.
         </li>

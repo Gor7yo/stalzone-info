@@ -4,9 +4,56 @@ import { LoginCard, TelegramLinkCard } from "@/components/Account/AccountGate";
 import { Icon } from "@/components/Icon";
 import { ProBadge } from "@/components/Pro/Pro";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { PRO_BUY_URL, PRO_FEATURES, usePro, useStartTrial } from "@/features/pro";
+import { PRO_BUY_URL, PRO_FEATURES, usePro, useReferral, useStartTrial } from "@/features/pro";
 import { useFormat, useT } from "@/i18n/client";
+import { haptic } from "@/lib/telegram";
+import { useState } from "react";
 import styles from "./pro.module.css";
+
+/** Реферальная ссылка: друг получает пробный, вы — день Pro за каждого. */
+function ReferralCard() {
+  const t = useT().pro.referral;
+  const { data } = useReferral(true);
+  const [copied, setCopied] = useState(false);
+  if (!data) return null;
+
+  const share = `https://t.me/share/url?url=${encodeURIComponent(data.link)}&text=${encodeURIComponent(t.shareText(data.trialDays))}`;
+  return (
+    <section className="section">
+      <h2 className="section-title">{t.title}</h2>
+      <div className={`glass ${styles.referral}`}>
+        <p>{t.text(data.trialDays, data.bonusDays)}</p>
+        <div className={styles.refLink}>
+          <code>{data.link}</code>
+          <button
+            type="button"
+            className="btn"
+            onClick={() => {
+              haptic.tap();
+              void navigator.clipboard?.writeText(data.link).then(() => {
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+              });
+            }}
+          >
+            {copied ? t.copied : t.copy}
+          </button>
+        </div>
+        <a className="btn primary" href={share} target="_blank" rel="noopener" onClick={() => haptic.tap()}>
+          <Icon name="share" size={16} /> {t.share}
+        </a>
+        <div className={styles.refStats}>
+          <span>
+            {t.invited} <strong className="mono">{data.invited}</strong>
+          </span>
+          <span>
+            {t.month} <strong className="mono">{`${data.rewardedMonth} / ${data.monthLimit}`}</strong>
+          </span>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export default function ProPage() {
   const t = useT().pro;
@@ -79,6 +126,8 @@ export default function ProPage() {
           </div>
         )}
       </section>
+
+      {pro.available && <ReferralCard />}
 
       <section className="section">
         <h2 className="section-title">{t.freeTitle}</h2>

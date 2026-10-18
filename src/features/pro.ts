@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authed, ME_KEY, useMe } from "./account";
 
 /**
@@ -19,6 +19,24 @@ export function useStartTrial() {
     },
   });
 }
+
+/** Реферальная ссылка аккаунта (t.me/<бот>?start=ref_…) и счётчики приглашений. */
+export interface Referral {
+  link: string;
+  invited: number;
+  rewardedMonth: number;
+  monthLimit: number;
+  bonusDays: number;
+  trialDays: number;
+}
+
+export const useReferral = (enabled: boolean) =>
+  useQuery({
+    enabled,
+    queryKey: ["referral"],
+    queryFn: () => authed<Referral>("/api/me/referral"),
+    staleTime: 60_000,
+  });
 
 /** Что даёт Pro — для экрана подписки и заглушек (тексты - в словаре, t.pro.features[key]). */
 export const PRO_FEATURES: {
