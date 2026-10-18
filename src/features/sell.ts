@@ -70,6 +70,42 @@ export const useSellAdvice = (p: SellParams, enabled = true) =>
     placeholderData: keepPreviousData,
   });
 
+/** Час (0–23) или день недели (1 — пн … 7 — вс): отклонение цены от обычной для того же дня, %. */
+export interface TimingSlot {
+  key: number;
+  /** null — мало сделок */
+  delta: number | null;
+  deals: number;
+}
+
+/** «Когда выгоднее продавать» (считает сервер по сделкам за 8 недель; время московское). */
+export interface SaleTiming {
+  /** 0 — данных мало, показывать нечего */
+  deals: number;
+  days: number;
+  weeks: number;
+  weekdaysReliable: boolean;
+  hours: TimingSlot[];
+  weekdays: TimingSlot[];
+  bestHour: TimingSlot | null;
+  worstHour: TimingSlot | null;
+  now: TimingSlot | null;
+}
+
+/** Только для Pro. Количество штук на картину не влияет — его не передаём. */
+export const useSaleTiming = (p: Omit<SellParams, "amount">, enabled = true) =>
+  useQuery({
+    enabled,
+    queryKey: ["sell-timing", p.region, p.itemId, p.quality, p.upgrade, p.variant],
+    queryFn: () =>
+      authed<SaleTiming>(
+        `/api/sell/timing?region=${p.region}&item=${p.itemId}&quality=${p.quality}&upgrade=${p.upgrade}` +
+          (p.variant ? `&variant=${encodeURIComponent(p.variant)}` : ""),
+      ),
+    staleTime: 10 * 60_000,
+    placeholderData: keepPreviousData,
+  });
+
 // ---------- «моя цена → когда продастся»: та же модель, что на сервере (sell-estimate.ts) ----------
 
 /** Часть спроса уходит на лоты, которые выставят после нас дешевле. */

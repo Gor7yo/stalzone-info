@@ -279,6 +279,23 @@ export const en: Dict = {
     noData: "No data",
   },
   sell: {
+    timing: {
+      title: "🕒 When it sells for more",
+      noData: "Not enough deals yet to tell at what time this item sells for more.",
+      nowHigher: (p: string) => `Right now buyers pay more than usual: ${p}`,
+      nowLower: (p: string) => `Right now buyers pay less than usual: ${p} - if it's not urgent, list later`,
+      best: (h: string, p: string) => `Best time: ${h} MSK (${p})`,
+      worst: (h: string, p: string) => `Worst time: ${h} MSK (${p})`,
+      byHour: "By hour of day (MSK)",
+      byDay: "By day of week",
+      days: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+      few: "few deals",
+      deals: (n: string) => `${n} deals`,
+      fewWeeks: (w: number) =>
+        `Only ${w} weeks of data so far - weekday insights are rough and will get more accurate in a couple of months.`,
+      basis: (deals: string, days: number) =>
+        `Based on ${deals} deals over ${days} days. Each deal is compared to the usual price of the same day; faded bars are hours when people buy less. An estimate from past deals, not a guarantee.`,
+    },
     login: "The selling helper is a Pro feature. Sign in with EXBO to subscribe or get a free 3-day trial.",
     title: "Selling helper",
     teaser: "What price to list at so it sells within an hour, 6 hours or a day - based on the lot queue and deal speed",

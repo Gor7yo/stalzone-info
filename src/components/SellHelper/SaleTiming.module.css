@@ -1,0 +1,138 @@
+/* «Когда выгоднее продавать» — внутри помощника продажи. */
+
+.timing {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  transition: opacity 200ms;
+}
+
+.title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.summary {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.summary li {
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.summary li[data-tone="up"] {
+  border-color: color-mix(in srgb, var(--green) 35%, transparent);
+}
+
+.summary li[data-tone="down"] {
+  border-color: color-mix(in srgb, var(--red) 35%, transparent);
+}
+
+.chart {
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.chart figcaption {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-2);
+}
+
+.chart[data-dim] .bars {
+  opacity: 0.6;
+}
+
+.bars {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--n), 1fr);
+  gap: 3px;
+  height: 96px;
+  padding-bottom: 18px;
+}
+
+/* нулевая линия — «обычная цена для этого дня» */
+.bars::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc((100% - 18px) / 2);
+  height: 1px;
+  background: var(--line-2, var(--line));
+}
+
+.slot {
+  position: relative;
+  border-radius: 4px;
+}
+
+.slot[data-current] {
+  background: rgb(var(--acc-rgb) / 0.1);
+  outline: 1px solid rgb(var(--acc-rgb) / 0.5);
+}
+
+.bar {
+  position: absolute;
+  left: 15%;
+  right: 15%;
+  border-radius: 3px;
+  opacity: var(--alpha);
+}
+
+/* высота считается от области графика без подписей */
+.slot > .bar {
+  max-height: 50%;
+}
+
+.bar[data-tone="up"] {
+  background: var(--green);
+}
+
+.bar[data-tone="down"] {
+  background: var(--red);
+}
+
+.none {
+  position: absolute;
+  left: 30%;
+  right: 30%;
+  top: calc(50% - 2px);
+  height: 4px;
+  border-radius: 2px;
+  background: var(--text-3);
+  opacity: 0.4;
+}
+
+.tick {
+  position: absolute;
+  left: 50%;
+  bottom: -18px;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+
+.note {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-2);
+}

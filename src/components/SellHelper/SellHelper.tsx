@@ -10,6 +10,7 @@ import type { Region } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
 import { Icon } from "../Icon";
 import { ModuleStatPicker } from "../ModuleStat/ModuleStat";
+import { SaleTiming } from "./SaleTiming";
 import { ProTeaser } from "../Pro/Pro";
 import { LoginCard } from "../Account/AccountGate";
 import styles from "./SellHelper.module.css";
@@ -200,6 +201,14 @@ function SellPanel({ itemId, region, hasQuality, hasUpgrade, stackable, initialQ
           </p>
         </div>
       )}
+
+      <SaleTiming
+        region={region}
+        itemId={itemId}
+        quality={hasQuality ? quality : -1}
+        upgrade={upgradable ? upgrade : 0}
+        variant={variant}
+      />
     </div>
   );
 }
