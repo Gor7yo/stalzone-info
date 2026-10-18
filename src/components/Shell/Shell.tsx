@@ -87,6 +87,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
           <ThemeToggle compact />
           <LangSwitch />
         </div>
+        <nav className={styles.footerLinks} aria-label={t.shell.docsNav}>
+          <Link href="/guide">{t.shell.guide}</Link>
+          <Link href="/rules">{t.shell.rules}</Link>
+          <Link href="/privacy">{t.shell.privacy}</Link>
+        </nav>
         STALZONE INFO · by{" "}
         <Link href={creatorHref} onClick={() => haptic.tap()}>
           {CREATOR.nick}
@@ -144,6 +149,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
         </div>
         {/* только в боковой панели широкого экрана; на телефоне — кнопка в подвале */}
         <div className={styles.sideExtra}>
+          <Link href="/guide" className={styles.sideDonate} data-guide>
+            <Icon name="help" size={18} />
+            {t.shell.guide}
+          </Link>
           <ThemeToggle />
           <LangSwitch />
           <a className={styles.sideDonate} href={DONATE_URL} target="_blank" rel="noopener">

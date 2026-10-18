@@ -82,6 +82,13 @@ export default function HomePage() {
             />
           </section>
 
+          {/* новичкам: после рекламы спрашивали «что тут делать» — гайд на самом видном месте */}
+          <Link href="/guide" className={`list-row ${styles.guide}`} onClick={() => haptic.tap()}>
+            <Icon name="help" size={20} />
+            <strong>{t.shell.guideBanner}</strong>
+            <Icon name="chevron" size={18} className="dim" />
+          </Link>
+
           <UniversalSearch region={region} wantIndex={favItems.length > 0} />
 
           <section className={`${styles.bento} stagger`}>

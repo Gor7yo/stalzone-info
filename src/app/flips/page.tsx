@@ -34,6 +34,7 @@ const DEFAULTS: FlipSettings = { sort: "profit", minConfidence: "medium", minPro
 const UPGRADABLE = new Set(["artefact", "weapon", "armor"]);
 /** Кратно 2 и 3: на широком экране карточки — сеткой в 2–3 колонки. */
 const STEP = 24;
+const MODULES = "weapon_modules";
 
 /** Одинаковые лоты (предмет + качество + заточка) — одна карточка с самым выгодным лотом. */
 interface Offer {
@@ -104,10 +105,12 @@ function FlipsFeed() {
   const { data, isLoading, isError, refetch } = useFlips(region);
   const [open, setOpen] = useState(false);
   const [limit, setLimit] = useState(STEP);
+  const [modLimit, setModLimit] = useState(STEP);
 
   const set = (patch: Partial<FlipSettings>) => {
     haptic.select();
     setLimit(STEP);
+    setModLimit(STEP);
     actions.setFlips(patch);
   };
 
@@ -122,10 +125,14 @@ function FlipsFeed() {
         (!settings.group || groupOf(f) === settings.group),
     ),
   ).sort(SORTS[settings.sort]);
+  // в общем списке модули — отдельным блоком ниже: их много, а перепродаются они хуже обычных предметов
+  const isModule = (o: Offer) => groupOf(o.best) === MODULES;
+  const main = settings.group ? offers : offers.filter((o) => !isModule(o));
+  const modules = settings.group ? [] : offers.filter(isModule);
   // в чипах только категории, в которых сейчас есть флипы
   const groups = GROUPS.filter((g) => all.some((f) => groupOf(f) === g.id));
   const lotsCount = offers.reduce((n, o) => n + o.lots.length, 0);
-  const top = offers.reduce<Flip | null>((best, o) => (!best || o.best.profit > best.profit ? o.best : best), null);
+  const top = (main.length ? main : modules).reduce<Flip | null>((best, o) => (!best || o.best.profit > best.profit ? o.best : best), null);
 
   const active = [
     settings.minConfidence !== DEFAULTS.minConfidence,
@@ -262,15 +269,14 @@ function FlipsFeed() {
           <RowSkeleton />
         ) : offers.length ? (
           <>
-            <div className="stack desk-grid" style={{ gap: 10 }}>
-              {offers.slice(0, limit).map((o) => (
-                <OfferCard key={o.key} offer={o} item={index?.byId.get(o.best.itemId)} />
-              ))}
-            </div>
-            {offers.length > limit && (
-              <button type="button" className="btn" style={{ width: "100%", marginTop: 12 }} onClick={() => setLimit((l) => l + STEP)}>
-                {t.showMore}
-              </button>
+            <OfferList offers={main} limit={limit} onMore={() => setLimit((l) => l + STEP)} />
+            {modules.length > 0 && (
+              <>
+                <h2 className="section-title" style={{ marginTop: main.length ? 24 : 0 }}>
+                  {t.modulesTitle} <small>{t.modulesHint}</small>
+                </h2>
+                <OfferList offers={modules} limit={modLimit} onMore={() => setModLimit((l) => l + STEP)} />
+              </>
             )}
           </>
         ) : (
@@ -280,6 +286,25 @@ function FlipsFeed() {
 
       <p className={`dim ${styles.note}`}>{t.note}</p>
     </main>
+  );
+}
+
+function OfferList({ offers, limit, onMore }: { offers: Offer[]; limit: number; onMore: () => void }) {
+  const t = useT().flips;
+  const { data: index } = useItems();
+  return (
+    <>
+      <div className="stack desk-grid" style={{ gap: 10 }}>
+        {offers.slice(0, limit).map((o) => (
+          <OfferCard key={o.key} offer={o} item={index?.byId.get(o.best.itemId)} />
+        ))}
+      </div>
+      {offers.length > limit && (
+        <button type="button" className="btn" style={{ width: "100%", marginTop: 12 }} onClick={onMore}>
+          {t.showMore}
+        </button>
+      )}
+    </>
   );
 }
 

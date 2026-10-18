@@ -220,6 +220,29 @@
   text-underline-offset: 3px;
 }
 
+/* гайд, правила, политика — видно всегда: светлее остального подвала */
+.footerLinks {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 18px;
+  margin-bottom: 12px;
+  font-family: var(--font-body, inherit);
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+
+.credit .footerLinks a {
+  color: var(--text-2);
+  text-decoration: none;
+}
+
+.credit .footerLinks a:hover {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 /* ---------- донаты и тема ---------- */
 
 .footerActions {
@@ -382,6 +405,10 @@
     transition:
       color 200ms,
       background 200ms;
+  }
+
+  .sideDonate[data-guide] svg {
+    color: var(--acc);
   }
 
   .sideDonate svg {

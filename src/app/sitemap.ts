@@ -13,6 +13,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE}/clans`, changeFrequency: "daily", priority: 0.7 },
     { url: `${SITE}/character`, changeFrequency: "weekly", priority: 0.6 },
     { url: `${SITE}/pro`, changeFrequency: "monthly", priority: 0.4 },
+    { url: `${SITE}/guide`, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${SITE}/rules`, changeFrequency: "yearly", priority: 0.2 },
+    { url: `${SITE}/privacy`, changeFrequency: "yearly", priority: 0.2 },
   ];
   const groups = marketGroups().map((g) => ({
     url: `${SITE}/auction/c/${g.id}`,

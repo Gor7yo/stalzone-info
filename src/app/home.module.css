@@ -20,9 +20,7 @@
   width: 22px;
   height: 22px;
   border-radius: 7px;
-  background:
-    radial-gradient(circle at 35% 30%, #fff8, transparent 40%),
-    conic-gradient(from 200deg, var(--acc), #1ec8a0, var(--acc));
+  background: radial-gradient(circle at 35% 30%, #fff8, transparent 40%), conic-gradient(from 200deg, var(--acc), #1ec8a0, var(--acc));
   box-shadow: 0 0 18px rgb(var(--acc-rgb) / 0.5);
   animation: spin 8s linear infinite;
 }
@@ -88,6 +86,22 @@
 
 /* ---------- search ---------- */
 
+.guide {
+  margin-top: 14px;
+  border-color: rgb(var(--acc-rgb) / 0.35);
+  font-size: 14px;
+}
+
+.guide > svg:first-child {
+  flex: none;
+  color: var(--acc);
+}
+
+.guide strong {
+  flex: 1;
+  min-width: 0;
+}
+
 .search {
   margin-top: 14px;
   position: relative;
@@ -142,7 +156,9 @@
   background: var(--tile);
   opacity: 0.13;
   filter: blur(30px);
-  transition: opacity 400ms, transform 600ms var(--ease);
+  transition:
+    opacity 400ms,
+    transform 600ms var(--ease);
 }
 
 .tile:active::before {
