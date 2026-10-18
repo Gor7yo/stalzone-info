@@ -1,0 +1,201 @@
+/* Прогресс игрока: плитки прироста, активность по дням, «что ещё выросло». */
+
+.progress {
+  display: grid;
+  gap: 12px;
+  transition: opacity 200ms;
+}
+
+.window {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.empty {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+}
+
+.empty span {
+  font-size: 26px;
+}
+
+.empty p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text-2);
+}
+
+/* ---------- плитки ---------- */
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tile[data-tone="acc"] {
+  --tint: #c8ff3d;
+}
+.tile[data-tone="cyan"] {
+  --tint: #3ee0d0;
+}
+.tile[data-tone="violet"] {
+  --tint: #9b8cff;
+}
+.tile[data-tone="amber"] {
+  --tint: #ffb547;
+}
+
+.tile {
+  position: relative;
+  display: grid;
+  gap: 4px;
+  padding: 14px 14px 14px 18px;
+  border-radius: 18px;
+  overflow: hidden;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--tint) 14%, transparent), transparent 70%), var(--surface);
+  border: 1px solid color-mix(in srgb, var(--tint) 25%, var(--line));
+}
+
+/* неоновая метка слева, как в помощнике продажи */
+.tile::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--tint);
+  box-shadow: 0 0 12px var(--tint);
+}
+
+.tile span {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-2);
+}
+
+.tile strong {
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--tint);
+  text-shadow: 0 0 18px color-mix(in srgb, var(--tint) 45%, transparent);
+}
+
+.tile small {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-3);
+}
+
+/* ---------- активность по дням ---------- */
+
+.days,
+.rest {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 18px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.restTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-2);
+}
+
+.bars {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 8px;
+  height: 120px;
+}
+
+.bar {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  justify-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.bar small {
+  font-size: 11px;
+  color: var(--text-2);
+}
+
+.bar span {
+  align-self: end;
+  width: 100%;
+  max-width: 34px;
+  height: calc(max(var(--h), 0.04) * 100%);
+  border-radius: 8px 8px 4px 4px;
+  background: linear-gradient(180deg, #3ee0d0, color-mix(in srgb, #3ee0d0 30%, transparent));
+  box-shadow: 0 0 14px color-mix(in srgb, #3ee0d0 45%, transparent);
+}
+
+.bar span[data-zero] {
+  background: rgb(255 255 255 / 0.08);
+  box-shadow: none;
+}
+
+.bar b {
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+/* ---------- что ещё выросло ---------- */
+
+.rest dl {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+}
+
+.rest dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+}
+
+.rest dl div:last-child {
+  border-bottom: 0;
+}
+
+.rest dt {
+  min-width: 0;
+  color: var(--text-2);
+}
+
+.rest dd {
+  margin: 0;
+  font-weight: 700;
+  color: var(--green);
+  white-space: nowrap;
+}
+
+.rest summary {
+  width: fit-content;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+.rest details[open] summary {
+  margin-bottom: 4px;
+}

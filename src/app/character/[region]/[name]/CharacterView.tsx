@@ -19,6 +19,8 @@ import type { Format } from "@/lib/format";
 import { CREATOR, isCreator } from "@/lib/creator";
 import { actions, sameChar, useApp, type Region } from "@/lib/store";
 import { useNow } from "@/lib/useNow";
+import { CompareEntry } from "./CompareEntry";
+import { PlayerProgress } from "./Progress";
 import styles from "./character.module.css";
 
 export function CharacterView({ region, name }: { region: Region; name: string }) {
@@ -197,6 +199,10 @@ function Profile({ character: c, region, meta }: { character: Character; region:
             />
             <StatTile label={t.maxStreak} value={formatNumber(stat("max-kil-ser"))} hint={t.mutants(formatNumber(stat("mut-kil")))} />
           </section>
+
+          <PlayerProgress region={region} name={c.username} meta={meta} />
+
+          <CompareEntry region={region} name={c.username} />
         </div>
         <div className="desk-side">
           {c.displayedAchievements?.length > 0 && (
