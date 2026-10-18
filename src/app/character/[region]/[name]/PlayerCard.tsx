@@ -81,14 +81,6 @@ export function PlayerCard({ region, character: c }: { region: Region; character
                 );
               })}
             </div>
-
-            <a
-              className={`btn ${styles.download}`}
-              href={`/story/${region}/${encodeURIComponent(c.username)}/card`}
-              download={`${c.username}-card.png`}
-            >
-              {t.download}
-            </a>
           </div>
         </div>
       )}

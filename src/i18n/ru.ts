@@ -499,7 +499,6 @@ export const ru = {
       months: ["январь", "февраль", "март", "апрель", "май", "июнь", "июль", "август", "сентябрь", "октябрь", "ноябрь", "декабрь"],
       title: (month: string) => `Твой ${month} в Зоне`,
       shareText: (month: string, nick: string) => `${nick}: мой ${month} в Зоне`,
-      download: "⬇️ Скачать для сторис",
       hint: "1-го числа такую картинку присылает бот @stalzoneinfo_bot - если войти через EXBO и привязать Telegram.",
       link: (month: string) => `🗓 Итоги: ${month}`,
     },
@@ -521,7 +520,6 @@ export const ru = {
         played: "Часов в игре",
         survival: "Выживаемость",
       },
-      download: "⬇️ Скачать для сторис",
     },
     compare: {
       title: "Сравнить с игроком",

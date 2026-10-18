@@ -1,7 +1,7 @@
 import { ARCHETYPES, ATTRIBUTE_SHORT, ATTRIBUTES, TIERS, type Archetype, type Attribute, type Tier } from "@/features/archetypes";
 
 /**
- * Карточка игрока в стиле FIFA для генератора картинок (сторис, превью ссылки).
+ * Карточка игрока в стиле FIFA для генератора картинок (превью ссылки на профиль).
  * Вёрстка под satori: у каждого блока с несколькими детьми — display: flex.
  * w — ширина карточки в пикселях, всё остальное масштабируется от неё.
  */

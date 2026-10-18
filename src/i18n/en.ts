@@ -486,7 +486,6 @@ export const en: Dict = {
       months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
       title: (month: string) => `Your ${month} in the Zone`,
       shareText: (month: string, nick: string) => `${nick}: my ${month} in the Zone`,
-      download: "⬇️ Download for stories",
       hint: "On the 1st, the @stalzoneinfo_bot bot sends this picture - sign in with EXBO and link Telegram.",
       link: (month: string) => `🗓 Recap: ${month}`,
     },
@@ -508,7 +507,6 @@ export const en: Dict = {
         played: "Hours played",
         survival: "Survival",
       },
-      download: "⬇️ Download for stories",
     },
     compare: {
       title: "Compare with a player",

@@ -63,7 +63,7 @@ export function PlayerProgress({ region, name, meta }: { region: Region; name: s
   );
 }
 
-/** Ссылка на итоги месяца последнего снимка (день снимка — по Москве) — картинка-сторис. */
+/** Ссылка на итоги месяца последнего снимка (день снимка — по Москве). */
 function RecapLink({ region, name, month }: { region: Region; name: string; month: string }) {
   const t = useT().player.recap;
   return (

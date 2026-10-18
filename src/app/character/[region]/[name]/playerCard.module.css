@@ -258,10 +258,6 @@
   box-shadow: 0 0 10px rgb(var(--acc-rgb) / 0.6);
 }
 
-.download {
-  justify-self: start;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .card[data-tier="neon"] {
     animation: none;
