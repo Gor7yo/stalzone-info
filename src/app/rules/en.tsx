@@ -181,7 +181,7 @@ export const SECTIONS_EN: DocSection[] = [
           Russian, but you can write in English.
         </li>
         <li>A real person answers. We try to reply quickly but can&apos;t guarantee an exact response time.</li>
-        <li>You can have up to 3 open tickets at once and send up to 20 messages per hour - this protects against spam.</li>
+        <li>Spam protection: up to 5 new tickets per day, up to 3 open at once and up to 20 messages per hour.</li>
         <li>After a ticket is closed you can rate the answer - it helps us improve.</li>
       </ul>
     ),
