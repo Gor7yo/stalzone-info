@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PageHeader } from "@/components/ui/PageHeader";
-import { CONTACT_LABEL, CONTACT_URL } from "@/lib/creator";
-import styles from "@/components/Doc/Doc.module.css";
+import { type DocSection, DocPage, docStyles as styles, Steps } from "@/components/Doc/DocPage";
+import { Icon } from "@/components/Icon";
+import { getLang } from "@/i18n/server";
+import { CONTACT_LABEL, CONTACT_LABEL_EN, CONTACT_URL } from "@/lib/creator";
+import { SECTIONS_EN } from "./en";
 
 export const metadata: Metadata = {
   title: "Гайд: как пользоваться",
@@ -18,72 +20,48 @@ export const metadata: Metadata = {
  */
 const VIDEOS: { title: string; src: string }[] = [];
 
-const STEPS = [
-  { id: "start", title: "С чего начать" },
-  { id: "market", title: "Цены на рынке" },
-  { id: "sell", title: "За сколько продать" },
-  { id: "alerts", title: "Алерты в Telegram" },
-  { id: "flips", title: "Флиппер" },
-  { id: "emission", title: "Выбросы" },
-  { id: "players", title: "Игроки и кланы" },
-  { id: "pro", title: "Pro" },
-  { id: "safe", title: "Безопасность" },
-];
-
-export default function GuidePage() {
-  return (
-    <main className="page">
-      <PageHeader eyebrow="Гайд" title="Как пользоваться">
-        Пять минут чтения - и вы знаете, где смотреть цены, за сколько продавать и как ловить выгодные лоты.
-      </PageHeader>
-
-      <div className={styles.doc}>
-        <nav className={styles.toc} aria-label="Разделы гайда">
-          {STEPS.map((s) => (
-            <a key={s.id} href={`#${s.id}`} className="chip">
-              {s.title}
-            </a>
-          ))}
-        </nav>
-
-        {VIDEOS.length > 0 && (
-          <section className="stack" style={{ gap: 12 }}>
-            {VIDEOS.map((v) => (
-              <figure key={v.src} style={{ margin: 0, display: "grid", gap: 6 }}>
-                <div className={styles.video}>
-                  <iframe src={v.src} title={v.title} loading="lazy" allow="fullscreen; picture-in-picture" allowFullScreen />
-                </div>
-                <figcaption className="dim" style={{ fontSize: 13 }}>
-                  {v.title}
-                </figcaption>
-              </figure>
-            ))}
-          </section>
-        )}
-
-        <h2 id="start">1. С чего начать</h2>
-        <ol>
-          <li>
-            Выберите <strong>регион</strong> сервера (RU, EU, NA, SEA) переключателем вверху главной - цены у регионов разные.
-          </li>
-          <li>
-            Найдите предмет через <strong>поиск на главной</strong>: можно писать по-русски, по-английски и даже в неправильной раскладке.
-            Туда же можно вписать ник игрока.
-          </li>
-          <li>
-            Чтобы работали алерты и Pro, <Link href="/account">войдите через EXBO</Link>. Пароль вводится только на exbo.net - сайт его не
-            видит.
-          </li>
-        </ol>
-        <p>
-          Сайт также открывается как мини-приложение в Telegram: <a href="https://t.me/stalzoneinfo_bot">@stalzoneinfo_bot</a>.
+const SECTIONS: DocSection[] = [
+  {
+    id: "start",
+    icon: "bolt",
+    accent: "var(--acc)",
+    title: "С чего начать",
+    hint: "Регион, поиск и вход - за минуту",
+    body: (
+      <>
+        <Steps>
+          {[
+            <>
+              Выберите <strong>регион</strong> сервера (RU, EU, NA, SEA) переключателем вверху главной - цены у регионов разные.
+            </>,
+            <>
+              Найдите предмет через <strong>поиск на главной</strong>: по-русски, по-английски и даже в неправильной раскладке. Туда же
+              можно вписать ник игрока.
+            </>,
+            <>
+              Чтобы работали алерты и Pro, <Link href="/account">войдите через EXBO</Link>. Пароль вводится только на exbo.net - сайт его не
+              видит.
+            </>,
+          ]}
+        </Steps>
+        <p className={styles.tip}>
+          💡 Сайт открывается и как мини-приложение в Telegram: <a href="https://t.me/stalzoneinfo_bot">@stalzoneinfo_bot</a>.
         </p>
-
-        <h2 id="market">2. Цены на рынке</h2>
+      </>
+    ),
+  },
+  {
+    id: "market",
+    icon: "market",
+    accent: "#5aa9ff",
+    title: "Цены на рынке",
+    hint: "Лоты, история продаж, качество",
+    body: (
+      <>
         <p>
           В разделе <Link href="/auction">Рынок</Link> откройте предмет. Там видно:
         </p>
-        <ul>
+        <ul className={styles.list}>
           <li>
             <strong>лоты</strong>, которые выставлены прямо сейчас, - с ценой выкупа и ценой за штуку;
           </li>
@@ -95,38 +73,74 @@ export default function GuidePage() {
             одинаковые.
           </li>
         </ul>
-        <p>
-          Нажмите ★, чтобы добавить предмет в избранное: его лучшая цена появится на главной в блоке «Мой рынок». На главной же есть{" "}
-          <strong>Радар рынка</strong> - что за сутки подорожало, подешевело и где больше всего сделок.
+        <p className={styles.tip}>
+          ⭐ Нажмите звёздочку - лучшая цена предмета появится на главной в «Моём рынке». Там же <strong>Радар рынка</strong>: что за сутки
+          подорожало, подешевело и где больше всего сделок.
         </p>
-
-        <h2 id="sell">3. За сколько продать</h2>
+      </>
+    ),
+  },
+  {
+    id: "sell",
+    icon: "tag",
+    accent: "#ffc94a",
+    title: "За сколько продать",
+    hint: "Цена, по которой лот уйдёт",
+    body: (
+      <>
         <p>
           На странице предмета есть блок <strong>«По какой цене продать»</strong>. Он смотрит на прошлые сделки и текущие лоты и
-          подсказывает цену, по которой предмет уйдёт быстро, и цену, при которой выгоднее, но придётся подождать (функция Pro). Без Pro
-          ориентируйтесь на историю продаж того же качества и заточки. Помните про комиссию аукциона 5 %.
+          подсказывает цену, по которой предмет уйдёт быстро, и цену, при которой выгоднее, но придётся подождать.
         </p>
-
-        <h2 id="alerts">4. Алерты в Telegram</h2>
-        <ol>
-          <li>
-            Войдите через EXBO и в <Link href="/account">Аккаунте</Link> нажмите «Привязать Telegram» - бот откроется сам, нажмите в нём «✅
-            Привязать».
-          </li>
-          <li>
-            На странице предмета нажмите <strong>«Уведомить о цене»</strong> и укажите цену. Когда появится лот дешевле - бот пришлёт
-            сообщение.
-          </li>
-          <li>В боте можно включить уведомления о выбросе для нужных регионов.</li>
-        </ol>
-        <p>Бесплатно - один ценовой алерт на любое качество и заточку, в Pro - до 20 и с точным вариантом.</p>
-
-        <h2 id="flips">5. Флиппер</h2>
+        <p className={styles.tip}>
+          Это функция Pro. Без Pro ориентируйтесь на историю продаж того же качества и заточки. И помните про комиссию аукциона 5 %.
+        </p>
+      </>
+    ),
+  },
+  {
+    id: "alerts",
+    icon: "bell",
+    accent: "#c08bff",
+    title: "Алерты в Telegram",
+    hint: "Бот напишет, когда станет дешевле",
+    body: (
+      <>
+        <Steps>
+          {[
+            <>
+              Войдите через EXBO и в <Link href="/account">Аккаунте</Link> нажмите «Привязать Telegram» - бот откроется сам, нажмите в нём
+              «✅ Привязать».
+            </>,
+            <>
+              На странице предмета нажмите <strong>«Уведомить о цене»</strong> и укажите цену. Появится лот дешевле - бот пришлёт сообщение.
+            </>,
+            <>В меню бота можно включить уведомления о выбросе для нужных регионов.</>,
+          ]}
+        </Steps>
+        <p className={styles.tip}>Бесплатно - один ценовой алерт на любое качество и заточку, в Pro - до 20 и с точным вариантом.</p>
+      </>
+    ),
+  },
+  {
+    id: "flips",
+    icon: "sparkle",
+    accent: "#7ee081",
+    title: "Флиппер",
+    hint: "Купить дешевле - продать по рынку",
+    body: (
+      <>
         <p>
-          <Link href="/flips">Флиппер</Link> ищет лоты, выставленные заметно дешевле, чем предмет обычно продаётся. Схема простая: выкупили
-          - выставили по рыночной цене - забрали разницу.
+          <Link href="/flips">Флиппер</Link> ищет лоты, выставленные заметно дешевле, чем предмет обычно продаётся. Схема простая:
         </p>
-        <ul>
+        <div className={styles.flow} aria-label="Выкупили, выставили по рыночной цене, забрали разницу">
+          <span>Выкупили</span>
+          <Icon name="chevron" size={16} />
+          <span>Выставили по рынку</span>
+          <Icon name="chevron" size={16} />
+          <span>Забрали разницу</span>
+        </div>
+        <ul className={styles.list}>
           <li>
             <strong>Прибыль</strong> считается уже за вычетом комиссии 5 %.
           </li>
@@ -137,54 +151,133 @@ export default function GuidePage() {
           <li>Модули показаны отдельным блоком ниже: продаются они медленнее обычных предметов.</li>
           <li>Лот могли уже выкупить - действуйте быстро. Флип-алерты в Telegram присылают такие лоты сразу.</li>
         </ul>
-
-        <h2 id="emission">6. Выбросы</h2>
-        <p>
-          В разделе <Link href="/emission">Выброс</Link> - идёт ли выброс сейчас во всех регионах и когда был последний. Уведомления о
-          начале выброса приходят в Telegram-бота.
-        </p>
-
-        <h2 id="players">7. Игроки и кланы</h2>
-        <p>
-          В <Link href="/character">Игроках</Link> найдите персонажа по нику: статистика и клан. В <Link href="/clans">Кланах</Link> -
-          рейтинг и составы. Если вы вошли через EXBO, сайт сам найдёт ваших персонажей.
-        </p>
-
-        <h2 id="pro">8. Pro</h2>
+      </>
+    ),
+  },
+  {
+    id: "emission",
+    icon: "radiation",
+    accent: "var(--ember)",
+    title: "Выбросы",
+    hint: "Где идёт выброс прямо сейчас",
+    body: (
+      <p>
+        В разделе <Link href="/emission">Выброс</Link> - идёт ли выброс сейчас во всех регионах и когда был последний. Уведомление о начале
+        выброса бот пришлёт в Telegram.
+      </p>
+    ),
+  },
+  {
+    id: "players",
+    icon: "users",
+    accent: "var(--cyan)",
+    title: "Игроки и кланы",
+    hint: "Профили, статистика, рейтинг",
+    body: (
+      <p>
+        В <Link href="/character">Игроках</Link> найдите персонажа по нику: статистика и клан. В <Link href="/clans">Кланах</Link> - рейтинг
+        и составы. Если вы вошли через EXBO, сайт сам найдёт ваших персонажей.
+      </p>
+    ),
+  },
+  {
+    id: "pro",
+    icon: "star",
+    accent: "#ffb547",
+    title: "Pro",
+    hint: "Флиппер, графики, 20 алертов",
+    body: (
+      <>
         <p>
           <Link href="/pro">Pro</Link> открывает флиппер, флип-алерты, помощник продажи, графики, точные фильтры и до 20 ценовых алертов.
-          Первые 3 дня можно попробовать бесплатно - нужен только привязанный Telegram. Pro привязан к аккаунту EXBO - работает и на сайте,
-          и в Telegram.
+          Pro привязан к аккаунту EXBO - работает и на сайте, и в Telegram.
         </p>
+        <p className={styles.tip}>🎁 Первые 3 дня - бесплатно, нужен только привязанный Telegram.</p>
+      </>
+    ),
+  },
+  {
+    id: "safe",
+    icon: "shield",
+    accent: "#7ee081",
+    title: "Это безопасно",
+    hint: "Пароль не видим, данные из API EXBO",
+    body: (
+      <ul className={styles.list}>
+        <li>
+          <strong>Пароль мы не видим.</strong> Вход - через официальную страницу EXBO (exbo.net), как «Войти через Google» на других сайтах.
+          Сайт получает только подтверждение, что это вы, и список ваших персонажей.
+        </li>
+        <li>
+          <strong>Данные игры - из официального API EXBO</strong>: цены, лоты, профили, кланы, выбросы. Ничего не взламываем и в клиент игры
+          не лезем.
+        </li>
+        <li>
+          <strong>Аккаунту в игре ничего не грозит</strong>: сайт ничего не делает от вашего имени в игре - только читает открытые данные.
+        </li>
+        <li>
+          <strong>Оплата - через Tribute</strong> в Telegram. Данные карты к нам не попадают.
+        </li>
+        <li>
+          Не ставим рекламные трекеры и не продаём данные. Подробно - в <Link href="/privacy">политике конфиденциальности</Link>.
+        </li>
+      </ul>
+    ),
+  },
+];
 
-        <h2 id="safe">9. Это безопасно</h2>
-        <ul>
-          <li>
-            <strong>Пароль мы не видим.</strong> Вход - через официальную страницу EXBO (exbo.net), как «Войти через Google» на других
-            сайтах. Сайт получает только подтверждение, что это вы, и список ваших персонажей.
-          </li>
-          <li>
-            <strong>Данные игры - из официального API EXBO</strong>: цены, лоты, профили, кланы, выбросы. Ничего не взламываем и в клиент
-            игры не лезем.
-          </li>
-          <li>
-            <strong>Аккаунту в игре ничего не грозит</strong>: сайт ничего не делает от вашего имени в игре - только читает открытые данные.
-          </li>
-          <li>
-            <strong>Оплата - через Tribute</strong> в Telegram. Данные карты к нам не попадают.
-          </li>
-          <li>
-            Не ставим рекламные трекеры и не продаём данные. Подробно - в <Link href="/privacy">политике конфиденциальности</Link>.
-          </li>
-        </ul>
-
-        <section className={`glass ${styles.card}`}>
-          <strong>Остались вопросы?</strong>
-          <span>
-            Напишите: <a href={CONTACT_URL}>{CONTACT_LABEL}</a>. По частым вопросам допишем гайд.
-          </span>
-        </section>
-      </div>
-    </main>
+export default async function GuidePage() {
+  // язык из cookie; метаданные (SEO) остаются русскими, как на остальных страницах
+  const en = (await getLang()) === "en";
+  return (
+    <DocPage
+      eyebrow={en ? "Guide" : "Гайд"}
+      title={en ? "How to use" : "Как пользоваться"}
+      lead={
+        en
+          ? "Five minutes - and you know where to check prices, what to sell for and how to catch good deals."
+          : "Пять минут - и вы знаете, где смотреть цены, за сколько продавать и как ловить выгодные лоты."
+      }
+      meta={en ? ["⏱ 5 minutes", `📚 ${SECTIONS_EN.length} sections`] : ["⏱ 5 минут", `📚 ${SECTIONS.length} разделов`]}
+      sections={en ? SECTIONS_EN : SECTIONS}
+      numberLabel={en ? "Step" : "Шаг"}
+      navLabel={en ? "Guide sections" : "Разделы гайда"}
+      toTopLabel={en ? "Back to sections" : undefined}
+      beforeSections={
+        VIDEOS.length > 0 && (
+          <section className={styles.videos}>
+            {VIDEOS.map((v) => (
+              <figure key={v.src}>
+                <div className={styles.video}>
+                  <iframe src={v.src} title={v.title} loading="lazy" allow="fullscreen; picture-in-picture" allowFullScreen />
+                </div>
+                <figcaption>{v.title}</figcaption>
+              </figure>
+            ))}
+          </section>
+        )
+      }
+      final={
+        en
+          ? {
+              title: "Still have questions?",
+              body: (
+                <p>
+                  Contact support: <a href={CONTACT_URL}>{CONTACT_LABEL_EN}</a>. A real person answers, and we add common questions to the
+                  guide.
+                </p>
+              ),
+            }
+          : {
+              title: "Остались вопросы?",
+              body: (
+                <p>
+                  Напишите в поддержку: <a href={CONTACT_URL}>{CONTACT_LABEL}</a>. Отвечает живой человек, а по частым вопросам мы допишем
+                  гайд.
+                </p>
+              ),
+            }
+      }
+    />
   );
 }

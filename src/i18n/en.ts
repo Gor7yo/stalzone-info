@@ -39,6 +39,7 @@ export const en: Dict = {
     donate: "Support the project",
     disclaimer: "Unofficial fan project · data from STALZONE API · EXBO",
     docsNav: "Documents",
+    contact: "Contact us",
     guide: "How to use",
     rules: "Rules",
     privacy: "Privacy",
@@ -52,12 +53,14 @@ export const en: Dict = {
   home: {
     tiles: {
       market: ["Market", "Prices, charts and good deals"],
+      flips: ["Flipper", "Lots below market - buy and resell"],
       craft: ["Craft", "What to farm and what it's worth"],
       players: ["Players", "Profiles and stats"],
       clans: ["Clans", "Rankings and rosters"],
       emission: ["Emissions", "All regions live"],
       loot: ["Backpack", "What your loot is worth"],
     },
+    hotBadge: "🔥 deals",
     allRegions: "All regions",
     anomalyAria: "Anomaly: state of the Zone",
     admin: "Admin",

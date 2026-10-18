@@ -29,11 +29,15 @@ type Tile = {
   key: keyof Dict["home"]["tiles"];
   icon: IconName;
   accent: string;
+  /** выделенная плитка: светящаяся рамка и метка */
+  hot?: boolean;
 };
 
 const TILES = (
   [
     { href: "/auction", key: "market", icon: "market", accent: "#5aa9ff" },
+    // флиппер — на виду у всех: без Pro страница покажет, что он умеет, и предложит пробный период
+    { href: "/flips", key: "flips", icon: "sparkle", accent: "#7ee081", hot: true },
     { href: "/craft", key: "craft", icon: "sparkle", accent: "var(--acc)" },
     { href: "/character", key: "players", icon: "user", accent: "var(--cyan)" },
     { href: "/clans", key: "clans", icon: "shield", accent: "#c08bff" },
@@ -99,12 +103,14 @@ export default function HomePage() {
                 href={tile.href}
                 className={`glass ${styles.tile}`}
                 data-wide={i < 2 || undefined}
+                data-hot={tile.hot || undefined}
                 style={{ "--tile": tile.accent } as React.CSSProperties}
                 onClick={() => haptic.tap()}
               >
                 <span className={`${styles.tileIcon} depth`}>
                   <Icon name={tile.icon} size={22} />
                 </span>
+                {tile.hot && <span className={styles.tileBadge}>{t.home.hotBadge}</span>}
                 <span className={styles.tileBody}>
                   <strong className="display">{t.home.tiles[tile.key][0]}</strong>
                   <span>{t.home.tiles[tile.key][1]}</span>

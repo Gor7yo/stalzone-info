@@ -10,6 +10,7 @@ import { emissionState, useEmission } from "@/features/emission";
 import { CREATOR, creatorHref, DONATE_URL } from "@/lib/creator";
 import { useApp } from "@/lib/store";
 import { bindBackButton, haptic, useIsTelegram } from "@/lib/telegram";
+import { ContactButton } from "../Contact/ContactButton";
 import { Icon, type IconName } from "../Icon";
 import { ThemeToggle } from "../Theme/ThemeToggle";
 import { LangSwitch } from "../ui/RegionSwitch";
@@ -98,6 +99,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
         </Link>
         <span className={styles.disclaimer}>{t.shell.disclaimer}</span>
       </footer>
+
+      <ContactButton label={t.shell.contact} />
 
       {canGoBack && (
         <button

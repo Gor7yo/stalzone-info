@@ -173,6 +173,62 @@
   align-items: center;
 }
 
+/* нечётное число плиток: последняя одна в ряду — на всю ширину, без дырки справа */
+.tile:last-child:nth-child(odd):not([data-wide]) {
+  grid-column: span 2;
+}
+
+/* выделенная плитка (флиппер): цветная рамка, свечение и бегущий блик */
+.tile[data-hot] {
+  border-color: color-mix(in srgb, var(--tile) 55%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--tile) 25%, transparent),
+    0 18px 44px -20px var(--tile);
+}
+
+.tile[data-hot]::before {
+  opacity: 0.3;
+}
+
+.tile[data-hot]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(110deg, transparent 30%, color-mix(in srgb, var(--tile) 18%, transparent) 50%, transparent 70%);
+  background-size: 250% 100%;
+  animation: shine 3.2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes shine {
+  from {
+    background-position: 120% 0;
+  }
+  to {
+    background-position: -120% 0;
+  }
+}
+
+.tileBadge {
+  position: absolute;
+  top: 14px;
+  right: 40px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #0b0d0b;
+  background: var(--tile);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile[data-hot]::after {
+    animation: none;
+  }
+}
+
 .tileIcon {
   display: grid;
   place-items: center;
