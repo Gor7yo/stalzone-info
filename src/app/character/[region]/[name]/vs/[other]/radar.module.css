@@ -1,0 +1,154 @@
+/* Октагон сравнения: неоновые фигуры двух игроков на сетке из колец. */
+
+.radar {
+  display: grid;
+  gap: 6px;
+  margin-top: 14px;
+  padding: 14px 10px 12px;
+}
+
+/* цвета сторон — как на странице сравнения */
+.radar [data-side="a"] {
+  --side: #3ee0d0;
+}
+.radar [data-side="b"] {
+  --side: #ff7ab6;
+}
+
+.legend {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--side);
+}
+
+.legend span::before {
+  content: "";
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--side);
+  box-shadow: 0 0 10px var(--side);
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  overflow: visible;
+}
+
+.ring {
+  fill: none;
+  stroke: rgb(255 255 255 / 0.08);
+  stroke-width: 1;
+}
+
+.ring[data-outer] {
+  stroke: rgb(255 255 255 / 0.16);
+}
+
+.spoke {
+  stroke: rgb(255 255 255 / 0.07);
+  stroke-width: 1;
+  transition: stroke 200ms;
+}
+
+.spoke[data-active] {
+  stroke: rgb(var(--acc-rgb) / 0.55);
+}
+
+/* фигуры вырастают из центра при появлении */
+.shape {
+  fill: color-mix(in srgb, var(--side) 20%, transparent);
+  stroke: var(--side);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--side) 70%, transparent));
+  transform-origin: 220px 170px;
+  animation: grow 750ms var(--ease) both;
+}
+
+.shape[data-side="a"] {
+  animation-delay: 120ms;
+}
+
+.dot {
+  fill: var(--side);
+  filter: drop-shadow(0 0 5px var(--side));
+  transform-origin: 220px 170px;
+  animation: grow 750ms var(--ease) both;
+  transition: r 150ms;
+}
+
+@keyframes grow {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 700;
+  fill: var(--text-2);
+  cursor: pointer;
+  outline: none;
+  transition: fill 200ms;
+}
+
+.label[data-win="a"] {
+  fill: color-mix(in srgb, #3ee0d0 75%, var(--text-2));
+}
+
+.label[data-win="b"] {
+  fill: color-mix(in srgb, #ff7ab6 75%, var(--text-2));
+}
+
+.label[data-active],
+.label:focus-visible {
+  fill: var(--acc);
+}
+
+/* цифры выбранного показателя */
+.readout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 26px;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-3);
+}
+
+.readout b {
+  font-size: 16px;
+  color: var(--text-2);
+}
+
+.readout b[data-win] {
+  color: var(--side);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--side) 55%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shape,
+  .dot {
+    animation: none;
+  }
+}

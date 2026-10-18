@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useT } from "@/i18n/client";
-import { deepLink, haptic, share } from "@/lib/telegram";
+import { haptic, share } from "@/lib/telegram";
 import { Icon } from "../Icon";
+import { SITE_URL } from "../JsonLd";
 import styles from "./ui.module.css";
 
 export function FavButton({ active, onToggle, label }: { active: boolean; onToggle: () => void; label?: string }) {
@@ -38,7 +39,8 @@ export function ShareButton({ text }: { text: string }) {
       aria-label={t.common.share}
       onClick={async () => {
         haptic.tap();
-        const result = await share(deepLink(window.location.pathname), text);
+        // всегда ссылка на сайт (не на мини-приложение): открывается в браузере и даёт картинку-превью
+        const result = await share(`${SITE_URL}${window.location.pathname}`, text);
         if (result === "copied") {
           setCopied(true);
           setTimeout(() => setCopied(false), 1600);

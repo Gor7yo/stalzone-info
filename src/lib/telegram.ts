@@ -113,18 +113,9 @@ export function bindBackButton(onBack: () => void) {
 }
 
 // ---------- диплинки: t.me/<bot>/<app>?startapp=<путь в base64url> ----------
+// Сами больше не раздаём («Поделиться» даёт ссылку на сайт), но старые ссылки ещё открываются.
 
-const TG_APP_URL = process.env.NEXT_PUBLIC_TG_APP_URL;
-
-const toBase64Url = (s: string) => btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 const fromBase64Url = (s: string) => atob(s.replace(/-/g, "+").replace(/_/g, "/"));
-
-/** Ссылка, открывающая конкретную страницу приложения прямо в Telegram. */
-export function deepLink(path: string) {
-  if (!TG_APP_URL) return `${window.location.origin}${path}`;
-  // pathname уже percent-encoded, т.е. ASCII — btoa безопасен
-  return `${TG_APP_URL}?startapp=${toBase64Url(path)}`;
-}
 
 /** Путь из startapp-параметра, с которым открыли мини-приложение (один раз за сессию). */
 let startConsumed = false;
@@ -141,7 +132,10 @@ export function consumeStartPath(): string | null {
   }
 }
 
-/** Делится ссылкой нативно (Telegram → Web Share API → буфер обмена). */
+/**
+ * Делится ссылкой: в мини-приложении — окно «переслать» Telegram, на телефоне — системное меню,
+ * на компьютере — просто копирует ссылку (системное окно Windows там только мешает).
+ */
 export async function share(url: string, text: string): Promise<"shared" | "copied" | "failed"> {
   if (sdk) {
     const [called] = sdk.shareURL.ifAvailable(url, text);
@@ -149,11 +143,12 @@ export async function share(url: string, text: string): Promise<"shared" | "copi
   }
 
   try {
-    if (navigator.share) {
+    if (navigator.share && window.matchMedia("(pointer: coarse)").matches) {
       await navigator.share({ url, text });
       return "shared";
     }
-    await navigator.clipboard.writeText(`${text} ${url}`);
+    // только ссылка: мессенджер сам подтянет заголовок и картинку-превью
+    await navigator.clipboard.writeText(url);
     return "copied";
   } catch {
     return "failed";

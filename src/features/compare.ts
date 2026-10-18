@@ -15,11 +15,14 @@ export function statOf(c: StatsHolder, id: string) {
   return typeof v === "number" ? v : Number(v) || 0;
 }
 
-export type CompareKey = "kd" | "kills" | "played" | "accuracy" | "headshots" | "streak" | "mutants";
+export type CompareKey = "kd" | "kills" | "damage" | "accuracy" | "headshots" | "streak" | "mutants" | "played";
 
 const pct = (part: number, whole: number) => (whole ? (part / whole) * 100 : 0);
 
-/** Главные показатели игрока: больше — лучше. played — в часах, accuracy и headshots — в %. */
+/**
+ * Главные показатели игрока: больше — лучше. played — в часах, accuracy и headshots — в %.
+ * Порядок ключей — порядок осей октагона: боевые рядом, «в игре» замыкает круг.
+ */
 export function playerStats(c: StatsHolder): Record<CompareKey, number> {
   const kills = statOf(c, "kil");
   const deaths = statOf(c, "dea");
@@ -27,11 +30,12 @@ export function playerStats(c: StatsHolder): Record<CompareKey, number> {
   return {
     kd: deaths ? kills / deaths : kills,
     kills,
-    played: statOf(c, "pla-tim") / HOUR,
+    damage: statOf(c, "dam-dea-all"),
     accuracy: pct(hits, statOf(c, "sho-fir")),
     headshots: pct(statOf(c, "sho-hea"), hits),
     streak: statOf(c, "max-kil-ser"),
     mutants: statOf(c, "mut-kil"),
+    played: statOf(c, "pla-tim") / HOUR,
   };
 }
 

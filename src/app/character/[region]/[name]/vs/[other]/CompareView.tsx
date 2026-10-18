@@ -12,11 +12,14 @@ import { isNotFound } from "@/lib/api";
 import { stripMc } from "@/lib/mcText";
 import type { Region } from "@/lib/store";
 import { CompareEntry } from "../../CompareEntry";
+import { Radar } from "./Radar";
 import styles from "./compare.module.css";
 
 const HOUR = 3_600_000;
 
-interface Row {
+export interface Row {
+  /** показатель профиля; у строк «за неделю» нет — они не идут в октагон */
+  key?: CompareKey;
   label: string;
   a: number;
   b: number;
@@ -67,8 +70,8 @@ export function CompareView({ region, a, b }: { region: Region; a: string; b: st
 
 function Versus({ region, a, b, pa, pb }: { region: Region; a: Character; b: Character; pa?: Progress; pb?: Progress }) {
   const t = useT().player;
-  const { formatNumber } = useFormat();
-  const rows = buildRows(a, b, pa, pb, t, formatNumber).filter((r) => r.a || r.b);
+  const { formatNumber, formatShort } = useFormat();
+  const rows = buildRows(a, b, pa, pb, t, formatNumber, formatShort).filter((r) => r.a || r.b);
   const { a: winsA, b: winsB } = score(rows);
   const leader = winsA === winsB ? null : winsA > winsB ? a.username : b.username;
 
@@ -86,6 +89,9 @@ function Versus({ region, a, b, pa, pb }: { region: Region; a: Character; b: Cha
       </div>
 
       <p className={styles.verdict}>{leader ? t.compare.leads(leader) : t.compare.draw}</p>
+
+      {/* октагон — только общие показатели профиля (строки «за неделю» без key) */}
+      <Radar axes={rows.filter((r) => r.key)} nameA={a.username} nameB={b.username} />
 
       <section className={`glass ${styles.rows}`}>
         {rows.map((r) => {
@@ -155,6 +161,7 @@ function buildRows(
   pb: Progress | undefined,
   t: ReturnType<typeof useT>["player"],
   formatNumber: (n: number) => string,
+  formatShort: (n: number) => string,
 ): Row[] {
   const num = (n: number) => formatNumber(Math.round(n));
   const hours = (n: number) => t.hours(formatNumber(Math.round(n * 10) / 10));
@@ -167,6 +174,7 @@ function buildRows(
     headshots: { label: t.compare.headshots, format: percent },
     streak: { label: t.maxStreak, format: num },
     mutants: { label: t.compare.mutants, format: num },
+    damage: { label: t.compare.damage, format: formatShort },
   };
 
   const rows: Row[] = compareStats(a, b).map((r) => ({ ...r, ...view[r.key] }));
