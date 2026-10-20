@@ -6,8 +6,16 @@
   transition: opacity 200ms;
 }
 
+.windowRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 .recap {
-  justify-self: start;
+  flex: none;
 }
 
 .window {

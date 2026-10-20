@@ -72,7 +72,7 @@ export default function HomePage() {
         <div className="desk-main">
           <section className={`glass ${styles.hero}`} data-phase={phase}>
             <div className={styles.heroText}>
-              <EmissionStatus data={emission.data} isLoading={emission.isLoading} isError={emission.isError} />
+              <EmissionStatus data={emission.data} isLoading={emission.isLoading} isError={emission.isError} size="sm" />
               <Link href="/emission" className={styles.heroLink}>
                 {t.home.allRegions} <Icon name="chevron" size={14} />
               </Link>

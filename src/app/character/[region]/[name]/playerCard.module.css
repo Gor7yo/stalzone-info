@@ -254,6 +254,22 @@
   color: var(--text);
 }
 
+.moreRows {
+  display: grid;
+}
+
+.moreRows[open] {
+  gap: 8px;
+}
+
+.moreRows summary {
+  width: fit-content;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-3);
+  cursor: pointer;
+}
+
 .betterRow[data-top] .betterBar i {
   box-shadow: 0 0 10px rgb(var(--acc-rgb) / 0.6);
 }

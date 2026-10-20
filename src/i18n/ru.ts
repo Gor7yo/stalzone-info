@@ -509,6 +509,7 @@ export const ru = {
       collecting: (n: string) => `Собираем базу игроков для рейтинга (сейчас ${n}) - карточка появится совсем скоро.`,
       whoYou: "Кто ты в Зоне",
       better: (label: string, p: number) => `${label} лучше, чем у ${p}% игроков`,
+      more: (n: number) => `Ещё ${n} ${plural(n, ["показатель", "показателя", "показателей"])}`,
       metrics: {
         kd: "K/D",
         kills: "Убийств",

@@ -201,11 +201,12 @@ function Profile({ character: c, region, meta }: { character: Character; region:
             <StatTile label={t.maxStreak} value={formatNumber(stat("max-kil-ser"))} hint={t.mutants(formatNumber(stat("mut-kil")))} />
           </section>
 
+          {/* сравнение — сразу под главными цифрами, а не в самом низу */}
+          <CompareEntry region={region} name={c.username} />
+
           <PlayerCard region={region} character={c} />
 
           <PlayerProgress region={region} name={c.username} meta={meta} />
-
-          <CompareEntry region={region} name={c.username} />
         </div>
         <div className="desk-side">
           {c.displayedAchievements?.length > 0 && (
@@ -351,7 +352,8 @@ function AllStats({ stats, meta }: { stats: Stat[]; meta?: Meta }) {
       <SearchField value={filter} onChange={setFilter} placeholder={t.findStat} aria-label={t.statsFilterAria} />
       <div className="stack" style={{ marginTop: 12 }}>
         {[...groups].map(([category, list]) => (
-          <details key={category} className={styles.group} open={!!q || category === "COMBAT" || category === "SURVIVAL"}>
+          // свёрнуто, пока не ищут: раскрытые «Бой» и «Выживание» растягивали страницу на сотню строк
+          <details key={category} className={styles.group} open={!!q}>
             <summary>
               {categories[category] ?? category}
               <span className="dim mono">{list.length}</span>

@@ -54,10 +54,7 @@ export function PlayerProgress({ region, name, meta }: { region: Region; name: s
           <p>{t.empty}</p>
         </div>
       ) : (
-        <>
-          <Body p={data} meta={meta} />
-          {data.to && <RecapLink region={region} name={name} month={data.to.slice(0, 7)} />}
-        </>
+        <Body p={data} meta={meta} recap={data.to ? <RecapLink region={region} name={name} month={data.to.slice(0, 7)} /> : null} />
       )}
     </section>
   );
@@ -67,13 +64,13 @@ export function PlayerProgress({ region, name, meta }: { region: Region; name: s
 function RecapLink({ region, name, month }: { region: Region; name: string; month: string }) {
   const t = useT().player.recap;
   return (
-    <Link href={`/character/${region}/${encodeURIComponent(name)}/recap/${month}`} className={`btn ${styles.recap}`}>
+    <Link href={`/character/${region}/${encodeURIComponent(name)}/recap/${month}`} className={`pill ${styles.recap}`}>
       {t.link(t.months[Number(month.slice(5)) - 1])}
     </Link>
   );
 }
 
-function Body({ p, meta }: { p: Progress; meta?: Meta }) {
+function Body({ p, meta, recap }: { p: Progress; meta?: Meta; recap: React.ReactNode }) {
   const t = useT().player.progress;
   const lang = useLang();
   const { formatNumber } = useFormat();
@@ -100,7 +97,11 @@ function Body({ p, meta }: { p: Progress; meta?: Meta }) {
 
   return (
     <>
-      <p className={styles.window}>{p.full ? t.window(p.days) : t.partial(p.days)}</p>
+      {/* «За 7 дней» слева, ссылка на итоги месяца справа — одной строкой */}
+      <div className={styles.windowRow}>
+        <p className={styles.window}>{p.full ? t.window(p.days) : t.partial(p.days)}</p>
+        {recap}
+      </div>
 
       <div className={styles.tiles}>
         <Tile label={t.kills} value={plus(kills)} tone="acc" />

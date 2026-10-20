@@ -20,6 +20,19 @@ import styles from "./playerCard.module.css";
 
 /** Какие процентили показываем строками «лучше, чем у X%» — по порядку. */
 const PERCENTILE_ROWS: Metric[] = ["kd", "kills", "accuracy", "headshots", "survival", "damage", "mutants", "played"];
+/** Сколько строк «лучше, чем у X%» видно сразу — самые сильные. */
+const TOP_ROWS = 4;
+
+function BetterRow({ label, p }: { label: string; p: number }) {
+  return (
+    <div className={styles.betterRow} data-top={p >= 80 || undefined}>
+      <span>{label}</span>
+      <span className={styles.betterBar} aria-hidden>
+        <i style={{ width: `${p}%` }} />
+      </span>
+    </div>
+  );
+}
 
 /** Карточка игрока как в FIFA: рейтинг, шесть характеристик, архетип и «лучше, чем X% игроков». */
 export function PlayerCard({ region, character: c }: { region: Region; character: Character }) {
@@ -29,6 +42,8 @@ export function PlayerCard({ region, character: c }: { region: Region; character
   const { data, isLoading, isError } = useRating(region, c.username);
 
   if (isError) return null;
+  const ranked =
+    data?.status === "ready" ? PERCENTILE_ROWS.map((m) => ({ m, p: Math.round(data.percentiles[m]) })).sort((a, b) => b.p - a.p) : [];
 
   return (
     <section className="section">
@@ -68,18 +83,17 @@ export function PlayerCard({ region, character: c }: { region: Region; character
               </span>
             </div>
 
+            {/* сильные стороны сверху; остальное — по нажатию, чтобы блок не растягивал страницу */}
             <div className={`glass ${styles.better}`}>
-              {PERCENTILE_ROWS.map((m) => {
-                const p = Math.round(data.percentiles[m]);
-                return (
-                  <div key={m} className={styles.betterRow} data-top={p >= 80 || undefined}>
-                    <span>{t.better(t.metrics[m], p)}</span>
-                    <span className={styles.betterBar} aria-hidden>
-                      <i style={{ width: `${p}%` }} />
-                    </span>
-                  </div>
-                );
-              })}
+              {ranked.slice(0, TOP_ROWS).map(({ m, p }) => (
+                <BetterRow key={m} label={t.better(t.metrics[m], p)} p={p} />
+              ))}
+              <details className={styles.moreRows}>
+                <summary>{t.more(ranked.length - TOP_ROWS)}</summary>
+                {ranked.slice(TOP_ROWS).map(({ m, p }) => (
+                  <BetterRow key={m} label={t.better(t.metrics[m], p)} p={p} />
+                ))}
+              </details>
             </div>
           </div>
         </div>

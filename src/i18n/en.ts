@@ -496,6 +496,7 @@ export const en: Dict = {
       collecting: (n: string) => `Building the player base for ratings (${n} so far) - the card will appear very soon.`,
       whoYou: "Who you are in the Zone",
       better: (label: string, p: number) => `${label} better than ${p}% of players`,
+      more: (n: number) => `${n} more ${pluralEn(n, "stat", "stats")}`,
       metrics: {
         kd: "K/D",
         kills: "Kills",
