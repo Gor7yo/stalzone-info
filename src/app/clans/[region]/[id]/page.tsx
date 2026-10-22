@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { clanLevel } from "@/lib/clanLevel";
 import { stripMc } from "@/lib/mcText";
 import { serverClan } from "@/lib/players-server";
 import { isRegion } from "@/lib/regions";
@@ -12,7 +13,7 @@ export async function generateMetadata({ params }: PageProps<"/clans/[region]/[i
   if (!clan) return { title: "Клан" };
   return {
     title: `[${stripMc(clan.tag)}] ${stripMc(clan.name)}`,
-    description: `Клан STALZONE: уровень ${clan.level}, бойцов ${clan.memberCount}, лидер ${stripMc(clan.leader)}.`,
+    description: `Клан STALZONE: уровень ${clanLevel(clan.level)}, бойцов ${clan.memberCount}, лидер ${stripMc(clan.leader)}.`,
   };
 }
 

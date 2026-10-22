@@ -47,6 +47,14 @@
   margin-top: 10px;
 }
 
+/* id клана длинный - на телефоне переносим, а не обрезаем */
+.clanId {
+  display: block;
+  font-size: 13px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .leader {
   margin-top: 10px;
 }

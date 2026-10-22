@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useDeferredValue, useEffect, useState } from "react";
+import { useDeferredValue, useState, useSyncExternalStore } from "react";
 import { Icon } from "@/components/Icon";
 import { ItemRow } from "@/components/ItemRow";
 import { ProBadge } from "@/components/Pro/Pro";
@@ -18,6 +18,9 @@ import { haptic } from "@/lib/telegram";
 
 const STEP = 40;
 
+const noSubscribe = () => () => {};
+const readUrlQuery = () => new URLSearchParams(window.location.search).get("q")?.trim().slice(0, 64) || null;
+
 export default function AuctionPage() {
   const t = useT().market;
   const lang = useLang();
@@ -31,11 +34,14 @@ export default function AuctionPage() {
   const [limit, setLimit] = useState(STEP);
   const deferred = useDeferredValue(query);
 
-  // /auction?q=комета — поиск из выдачи Google (SearchAction в layout) и ссылки извне
-  useEffect(() => {
-    const q = new URLSearchParams(window.location.search).get("q")?.trim();
-    if (q) setQuery(q.slice(0, 64));
-  }, []);
+  // /auction?q=комета — поиск из выдачи Google (SearchAction в layout) и ссылки извне;
+  // подставляем один раз, после гидратации (на сервере запроса нет)
+  const urlQuery = useSyncExternalStore(noSubscribe, readUrlQuery, () => null);
+  const [urlApplied, setUrlApplied] = useState(false);
+  if (urlQuery && !urlApplied) {
+    setUrlApplied(true);
+    setQuery(urlQuery);
+  }
 
   const { data: index, isLoading, isError, refetch } = useItems();
   const browsing = deferred.trim().length > 0 || group !== undefined;

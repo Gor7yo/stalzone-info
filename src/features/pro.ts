@@ -28,6 +28,8 @@ export interface Referral {
   monthLimit: number;
   bonusDays: number;
   trialDays: number;
+  /** бонус пригласившему - когда у друга столько часов в игре */
+  minHours?: number;
 }
 
 export const useReferral = (enabled: boolean) =>

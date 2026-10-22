@@ -12,6 +12,7 @@ import { useClan } from "@/features/clans";
 import { useFormat, useLang, useT } from "@/i18n/client";
 import { ClanMetrics } from "./ClanMetrics";
 import { isNotFound } from "@/lib/api";
+import { clanLevel } from "@/lib/clanLevel";
 import { McText, stripMc } from "@/lib/mcText";
 import { actions, useApp, type Region } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
@@ -91,7 +92,7 @@ export function ClanView({ region, id }: { region: Region; id: string }) {
                 <span className="dot" />
                 {allianceName(alliance, lang)}
               </span>
-              <span className="pill">{t.levelN(clan.level)}</span>
+              <span className="pill">{t.levelN(clanLevel(clan.level))}</span>
             </div>
           </Tilt>
 
@@ -100,13 +101,13 @@ export function ClanView({ region, id }: { region: Region; id: string }) {
         <div className="desk-side">
           <section className={`${styles.stats} stagger`}>
             <StatTile label={t.members} tone="acc" value={formatNumber(clan.memberCount)} />
-            <StatTile label={t.level} value={formatNumber(clan.level)} />
+            <StatTile label={t.level} value={formatNumber(clanLevel(clan.level))} />
             <StatTile
               label={t.founded}
               value={clan.registrationTime ? formatShortDate(clan.registrationTime) : "—"}
               hint={clan.registrationTime && now ? formatRelative(clan.registrationTime, now) : undefined}
             />
-            <StatTile label="ID" value={<span style={{ fontSize: 13 }}>{clan.id}</span>} />
+            <StatTile label="ID" value={<span className={styles.clanId}>{clan.id}</span>} />
           </section>
 
           {clan.leader && (

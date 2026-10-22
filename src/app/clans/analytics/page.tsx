@@ -20,6 +20,7 @@ import {
   type ClanPeriod,
 } from "@/features/clans";
 import { useFormat, useLang, useT } from "@/i18n/client";
+import { clanLevel } from "@/lib/clanLevel";
 import { stripMc } from "@/lib/mcText";
 import { useApp, type Region } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
@@ -174,9 +175,9 @@ function Report({ data, region }: { data: ClanAnalytics; region: Region }) {
           <div className={styles.chartCard}>
             <BarChart
               bars={data.levels.map((l) => ({
-                label: t.lvlShort(l.level),
+                label: t.lvlShort(clanLevel(l.level)),
                 value: l.clans,
-                tip: `${t.levelN(l.level)}: ${clansWord(l.clans)}, ${fighters(l.members)}`,
+                tip: `${t.levelN(clanLevel(l.level))}: ${clansWord(l.clans)}, ${fighters(l.members)}`,
               }))}
             />
           </div>
@@ -339,7 +340,7 @@ function ClanList({
                 [{stripMc(r.tag)}] {stripMc(r.name)}
               </strong>
               <span className="dim truncate">
-                {t.lvl(r.level)} · {fighters(r.memberCount)}
+                {t.lvl(clanLevel(r.level))} · {fighters(r.memberCount)}
               </span>
             </span>
             {aside(r)}

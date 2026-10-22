@@ -144,6 +144,8 @@ export const en: Dict = {
     notify: "Price alert",
     shareText: (name: string) => `${name} - STALZONE market prices`,
     itemFallback: "Item",
+    notFoundTitle: "Item not found",
+    notFoundText: "This item isn't in the database - the link may be outdated. Find it with the market search.",
     inactiveTitle: "Not trading right now",
     inactiveLast: (period: string, when: string, price: string) => `No lots and no deals ${period}. Last sale - ${when} for ${price}.`,
     inactiveNever: "No lots, and it has never sold at this region's auction.",
@@ -221,8 +223,8 @@ export const en: Dict = {
     safe: "🔒 Safe: you sign in only on the official EXBO site, we never see your password. Game data comes from the official EXBO API. Payments go through Tribute - card details never reach us.",
     referral: {
       title: "🤝 Invite a friend",
-      text: (trial: number, bonus: number) =>
-        `Your friend gets ${trial} days of Pro for free, and you get +${bonus} day of Pro for everyone who comes via your link and links Telegram. Up to 10 bonuses per 30 days.`,
+      text: (trial: number, bonus: number, hours: number) =>
+        `Your friend gets ${trial} days of Pro for free, and you get +${bonus} day of Pro for everyone who comes via your link, links Telegram and plays ${hours} hours. Up to 10 bonuses per 30 days.`,
       copy: "Copy",
       copied: "Copied ✓",
       share: "Share in Telegram",

@@ -11,6 +11,7 @@ import { SearchField } from "@/components/ui/SearchField";
 import { EmptyState, ErrorState, RowSkeleton } from "@/components/ui/States";
 import { CLANS_PAGE, useClans, useClanSearch, useDebounced, type Clan } from "@/features/clans";
 import { useFormat, useT } from "@/i18n/client";
+import { clanLevel } from "@/lib/clanLevel";
 import { stripMc } from "@/lib/mcText";
 import { actions, useApp, type Region } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
@@ -176,7 +177,7 @@ function ClanRow({ clan, region }: { clan: Clan; region: Region }) {
           [{stripMc(clan.tag)}] {stripMc(clan.name)}
         </strong>
         <span className="dim truncate" style={{ fontSize: 12, fontWeight: 600 }}>
-          {t.lvl(clan.level)} · {t.fighters(clan.memberCount, formatNumber(clan.memberCount))} · {clan.leader}
+          {t.lvl(clanLevel(clan.level))} · {t.fighters(clan.memberCount, formatNumber(clan.memberCount))} · {clan.leader}
         </span>
       </span>
       <FavButton

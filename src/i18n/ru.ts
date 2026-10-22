@@ -146,6 +146,8 @@ export const ru = {
     notify: "Уведомить о цене",
     shareText: (name: string) => `${name} - цены на рынке STALZONE`,
     itemFallback: "Предмет",
+    notFoundTitle: "Предмет не найден",
+    notFoundText: "Такого предмета нет в справочнике - возможно, ссылка устарела. Найдите его через поиск на рынке.",
     inactiveTitle: "Сейчас не торгуется",
     inactiveLast: (period: string, when: string, price: string) =>
       `Лотов нет, сделок ${period} не было. Последняя продажа - ${when} за ${price}.`,
@@ -224,8 +226,8 @@ export const ru = {
     safe: "🔒 Безопасно: вход - только на официальном сайте EXBO, пароль мы не видим. Данные игры берём из официального API EXBO. Оплату проводит Tribute - данные карты к нам не попадают.",
     referral: {
       title: "🤝 Пригласи друга",
-      text: (trial: number, bonus: number) =>
-        `Друг получит ${trial} дня Pro бесплатно, а вы - +${bonus} день Pro за каждого, кто придёт по вашей ссылке и привяжет Telegram. До 10 бонусов за 30 дней.`,
+      text: (trial: number, bonus: number, hours: number) =>
+        `Друг получит ${trial} дня Pro бесплатно, а вы - +${bonus} день Pro за каждого, кто придёт по вашей ссылке, привяжет Telegram и наиграет ${hours} часов. До 10 бонусов за 30 дней.`,
       copy: "Скопировать",
       copied: "Скопировано ✓",
       share: "Поделиться в Telegram",

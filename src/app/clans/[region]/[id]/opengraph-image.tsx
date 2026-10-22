@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { allianceOf } from "@/features/alliances";
+import { clanLevel } from "@/lib/clanLevel";
 import { stripMc } from "@/lib/mcText";
 import { OG_ACC, OG_BG, ogFonts, ogText } from "@/lib/og";
 import { serverClan } from "@/lib/players-server";
@@ -24,7 +25,7 @@ export default async function Image({ params }: { params: Promise<{ region: stri
   const name = clan ? stripMc(clan.name) : "Клан";
   const tiles = clan
     ? [
-        { label: "Уровень", value: String(clan.level) },
+        { label: "Уровень", value: String(clanLevel(clan.level)) },
         { label: "Бойцов", value: `${clan.memberCount}/${MAX_MEMBERS}` },
         { label: "Лидер", value: stripMc(clan.leader) },
       ]

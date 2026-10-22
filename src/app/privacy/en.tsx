@@ -120,7 +120,10 @@ export const SECTIONS_EN: DocSection[] = [
             ],
             ["Days you visited and your last visit time", "service statistics and abuse protection"],
             ["Pro expiry, trial flag, account restrictions", "so that Pro and the rules work"],
-            ["Your referral link code, who invited you and whom you invited", "give invitation bonuses and enforce the limit"],
+            [
+              "Your referral link code, who invited you and whom you invited",
+              "give invitation bonuses and enforce the limit; for the bonus we check the invitee's hours in the game in public EXBO stats",
+            ],
           ]}
         />
         <p>

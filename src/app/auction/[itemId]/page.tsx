@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { breadcrumbs, JsonLd } from "@/components/JsonLd";
 import { GROUPS } from "@/features/catalog";
 import { getLang } from "@/i18n/server";
@@ -48,12 +49,13 @@ export default async function ItemPage({ params, searchParams }: PageProps<"/auc
   const { q, u, v } = await searchParams;
   const id = decodeURIComponent(itemId);
   const item = serverItem(id);
-  const group = item && item.group !== "other" ? GROUPS.find((g) => g.id === item.group) : undefined;
+  if (!item) notFound();
+  const group = item.group !== "other" ? GROUPS.find((g) => g.id === item.group) : undefined;
   // заголовок в HTML - на языке интерфейса; JSON-LD и метаданные остаются русскими
   const lang = await getLang();
   return (
     <>
-      {item && group && (
+      {group && (
         <JsonLd
           data={breadcrumbs([
             ["Рынок", "/auction"],
@@ -64,7 +66,7 @@ export default async function ItemPage({ params, searchParams }: PageProps<"/auc
       )}
       <ItemView
         id={id}
-        name={lang === "en" ? item?.nameEn : item?.name}
+        name={lang === "en" ? item.nameEn : item.name}
         group={group && { id: group.id, label: group.label }}
         quality={level(q, 5)}
         upgrade={level(u, 15)}

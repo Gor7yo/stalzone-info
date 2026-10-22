@@ -22,7 +22,7 @@ function ReferralCard() {
     <section className="section">
       <h2 className="section-title">{t.title}</h2>
       <div className={`glass ${styles.referral}`}>
-        <p>{t.text(data.trialDays, data.bonusDays)}</p>
+        <p>{t.text(data.trialDays, data.bonusDays, data.minHours ?? 5)}</p>
         <div className={styles.refLink}>
           <code>{data.link}</code>
           <button
