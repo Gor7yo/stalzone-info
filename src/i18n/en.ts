@@ -725,6 +725,7 @@ export const en: Dict = {
     proUntilAria: "Pro until date",
     untilDate: "Until date",
     notifyBot: "Notify in the bot",
+    messagePlaceholder: "Your own message (optional) - sent under the “Pro granted until …” line",
     sureRevoke: "Revoke Pro, sure?",
     revoke: "Revoke Pro",
     blocking: "Ban",

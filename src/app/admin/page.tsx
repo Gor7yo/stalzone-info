@@ -252,6 +252,7 @@ function UserCard({ id, onBack }: { id: string; onBack: () => void }) {
   const [proDays, setProDays] = useState("");
   const [proDate, setProDate] = useState("");
   const [notify, setNotify] = useState(true);
+  const [message, setMessage] = useState("");
   const [banDays, setBanDays] = useState("");
   const [reason, setReason] = useState("");
   const [confirm, setConfirm] = useState<string | null>(null);
@@ -263,7 +264,7 @@ function UserCard({ id, onBack }: { id: string; onBack: () => void }) {
     haptic.notify("success");
     fn();
   };
-  const pro = (term: Term) => act.mutate({ kind: "pro", term, notify });
+  const pro = (term: Term) => act.mutate({ kind: "pro", term, notify, message }, { onSuccess: () => setMessage("") });
   const ban = (term: Term) => act.mutate({ kind: "ban", term, reason });
 
   return (
@@ -346,6 +347,15 @@ function UserCard({ id, onBack }: { id: string; onBack: () => void }) {
         <label className={styles.check}>
           <input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} /> {a.notifyBot}
         </label>
+        {notify && (
+          <textarea
+            className={styles.message}
+            placeholder={a.messagePlaceholder}
+            maxLength={1000}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+          />
+        )}
         {data?.pro && (
           <button
             type="button"

@@ -731,6 +731,7 @@ export const ru = {
     proUntilAria: "Pro до даты",
     untilDate: "До даты",
     notifyBot: "Сообщить в боте",
+    messagePlaceholder: "Своё сообщение (необязательно) - придёт под строкой «Вам выдан Pro до …»",
     sureRevoke: "Точно снять Pro?",
     revoke: "Снять Pro",
     blocking: "Блокировка",

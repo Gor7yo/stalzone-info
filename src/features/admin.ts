@@ -107,7 +107,10 @@ export const useAdminLog = (enabled: boolean) =>
   });
 
 type Action =
-  { kind: "pro"; term: Term; notify: boolean } | { kind: "revoke" } | { kind: "ban"; term: Term; reason: string } | { kind: "unban" };
+  | { kind: "pro"; term: Term; notify: boolean; message?: string }
+  | { kind: "revoke" }
+  | { kind: "ban"; term: Term; reason: string }
+  | { kind: "unban" };
 
 /** Действие над пользователем; после него обновляем карточку, список и журнал. */
 export function useAdminAction(id: string) {
@@ -117,7 +120,11 @@ export function useAdminAction(id: string) {
       const base = `/api/admin/users/${id}`;
       switch (a.kind) {
         case "pro":
-          return authed<AdminUserDetail>(`${base}/pro`, "POST", { ...a.term, notify: a.notify });
+          return authed<AdminUserDetail>(`${base}/pro`, "POST", {
+            ...a.term,
+            notify: a.notify,
+            message: a.notify && a.message?.trim() ? a.message.trim() : undefined,
+          });
         case "revoke":
           return authed<AdminUserDetail>(`${base}/pro/revoke`, "POST");
         case "ban":

@@ -180,6 +180,22 @@
   font-weight: 600;
 }
 
+/* своё послание к выдаче Pro */
+.message {
+  display: block;
+  width: 100%;
+  min-height: 72px;
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  border-radius: 11px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  resize: vertical;
+}
+
 .check {
   display: flex;
   align-items: center;
