@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Icon } from "@/components/Icon";
 import { Tilt } from "@/components/Tilt/Tilt";
 import { ShareButton } from "@/components/ui/Buttons";
 import { EmptyState, ErrorState } from "@/components/ui/States";
@@ -133,7 +134,7 @@ function Head({ region, c, side }: { region: Region; c: Character; side: "a" | "
             // eslint-disable-next-line @next/next/no-img-element
             <img src={alliance.image} alt="" width={44} height={44} />
           ) : (
-            <span className="display">{c.username.slice(0, 1).toUpperCase()}</span>
+            <Icon name="user" size={26} />
           )}
         </span>
         <strong className={`display ${styles.name}`}>

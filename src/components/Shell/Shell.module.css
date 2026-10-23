@@ -392,6 +392,14 @@
     margin-bottom: 52px;
   }
 
+  /* тема и язык - два переключателя в одну строку */
+  .sideToggles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 6px 12px;
+  }
+
   .sideDonate {
     display: flex;
     align-items: center;

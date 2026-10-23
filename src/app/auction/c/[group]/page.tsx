@@ -13,14 +13,16 @@ import styles from "./category.module.css";
  * «цены артефактов» и путь для робота ко всем страницам предметов.
  */
 export const dynamicParams = false;
+/** Состав рынка меняется (что месяц не торговалось - уходит): пересобираем раз в час. */
+export const revalidate = 3600;
 
-export function generateStaticParams() {
-  return marketGroups().map((g) => ({ group: g.id }));
+export async function generateStaticParams() {
+  return (await marketGroups()).map((g) => ({ group: g.id }));
 }
 
 export async function generateMetadata({ params }: PageProps<"/auction/c/[group]">): Promise<Metadata> {
   const { group } = await params;
-  const g = marketGroup(group);
+  const g = await marketGroup(group);
   if (!g) return {};
   return {
     title: `${g.label} - цены на аукционе`,
@@ -31,8 +33,9 @@ export async function generateMetadata({ params }: PageProps<"/auction/c/[group]
 
 export default async function CategoryPage({ params }: PageProps<"/auction/c/[group]">) {
   const { group } = await params;
-  const g = marketGroup(group);
+  const g = await marketGroup(group);
   if (!g) notFound();
+  const groups = await marketGroups();
   // интерфейс - на языке из cookie; JSON-LD и метаданные остаются русскими
   const { t, lang } = await getT();
   const label = groupLabel(g, lang);
@@ -56,7 +59,7 @@ export default async function CategoryPage({ params }: PageProps<"/auction/c/[gr
       </PageHeader>
 
       <nav className={styles.groups} aria-label={t.category.groupsAria}>
-        {marketGroups().map((x) => (
+        {groups.map((x) => (
           <Link key={x.id} href={`/auction/c/${x.id}`} className="chip" aria-current={x.id === g.id ? "page" : undefined}>
             {groupLabel(x, lang)}
           </Link>

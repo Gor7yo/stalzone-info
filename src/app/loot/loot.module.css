@@ -66,7 +66,7 @@
   border: 1px solid var(--line);
   overflow: hidden;
   isolation: isolate;
-  animation: rise 360ms var(--ease) both;
+  animation: rise 360ms var(--ease) backwards;
 }
 
 /* полоска доли в общей стоимости */

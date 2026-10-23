@@ -85,7 +85,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <Icon name="heart" size={15} />
             {t.shell.donate}
           </a>
-          <ThemeToggle compact />
+          <ThemeToggle />
           <LangSwitch />
         </div>
         <nav className={styles.footerLinks} aria-label={t.shell.docsNav}>
@@ -156,8 +156,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <Icon name="help" size={18} />
             {t.shell.guide}
           </Link>
-          <ThemeToggle />
-          <LangSwitch />
+          <div className={styles.sideToggles}>
+            <ThemeToggle />
+            <LangSwitch />
+          </div>
           <a className={styles.sideDonate} href={DONATE_URL} target="_blank" rel="noopener">
             <Icon name="heart" size={18} />
             {t.shell.donate}

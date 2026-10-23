@@ -2,10 +2,9 @@
 
 import { useSyncExternalStore } from "react";
 import { useT } from "@/i18n/client";
-import { haptic } from "@/lib/telegram";
 import { THEME_KEY, type Theme } from "@/lib/theme";
 import { Icon } from "../Icon";
-import styles from "./ThemeToggle.module.css";
+import { Segmented } from "../ui/Segmented";
 
 // тема живёт на <html data-theme> (её ставит скрипт в <head>); переключатели узнают о смене через подписку
 const listeners = new Set<() => void>();
@@ -29,26 +28,22 @@ function setTheme(next: Theme) {
 }
 
 /**
- * Светлая/тёмная тема. compact — круглая кнопка-иконка (подвал), иначе строка с подписью (боковая панель).
+ * Светлая/тёмная тема — переключатель с иконками (луна / солнце), рядом с RU/EN.
  * По умолчанию тёмная — фирменный вид; выбор запоминается в этом браузере.
  */
-export function ThemeToggle({ compact = false }: { compact?: boolean }) {
+export function ThemeToggle() {
   const theme = useSyncExternalStore(subscribe, snapshot, serverSnapshot);
   const t = useT().shell;
-  const label = theme === "light" ? t.themeDark : t.themeLight;
   return (
-    <button
-      type="button"
-      className={compact ? styles.icon : styles.row}
-      onClick={() => {
-        haptic.select();
-        setTheme(theme === "light" ? "dark" : "light");
-      }}
-      aria-label={label}
-      title={label}
-    >
-      <Icon name={theme === "light" ? "moon" : "sun"} size={compact ? 16 : 18} />
-      {!compact && label}
-    </button>
+    <Segmented<Theme>
+      label={t.theme}
+      size="sm"
+      value={theme}
+      onChange={setTheme}
+      options={[
+        { value: "dark", label: <Icon name="moon" size={15} />, ariaLabel: t.themeDark },
+        { value: "light", label: <Icon name="sun" size={15} />, ariaLabel: t.themeLight },
+      ]}
+    />
   );
 }

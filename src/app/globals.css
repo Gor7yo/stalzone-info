@@ -436,31 +436,92 @@ img {
   animation: shimmer 1.4s linear infinite;
 }
 
+/*
+ * Волна по номеру элемента (--stagger-i, до 24-го): первые 8 - шагом 40 мс, дальше 15 мс,
+ * чтобы длинный список (24 клана) не растягивался дольше ~0,6 с. Дальше 24-го - вместе с последним.
+ * Только полные свойства и одним правилом: сборщик CSS склеивает правила с одинаковым селектором,
+ * и короткая запись animation рядом с delay через var() превращалась в пустые значения.
+ */
 .stagger > * {
+  --stagger-i: 23;
+  animation-name: rise;
+  animation-duration: 520ms;
+  animation-timing-function: var(--ease);
   /* backwards, не both: после появления анимация отпускает transform — иначе она перебивает transition (наклон Tilt возвращался рывком) */
-  animation: rise 520ms var(--ease) backwards;
+  animation-fill-mode: backwards;
+  animation-delay: calc(30ms + min(var(--stagger-i), 8) * 40ms + max(var(--stagger-i) - 8, 0) * 15ms);
 }
-
 .stagger > *:nth-child(1) {
-  animation-delay: 30ms;
+  --stagger-i: 0;
 }
 .stagger > *:nth-child(2) {
-  animation-delay: 70ms;
+  --stagger-i: 1;
 }
 .stagger > *:nth-child(3) {
-  animation-delay: 110ms;
+  --stagger-i: 2;
 }
 .stagger > *:nth-child(4) {
-  animation-delay: 150ms;
+  --stagger-i: 3;
 }
 .stagger > *:nth-child(5) {
-  animation-delay: 190ms;
+  --stagger-i: 4;
 }
 .stagger > *:nth-child(6) {
-  animation-delay: 230ms;
+  --stagger-i: 5;
 }
-.stagger > *:nth-child(n + 7) {
-  animation-delay: 260ms;
+.stagger > *:nth-child(7) {
+  --stagger-i: 6;
+}
+.stagger > *:nth-child(8) {
+  --stagger-i: 7;
+}
+.stagger > *:nth-child(9) {
+  --stagger-i: 8;
+}
+.stagger > *:nth-child(10) {
+  --stagger-i: 9;
+}
+.stagger > *:nth-child(11) {
+  --stagger-i: 10;
+}
+.stagger > *:nth-child(12) {
+  --stagger-i: 11;
+}
+.stagger > *:nth-child(13) {
+  --stagger-i: 12;
+}
+.stagger > *:nth-child(14) {
+  --stagger-i: 13;
+}
+.stagger > *:nth-child(15) {
+  --stagger-i: 14;
+}
+.stagger > *:nth-child(16) {
+  --stagger-i: 15;
+}
+.stagger > *:nth-child(17) {
+  --stagger-i: 16;
+}
+.stagger > *:nth-child(18) {
+  --stagger-i: 17;
+}
+.stagger > *:nth-child(19) {
+  --stagger-i: 18;
+}
+.stagger > *:nth-child(20) {
+  --stagger-i: 19;
+}
+.stagger > *:nth-child(21) {
+  --stagger-i: 20;
+}
+.stagger > *:nth-child(22) {
+  --stagger-i: 21;
+}
+.stagger > *:nth-child(23) {
+  --stagger-i: 22;
+}
+.stagger > *:nth-child(24) {
+  --stagger-i: 23;
 }
 
 /* ---------- 3D-наклон (компонент Tilt) ---------- */

@@ -30,8 +30,18 @@ export function CharacterView({ region, name }: { region: Region; name: string }
   const isFav = useApp((s) => s.favCharacters.some((c) => sameChar(c, { region, name })));
   const { data: meta } = useMeta();
 
+  // в недавние/избранное - с группировкой и тегом клана (аватарка и тег в списках)
+  const ref = (c: Character | undefined) => ({
+    region,
+    name: c?.username ?? name,
+    alliance: c?.alliance || undefined,
+    clanTag: c?.clan?.info ? stripMc(c.clan.info.tag) || undefined : undefined,
+  });
+
   useEffect(() => {
-    if (data) actions.pushRecentCharacter({ region, name: data.username });
+    if (data) actions.pushRecentCharacter(ref(data));
+    // ref зависит только от data и region
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, region]);
 
   return (
@@ -40,15 +50,7 @@ export function CharacterView({ region, name }: { region: Region; name: string }
         <span className="pill dim">{region.toUpperCase()}</span>
         <div className="row" style={{ gap: 8 }}>
           <ShareButton text={t.shareText(data?.username ?? name)} />
-          <FavButton
-            active={isFav}
-            onToggle={() =>
-              actions.toggleFavCharacter({
-                region,
-                name: data?.username ?? name,
-              })
-            }
-          />
+          <FavButton active={isFav} onToggle={() => actions.toggleFavCharacter(ref(data))} />
         </div>
       </div>
 
@@ -134,10 +136,13 @@ function Profile({ character: c, region, meta }: { character: Character; region:
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={alliance.image} alt={allianceLabel} width={72} height={72} />
               ) : (
-                <span className="display">{c.username.slice(0, 1).toUpperCase()}</span>
+                <Icon name="user" size={40} />
               )}
             </div>
-            <h1 className={`display ${styles.name}`}>{c.username}</h1>
+            <h1 className={`display ${styles.name}`}>
+              {c.username}
+              {c.clan?.info && stripMc(c.clan.info.tag) && <span className={styles.nameTag}>{stripMc(c.clan.info.tag)}</span>}
+            </h1>
             <div className="row" style={{ flexWrap: "wrap", gap: 6, justifyContent: "center" }}>
               <span className="pill" style={{ color: alliance.color }}>
                 <span className="dot" />

@@ -49,6 +49,7 @@ export const ru = {
     backAria: "Назад на прошлый экран",
     nav: "Навигация",
     brandAria: "STALZONE INFO - на главную",
+    theme: "Тема",
     themeDark: "Тёмная тема",
     themeLight: "Светлая тема",
   },

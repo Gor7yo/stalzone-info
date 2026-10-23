@@ -6,6 +6,8 @@ import styles from "./ui.module.css";
 interface Option<T extends string> {
   value: T;
   label: React.ReactNode;
+  /** подпись для кнопки-иконки без текста (aria-label и подсказка) */
+  ariaLabel?: string;
 }
 
 /** Сегментированный переключатель со «скользящей» подложкой. */
@@ -41,6 +43,8 @@ export function Segmented<T extends string>({
           type="button"
           role="tab"
           aria-selected={o.value === value}
+          aria-label={o.ariaLabel}
+          title={o.ariaLabel}
           className={styles.segmentedItem}
           onClick={() => {
             if (o.value === value) return;

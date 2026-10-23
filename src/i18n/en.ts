@@ -47,6 +47,7 @@ export const en: Dict = {
     backAria: "Back to previous screen",
     nav: "Navigation",
     brandAria: "STALZONE INFO - home",
+    theme: "Theme",
     themeDark: "Dark theme",
     themeLight: "Light theme",
   },

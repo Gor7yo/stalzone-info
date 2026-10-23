@@ -52,6 +52,22 @@
   overflow-wrap: anywhere;
 }
 
+/* тег клана справа от ника */
+.nameTag {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 3px 8px;
+  border-radius: 8px;
+  background: rgb(192 139 255 / 0.12);
+  color: #c08bff;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
 .clan {
   margin-top: 10px;
 }

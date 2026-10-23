@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useLang } from "@/i18n/client";
+import { api } from "@/lib/api";
 import { pick, type Lang } from "@/i18n/lang";
 import { DATA_VERSION } from "@/lib/dataVersion";
 
@@ -130,6 +131,18 @@ export const useItems = (enabled = true) => {
     enabled,
   });
 };
+
+/**
+ * Предметы, которые за 30 дней были на аукционе (бэкенд обходит справочник раз в сутки) -
+ * рынок показывает только их. null - бэкенд ещё не обошёл справочник: не фильтруем.
+ */
+export const useActiveItems = () =>
+  useQuery({
+    queryKey: ["market-active"],
+    queryFn: () => api<{ ready: boolean; items: string[] }>("/api/market/active"),
+    select: (d) => (d.ready ? new Set(d.items) : null),
+    staleTime: 3_600_000,
+  });
 
 export function useItem(id: string) {
   const { data, ...rest } = useItems();

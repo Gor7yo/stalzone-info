@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Icon } from "@/components/Icon";
+import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { RegionSwitch } from "@/components/ui/RegionSwitch";
 import { SearchField } from "@/components/ui/SearchField";
@@ -86,24 +87,15 @@ function People({ title, people, action }: { title: string; people: CharacterRef
             className="list-row"
             onClick={() => haptic.tap()}
           >
-            <span
-              className="display"
-              style={{
-                display: "grid",
-                placeItems: "center",
-                width: 44,
-                height: 44,
-                borderRadius: 14,
-                background: "var(--surface-2)",
-                fontSize: 16,
-                flex: "none",
-              }}
-            >
-              {p.name.slice(0, 1).toUpperCase()}
+            <PlayerAvatar alliance={p.alliance} />
+            <span className="row" style={{ flex: 1, minWidth: 0, gap: 8 }}>
+              <strong className="truncate">{p.name}</strong>
+              {p.clanTag && (
+                <span className="pill" style={{ color: "#c08bff", fontFamily: "var(--font-mono)", flex: "none" }}>
+                  {p.clanTag}
+                </span>
+              )}
             </span>
-            <strong className="truncate" style={{ flex: 1 }}>
-              {p.name}
-            </strong>
             <span className="pill dim">{p.region.toUpperCase()}</span>
             <Icon name="chevron" size={18} className="dim" />
           </Link>

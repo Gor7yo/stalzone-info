@@ -26,22 +26,41 @@ const farm = new Set(barter.farm as string[]);
 
 export const serverItem = (id: string) => byId.get(id);
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "https://api.stalzone-info.ru";
+
+/** Без фармовых ресурсов (их нет на аукционе) и без «other» — мебели и оборудования убежища. */
+const catalog = items.filter((i) => !farm.has(i.id) && i.group !== "other");
+
 /**
- * Предметы со страницей рынка для поисковиков: без фармовых ресурсов (их нет на аукционе)
- * и без «other» — мебели и оборудования убежища.
+ * Предметы, которые за 30 дней были на аукционе (бэкенд обходит справочник раз в сутки).
+ * null — бэкенд ещё не обошёл справочник или не ответил: тогда не фильтруем, чтобы рынок не опустел.
  */
-const market = items.filter((i) => !farm.has(i.id) && i.group !== "other");
-export const marketItems = () => market;
+async function activeIds(): Promise<Set<string> | null> {
+  try {
+    const res = await fetch(`${API_URL}/api/market/active`, { next: { revalidate: 3600 }, signal: AbortSignal.timeout(3000) });
+    if (!res.ok) return null;
+    const body = (await res.json()) as { ready: boolean; items: string[] };
+    return body.ready ? new Set(body.items) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Предметы со страницей рынка для поисковиков и категорий: только те, что бывают на аукционе. */
+export async function marketItems() {
+  const active = await activeIds();
+  return active ? catalog.filter((i) => active.has(i.id)) : catalog;
+}
 
 /** Категории со страницей (`/auction/c/[group]`): у которых есть предметы на рынке. */
-export const marketGroups = () =>
-  GROUPS.filter((g) => g.id !== "other")
+export async function marketGroups() {
+  const market = await marketItems();
+  return GROUPS.filter((g) => g.id !== "other")
     .map((g) => ({ ...g, items: market.filter((i) => i.group === g.id).sort((a, b) => a.name.localeCompare(b.name, "ru")) }))
     .filter((g) => g.items.length > 0);
+}
 
-export const marketGroup = (id: string) => marketGroups().find((g) => g.id === id);
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "https://api.stalzone-info.ru";
+export const marketGroup = async (id: string) => (await marketGroups()).find((g) => g.id === id);
 
 /**
  * Лучшая цена за штуку и число лотов на RU — для описания страницы в поиске.

@@ -294,7 +294,7 @@ function OfferList({ offers, limit, onMore }: { offers: Offer[]; limit: number; 
   const { data: index } = useItems();
   return (
     <>
-      <div className="stack desk-grid" style={{ gap: 10 }}>
+      <div className="stack stagger desk-grid" style={{ gap: 10 }}>
         {offers.slice(0, limit).map((o) => (
           <OfferCard key={o.key} offer={o} item={index?.byId.get(o.best.itemId)} />
         ))}

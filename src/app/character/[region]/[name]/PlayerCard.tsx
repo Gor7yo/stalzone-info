@@ -1,5 +1,6 @@
 "use client";
 
+import { Icon } from "@/components/Icon";
 import { Tilt } from "@/components/Tilt/Tilt";
 import { allianceOf } from "@/features/alliances";
 import {
@@ -149,7 +150,7 @@ export function FifaCard({
             // eslint-disable-next-line @next/next/no-img-element
             <img src={ally.image} alt="" width={110} height={110} />
           ) : (
-            <span>{name.slice(0, 1).toUpperCase()}</span>
+            <Icon name="user" size={56} />
           )}
         </div>
       </div>

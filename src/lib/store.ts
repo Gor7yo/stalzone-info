@@ -24,6 +24,9 @@ export interface ClanRef {
 export interface CharacterRef {
   region: Region;
   name: string;
+  /** группировка и тег клана - для аватарки и тега в списках; обновляются при открытии профиля */
+  alliance?: string;
+  clanTag?: string;
 }
 
 export interface AppState {
@@ -161,7 +164,12 @@ export const actions = {
 
   pushRecentItem: (id: string) => setState((s) => ({ recentItems: pushUnique(s.recentItems, id, (a, b) => a === b) })),
 
-  pushRecentCharacter: (ref: CharacterRef) => setState((s) => ({ recentCharacters: pushUnique(s.recentCharacters, ref, sameChar) })),
+  /** в недавние; заодно освежает группировку и тег клана у того же игрока в избранном */
+  pushRecentCharacter: (ref: CharacterRef) =>
+    setState((s) => ({
+      recentCharacters: pushUnique(s.recentCharacters, ref, sameChar),
+      favCharacters: s.favCharacters.map((x) => (sameChar(x, ref) ? { ...x, ...ref } : x)),
+    })),
 
   /** amount <= 0 убирает предмет из рюкзака */
   setLoot: (id: string, amount: number) =>

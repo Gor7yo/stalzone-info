@@ -11,7 +11,7 @@ import { SearchField } from "@/components/ui/SearchField";
 import { EmptyState, ErrorState, RowSkeleton } from "@/components/ui/States";
 import { useBestPrice } from "@/features/auction";
 import { CRAFT_ENABLED, LOOT_ENABLED } from "@/lib/flags";
-import { GROUPS, groupLabel, searchItems, useItems, type Item } from "@/features/items";
+import { GROUPS, groupLabel, searchItems, useActiveItems, useItems, type Item } from "@/features/items";
 import { useFormat, useLang, useT } from "@/i18n/client";
 import { actions, useApp, type Region } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
@@ -44,8 +44,12 @@ export default function AuctionPage() {
   }
 
   const { data: index, isLoading, isError, refetch } = useItems();
+  // на рынке - только то, что за месяц было на аукционе; избранное и недавние - из полного справочника
+  const { data: active } = useActiveItems();
+  const market = index && active ? { list: index.list.filter((i) => active.has(i.id)), byId: index.byId } : index;
+  const groups = market ? GROUPS.filter((g) => market.list.some((i) => i.group === g.id)) : GROUPS;
   const browsing = deferred.trim().length > 0 || group !== undefined;
-  const results = index && browsing ? searchItems(index, deferred, group, limit + 1) : [];
+  const results = market && browsing ? searchItems(market, deferred, group, limit + 1) : [];
 
   const pick = (id?: string) => {
     haptic.select();
@@ -56,7 +60,7 @@ export default function AuctionPage() {
   return (
     <main className="page">
       <PageHeader eyebrow={t.eyebrow} title={t.title} aside={<RegionSwitch />}>
-        {index ? `${t.itemsCount(index.list.length, formatNumber(index.list.length))} ` : ""}
+        {market ? `${t.itemsCount(market.list.length, formatNumber(market.list.length))} ` : ""}
         {t.searchHint}
       </PageHeader>
 
@@ -152,7 +156,7 @@ export default function AuctionPage() {
         <button type="button" className="chip" aria-pressed={!group} onClick={() => pick(undefined)}>
           {t.all}
         </button>
-        {GROUPS.map((g) => (
+        {groups.map((g) => (
           <button key={g.id} type="button" className="chip" aria-pressed={group === g.id} onClick={() => pick(g.id)}>
             <span aria-hidden>{g.icon}</span> {groupLabel(g, lang)}
           </button>

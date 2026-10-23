@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Anomaly } from "@/components/Anomaly/Anomaly";
 import { EmissionStatus } from "@/components/Emission/EmissionStatus";
 import { Icon, type IconName } from "@/components/Icon";
+import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { ItemRow } from "@/components/ItemRow";
 import { MarketRadar } from "@/components/MarketRadar/MarketRadar";
 import { Tilt } from "@/components/Tilt/Tilt";
@@ -144,7 +145,7 @@ export default function HomePage() {
               <div className="chips">
                 {favCharacters.map((c) => (
                   <Link key={`c-${c.region}-${c.name}`} href={`/character/${c.region}/${encodeURIComponent(c.name)}`} className="chip">
-                    <Icon name="user" size={15} /> {c.name}
+                    <PlayerAvatar alliance={c.alliance} size={20} /> {c.name}
                     <span className="dim">{c.region.toUpperCase()}</span>
                   </Link>
                 ))}
