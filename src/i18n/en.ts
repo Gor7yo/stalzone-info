@@ -380,6 +380,8 @@ export const en: Dict = {
     batch: (lots: number, total: number) => (lots === total ? `Buy all ${lots}` : `Buy ${lots} of ${total}`),
     batchShort: (lots: number, total: number) => (lots === total ? `bulk all ${lots}` : `bulk ${lots} of ${total}`),
     hoursShort: "h",
+    sellsIn: "sells in",
+    overTwoDays: "2+ days",
     sellOver48: "Unlikely to sell at the median within 2 days: many cheaper lots are ahead. You'll have to sell cheaper or wait longer.",
     filters: "Filters",
     confidence: "Estimate reliability",

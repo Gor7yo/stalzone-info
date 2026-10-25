@@ -393,16 +393,14 @@ function OfferCard({ offer, item }: { offer: Offer; item?: Item }) {
         {/* за сколько уйдёт и прибыль в час — в той же строке, справа: высота карточек одинаковая */}
         {f.sellHours != null && f.profitPerHour != null && (
           <span className={styles.eta} title={`${sellTime(f.sellHours)} · ${t.perHour(formatShort(f.profitPerHour))}`}>
-            <Icon name="clock" size={12} />
-            {f.sellHours < 1 ? "<1" : `~${Math.round(f.sellHours)}`} {t.hoursShort}
+            <small>{t.sellsIn}</small> {f.sellHours < 1 ? "<1" : `~${Math.round(f.sellHours)}`} {t.hoursShort}
             <b>{t.perHour(formatShort(f.profitPerHour))}</b>
           </span>
         )}
         {/* null — по медиане за 2 суток не уйдёт (очередь дешевле); undefined — старый бэкенд */}
         {f.sellHours === null && (
-          <span className={styles.eta} title={t.sellOver48}>
-            <Icon name="clock" size={12} />
-            &gt;48 {t.hoursShort}
+          <span className={styles.eta} data-slow title={t.sellOver48}>
+            <small>{t.sellsIn}</small> {t.overTwoDays}
           </span>
         )}
       </div>

@@ -394,6 +394,8 @@ export const ru = {
     batch: (lots: number, total: number) => (lots === total ? `Скупить все ${lots}` : `Скупить ${lots} из ${total}`),
     batchShort: (lots: number, total: number) => (lots === total ? `пачкой все ${lots}` : `пачкой ${lots} из ${total}`),
     hoursShort: "ч",
+    sellsIn: "продастся за",
+    overTwoDays: "2+ сут",
     sellOver48: "По медиане вряд ли уйдёт за 2 суток: впереди много лотов дешевле. Продавать придётся дешевле или дольше.",
     filters: "Фильтры",
     confidence: "Надёжность оценки",
