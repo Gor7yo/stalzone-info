@@ -45,7 +45,8 @@ export function useReviewStatus() {
   const { loggedIn, pending } = useMe();
   const query = useQuery({
     queryKey: [...KEY, "me"],
-    queryFn: () => authed<{ telegram: boolean; nextAt: string | null }>("/api/reviews/me"),
+    // mine — свой отзыв за неделю: автор видит его в списке сразу
+    queryFn: () => authed<{ telegram: boolean; nextAt: string | null; mine: Review | null }>("/api/reviews/me"),
     enabled: loggedIn,
     staleTime: 30_000,
   });
