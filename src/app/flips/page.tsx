@@ -13,16 +13,18 @@ import { qualities, TIERS } from "@/features/auction";
 import { CONFIDENCE, useFlips, type Flip } from "@/features/flips";
 import { GROUPS, groupLabel, useItems, type Item } from "@/features/items";
 import { useFormat, useLang, useT } from "@/i18n/client";
-import { actions, useApp, type FlipSettings } from "@/lib/store";
+import { actions, REGIONS, useApp, type FlipSettings } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
 import { ProTeaser } from "@/components/Pro/Pro";
 import { usePro } from "@/features/pro";
-import { FlipAlertCard } from "./FlipAlertCard";
+import { FlipAlertCard, RadarToggle } from "./FlipAlertCard";
 import styles from "./flips.module.css";
 
 const SORTS: Record<FlipSettings["sort"], (a: Offer, b: Offer) => number> = {
   profit: (a, b) => b.best.profit - a.best.profit,
   pct: (a, b) => b.best.pct - a.best.pct,
+  // в час: деньги, которые крутятся быстрее; не продастся за 48 ч — в конец
+  hour: (a, b) => (b.best.profitPerHour ?? -1) - (a.best.profitPerHour ?? -1) || b.best.profit - a.best.profit,
   // ходовые: быстрее продастся, при равенстве — прибыльнее
   fast: (a, b) => b.best.perDay - a.best.perDay || b.best.profit - a.best.profit,
 };
@@ -175,6 +177,7 @@ function FlipsFeed() {
           options={[
             { value: "profit", label: t.sortProfit },
             { value: "pct", label: t.sortPct },
+            { value: "hour", label: t.sortHour },
             { value: "fast", label: t.sortFast },
           ]}
         />
@@ -261,6 +264,7 @@ function FlipsFeed() {
       )}
 
       <FlipAlertCard region={region} settings={settings} />
+      <RadarToggle region={region} regionLabel={REGIONS.find((r) => r.value === region)?.label ?? region.toUpperCase()} />
 
       <section className="section">
         {isError ? (
@@ -386,6 +390,25 @@ function OfferCard({ offer, item }: { offer: Offer; item?: Item }) {
           {f.amount > 1 && <small> {t.perPcs}</small>}
         </span>
       </div>
+
+      {f.sellHours != null && f.profitPerHour != null && (
+        <div className={styles.speed}>
+          <Icon name="clock" size={14} />
+          <span>{f.sellHours < 1 ? t.sellUnderHour : t.sellIn(Math.round(f.sellHours))}</span>
+          <strong className="mono">{t.perHour(formatShort(f.profitPerHour))}</strong>
+        </div>
+      )}
+
+      {f.batch && others > 0 && (
+        <div className={styles.batch}>
+          <Icon name="bag" size={14} />
+          <span>
+            {t.batch(f.batch.lots, f.batch.total)} · {t.buyout} {formatShort(f.batch.buyout)} ·{" "}
+            {f.batch.sellHours < 1 ? t.sellUnderHour : t.sellIn(Math.round(f.batch.sellHours))}
+          </span>
+          <strong className="mono">+{formatShort(f.batch.profit)}</strong>
+        </div>
+      )}
 
       <div className={styles.meta}>
         <span>

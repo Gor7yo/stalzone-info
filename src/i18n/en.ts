@@ -205,7 +205,11 @@ export const en: Dict = {
     heroText: "One good flip pays for the subscription. The rest is pure profit.",
     included: "What's included",
     features: {
-      flipper: ["Flipper", "Lots below market in real time - buy out and resell at a profit"],
+      flipper: [
+        "Flipper",
+        "Lots below market in real time: profit, profit per hour and how many lots to buy in bulk so everything sells within a day",
+      ],
+      radar: ["Market radar", "The bot messages you when a popular item suddenly drops, spikes or keeps rising for days"],
       flipAlerts: ["Flip alerts in Telegram", "The bot sends you a good lot before someone else buys it"],
       sell: ["Selling helper", "What price to list at so it sells within an hour, 6 hours or a day"],
       charts: ["Price charts", "Price history for the day and week, median, trend and details for every deal"],
@@ -368,7 +372,12 @@ export const en: Dict = {
     sortAria: "Sort",
     sortProfit: "Profit",
     sortPct: "Percent",
+    sortHour: "Per hour",
     sortFast: "Fast sellers",
+    sellIn: (h: number) => `sells in ~${h} h`,
+    sellUnderHour: "sells in under an hour",
+    perHour: (v: string) => `+${v}/h`,
+    batch: (lots: number, total: number) => (lots === total ? `Buy all ${lots}` : `Buy ${lots} of ${total}`),
     filters: "Filters",
     confidence: "Estimate reliability",
     confAll: "All",
@@ -399,6 +408,9 @@ export const en: Dict = {
     seen: (when: string) => `seen ${when}`,
   },
   flipAlert: {
+    radarTitle: (region: string) => `Market radar · ${region}`,
+    radarText:
+      "The bot will message you when a popular item suddenly gets cheaper or pricier (±25% in an hour) or keeps rising for several days.",
     from: (v: string) => `from +${v}`,
     confAny: "any reliability",
     confHigh: "reliable only",

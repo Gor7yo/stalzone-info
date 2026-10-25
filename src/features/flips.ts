@@ -29,6 +29,12 @@ export interface Flip {
   deals: number;
   perDay: number;
   confidence: Confidence;
+  /** за сколько часов примерно уйдёт по медиане; null — дольше 48 ч (нет у старого бэкенда) */
+  sellHours?: number | null;
+  /** прибыль в час с учётом времени продажи */
+  profitPerHour?: number | null;
+  /** пакет: сколько из выгодных лотов позиции скупить, чтобы всё ушло за сутки */
+  batch?: { lots: number; total: number; buyout: number; profit: number; sellHours: number };
   seenAt: string;
   endTime: string;
   lastSale: string;

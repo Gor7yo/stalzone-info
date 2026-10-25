@@ -42,11 +42,12 @@ export const useReferral = (enabled: boolean) =>
 
 /** Что даёт Pro — для экрана подписки и заглушек (тексты - в словаре, t.pro.features[key]). */
 export const PRO_FEATURES: {
-  icon: "bolt" | "bell" | "market" | "sparkle" | "star" | "tag";
-  key: "flipper" | "flipAlerts" | "sell" | "charts" | "quality" | "alerts";
+  icon: "bolt" | "bell" | "market" | "sparkle" | "star" | "tag" | "radiation";
+  key: "flipper" | "flipAlerts" | "radar" | "sell" | "charts" | "quality" | "alerts";
 }[] = [
   { icon: "bolt", key: "flipper" },
   { icon: "bell", key: "flipAlerts" },
+  { icon: "radiation", key: "radar" },
   { icon: "tag", key: "sell" },
   { icon: "market", key: "charts" },
   { icon: "sparkle", key: "quality" },

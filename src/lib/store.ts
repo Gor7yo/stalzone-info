@@ -47,7 +47,7 @@ export interface AppState {
 }
 
 export interface FlipSettings {
-  sort: "profit" | "pct" | "fast";
+  sort: "profit" | "pct" | "hour" | "fast";
   minConfidence: "low" | "medium" | "high";
   minProfit: number;
   /** 0 — любой */

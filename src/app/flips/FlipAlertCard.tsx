@@ -2,7 +2,7 @@
 
 import { Icon } from "@/components/Icon";
 import { LoginCard, SentTo, TelegramLinkCard } from "@/components/Account/AccountGate";
-import { useAlerts, useDeleteFlipAlert, useSetFlipAlert, type FlipAlert, type FlipAlertInput } from "@/features/alerts";
+import { useAlerts, useDeleteFlipAlert, useSetFlipAlert, useToggleRadar, type FlipAlert, type FlipAlertInput } from "@/features/alerts";
 import { GROUPS, groupLabel } from "@/features/items";
 import { useFormat, useLang, useT } from "@/i18n/client";
 import type { Lang } from "@/i18n/lang";
@@ -114,6 +114,42 @@ export function FlipAlertCard({ region, settings }: { region: Region; settings: 
           </>
         )}
       </div>
+    </section>
+  );
+}
+
+/** Радар рынка (Pro): галочка - бот пишет о резких движениях цен по ходовым предметам региона. */
+export function RadarToggle({ region, regionLabel }: { region: Region; regionLabel: string }) {
+  const t = useT().flipAlert;
+  const alerts = useAlerts();
+  const toggle = useToggleRadar();
+
+  // вход и привязку Telegram уже просит карточка флип-алерта выше
+  if (alerts.pending || !alerts.available || !alerts.telegram) return null;
+
+  const on = alerts.data?.radar?.includes(region) ?? false;
+  return (
+    <section className={`glass ${styles.alert}`} data-on={on ? "" : undefined}>
+      <span className={styles.alertIcon}>
+        <Icon name="bolt" size={18} />
+      </span>
+      <div className={styles.alertBody}>
+        <strong>{t.radarTitle(regionLabel)}</strong>
+        <span className="dim">{t.radarText}</span>
+        {toggle.error && <span className={styles.alertError}>{toggle.error.message}</span>}
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={on}
+        aria-label={t.radarTitle(regionLabel)}
+        className={styles.switch}
+        disabled={alerts.isLoading || toggle.isPending}
+        onClick={() => {
+          haptic.select();
+          toggle.mutate({ region, enabled: !on });
+        }}
+      />
     </section>
   );
 }

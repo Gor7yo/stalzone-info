@@ -46,6 +46,8 @@ export type FlipAlertInput = Pick<FlipAlert, "region" | "minProfit" | "minConfid
 
 export interface AlertsOverview {
   emission: Region[];
+  /** радар рынка (Pro); нет у старого бэкенда */
+  radar?: Region[];
   blocked: boolean;
   price: PriceAlert[];
   flip: FlipAlert[];
@@ -151,5 +153,17 @@ export function useToggleEmissionAlert() {
       return authed<{ emission: Region[] }>("/api/alerts/emission", "PUT", { region, enabled });
     },
     onSuccess: ({ emission }) => qc.setQueryData<AlertsOverview>(KEY, (old) => old && { ...old, emission }),
+  });
+}
+
+/** Радар рынка (Pro): сообщения о резких движениях цен по ходовым предметам региона. */
+export function useToggleRadar() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ region, enabled }: { region: Region; enabled: boolean }) => {
+      if (enabled) await withWriteAccess();
+      return authed<{ radar: Region[] }>("/api/alerts/radar", "PUT", { region, enabled });
+    },
+    onSuccess: ({ radar }) => qc.setQueryData<AlertsOverview>(KEY, (old) => old && { ...old, radar }),
   });
 }
