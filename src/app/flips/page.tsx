@@ -1,23 +1,20 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { Icon } from "@/components/Icon";
-import { ModuleStatBadge } from "@/components/ModuleStat/ModuleStat";
-import { ItemIcon } from "@/components/ui/ItemIcon";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { RegionSwitch } from "@/components/ui/RegionSwitch";
 import { Segmented } from "@/components/ui/Segmented";
 import { EmptyState, ErrorState, RowSkeleton } from "@/components/ui/States";
-import { qualities, TIERS } from "@/features/auction";
 import { CONFIDENCE, useFlips, type Flip } from "@/features/flips";
-import { GROUPS, groupLabel, useItems, type Item } from "@/features/items";
+import { GROUPS, groupLabel, useItems } from "@/features/items";
 import { useFormat, useLang, useT } from "@/i18n/client";
 import { actions, REGIONS, useApp, type FlipSettings } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
 import { ProTeaser } from "@/components/Pro/Pro";
 import { usePro } from "@/features/pro";
 import { FlipAlertCard, RadarToggle } from "./FlipAlertCard";
+import { OfferCard, type Offer } from "./OfferCard";
 import styles from "./flips.module.css";
 
 const SORTS: Record<FlipSettings["sort"], (a: Offer, b: Offer) => number> = {
@@ -32,18 +29,9 @@ const SORTS: Record<FlipSettings["sort"], (a: Offer, b: Offer) => number> = {
 const MIN_PROFIT = [20_000, 50_000, 100_000, 250_000, 500_000, 1_000_000];
 const BUDGET = [0, 500_000, 1_000_000, 5_000_000, 10_000_000];
 const DEFAULTS: FlipSettings = { sort: "profit", minConfidence: "medium", minProfit: 20_000, budget: 0, group: null };
-/** У этих групп есть заточка — в ссылку на предмет передаём и её. */
-const UPGRADABLE = new Set(["artefact", "weapon", "armor"]);
 /** Кратно 2 и 3: на широком экране карточки — сеткой в 2–3 колонки. */
 const STEP = 24;
 const MODULES = "weapon_modules";
-
-/** Одинаковые лоты (предмет + качество + заточка) — одна карточка с самым выгодным лотом. */
-interface Offer {
-  key: string;
-  best: Flip;
-  lots: Flip[];
-}
 
 function groupOffers(flips: Flip[]): Offer[] {
   const map = new Map<string, Offer>();
@@ -318,112 +306,5 @@ function Filter({ label, children }: { label: string; children: React.ReactNode 
       <span className={styles.filterLabel}>{label}</span>
       {children}
     </div>
-  );
-}
-
-/** Ссылка на предмет сразу с фильтром по качеству и заточке лота. */
-function itemHref(f: Flip, item?: Item) {
-  const params = new URLSearchParams();
-  if (f.quality >= 0) params.set("q", String(f.quality));
-  if (f.variant) params.set("v", f.variant);
-  else if (f.upgrade > 0 || (item && UPGRADABLE.has(item.group))) params.set("u", String(f.upgrade));
-  const query = params.toString();
-  return `/auction/${f.itemId}${query ? `?${query}` : ""}`;
-}
-
-function OfferCard({ offer, item }: { offer: Offer; item?: Item }) {
-  const t = useT().flips;
-  const lang = useLang();
-  const { formatRelative, formatShort, locale } = useFormat();
-  const f = offer.best;
-  const quality = qualities(lang)[f.quality];
-  const conf = CONFIDENCE[f.confidence];
-  const tier = TIERS.find((x) => f.upgrade >= x.min && f.upgrade <= x.max);
-  // полоска: какая доля ожидаемой выручки уходит на выкуп, какая — прибыль
-  const revenue = f.sellUnit * f.amount * 0.95;
-  const buyShare = Math.min(100, Math.max(0, (f.buyout / revenue) * 100));
-  const others = offer.lots.length - 1;
-  const sellTime = (h: number) => (h < 1 ? t.sellUnderHour : t.sellIn(Math.round(h)));
-
-  return (
-    <Link
-      href={itemHref(f, item)}
-      className={styles.card}
-      style={{ "--q": quality?.color ?? "var(--text-3)" } as React.CSSProperties}
-      onClick={() => {
-        haptic.tap();
-        actions.pushRecentItem(f.itemId);
-      }}
-    >
-      <div className={styles.cardHead}>
-        <ItemIcon item={item} size={46} />
-        <span className={styles.cardTitle}>
-          <span className={styles.nameRow}>
-            <strong className="truncate">{item?.name ?? f.itemId}</strong>
-            {!f.variant && (f.upgrade > 0 || quality) && <span className={styles.upgrade}>+{f.upgrade}</span>}
-          </span>
-          <span className={styles.tags}>
-            {f.variant && <ModuleStatBadge id={f.variant} quality={quality ? f.quality : null} />}
-            {quality && <span className={styles.qualityTag}>{quality.label}</span>}
-            {f.amount > 1 && <span className={styles.tag}>×{f.amount}</span>}
-            <span className={styles.conf} style={{ color: conf.color }}>
-              ● {t.conf[f.confidence]}
-            </span>
-          </span>
-        </span>
-        <span className={styles.profit}>
-          <strong className="mono">+{formatShort(f.profit)}</strong>
-          <span className="mono">{f.pct.toLocaleString(locale)} %</span>
-        </span>
-      </div>
-
-      <div className={styles.bar} aria-hidden>
-        <span style={{ width: `${buyShare}%` }} />
-      </div>
-
-      <div className={`mono ${styles.prices}`}>
-        <span>
-          <small>{t.buyout}</small> {formatShort(f.unitPrice)}
-        </span>
-        <Icon name="chevron" size={14} className="dim" />
-        <span>
-          <small>{t.sale}</small> ~{formatShort(f.sellUnit)}
-          {f.amount > 1 && <small> {t.perPcs}</small>}
-        </span>
-        {/* за сколько уйдёт и прибыль в час — в той же строке, справа: высота карточек одинаковая */}
-        {f.sellHours != null && f.profitPerHour != null && (
-          <span className={styles.eta} title={`${sellTime(f.sellHours)} · ${t.perHour(formatShort(f.profitPerHour))}`}>
-            <small>{t.sellsIn}</small> {f.sellHours < 1 ? "<1" : `~${Math.round(f.sellHours)}`} {t.hoursShort}
-            <b>{t.perHour(formatShort(f.profitPerHour))}</b>
-          </span>
-        )}
-        {/* null — по медиане за 2 суток не уйдёт (очередь дешевле); undefined — старый бэкенд */}
-        {f.sellHours === null && (
-          <span className={styles.eta} data-slow title={t.sellOver48}>
-            <small>{t.sellsIn}</small> {t.overTwoDays}
-          </span>
-        )}
-      </div>
-
-      <div className={styles.meta}>
-        <span>
-          {t.deals(f.deals)}
-          {f.basis === "tier" && tier ? ` (${tier.label})` : ""} · {t.perDay(f.perDay)}
-        </span>
-        {/* пакет вместо «ещё N лотов»: сколько скупить, чтобы всё ушло за сутки */}
-        {f.batch && others > 0 ? (
-          <span
-            className={styles.batch}
-            title={`${t.batch(f.batch.lots, f.batch.total)} · ${t.buyout} ${formatShort(f.batch.buyout)} · ${sellTime(f.batch.sellHours)} · +${formatShort(f.batch.profit)}`}
-          >
-            <Icon name="bag" size={11} />
-            {t.batchShort(f.batch.lots, f.batch.total)} +{formatShort(f.batch.profit)}
-          </span>
-        ) : (
-          others > 0 && <span className={styles.more}>{t.moreLots(others)}</span>
-        )}
-        <span>{t.seen(formatRelative(f.seenAt))}</span>
-      </div>
-    </Link>
   );
 }
