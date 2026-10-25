@@ -15,7 +15,7 @@ import { RegionSwitch } from "@/components/ui/RegionSwitch";
 import { SearchField } from "@/components/ui/SearchField";
 import { useIsAdmin } from "@/features/admin";
 import { allianceOf } from "@/features/alliances";
-import { CRAFT_ENABLED, LOOT_ENABLED } from "@/lib/flags";
+import { CRAFT_ENABLED, LOOT_ENABLED, MAP_ENABLED } from "@/lib/flags";
 import { emissionState, useEmission } from "@/features/emission";
 import { searchItems, useItems, type Item } from "@/features/items";
 import { useT } from "@/i18n/client";
@@ -42,9 +42,10 @@ const TILES = (
     { href: "/character", key: "players", icon: "user", accent: "var(--cyan)" },
     { href: "/clans", key: "clans", icon: "shield", accent: "#c08bff" },
     { href: "/emission", key: "emission", icon: "radiation", accent: "var(--ember)" },
+    { href: "/map", key: "map", icon: "map", accent: "#8fd3a6" },
     { href: "/loot", key: "loot", icon: "bag", accent: "#ffc94a" },
   ] satisfies Tile[]
-).filter((t) => (CRAFT_ENABLED || t.href !== "/craft") && (LOOT_ENABLED || t.href !== "/loot"));
+).filter((t) => (CRAFT_ENABLED || t.href !== "/craft") && (LOOT_ENABLED || t.href !== "/loot") && (MAP_ENABLED || t.href !== "/map"));
 
 export default function HomePage() {
   const t = useT();

@@ -28,7 +28,8 @@ export function FavButton({ active, onToggle, label }: { active: boolean; onTogg
   );
 }
 
-export function ShareButton({ text }: { text: string }) {
+/** withQuery — ссылка вместе с ?параметрами (карта: локация и место). */
+export function ShareButton({ text, withQuery = false }: { text: string; withQuery?: boolean }) {
   const t = useT();
   const [copied, setCopied] = useState(false);
 
@@ -40,7 +41,7 @@ export function ShareButton({ text }: { text: string }) {
       onClick={async () => {
         haptic.tap();
         // всегда ссылка на сайт (не на мини-приложение): открывается в браузере и даёт картинку-превью
-        const result = await share(`${SITE_URL}${window.location.pathname}`, text);
+        const result = await share(`${SITE_URL}${window.location.pathname}${withQuery ? window.location.search : ""}`, text);
         if (result === "copied") {
           setCopied(true);
           setTimeout(() => setCopied(false), 1600);

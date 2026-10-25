@@ -7,3 +7,6 @@ export const CRAFT_ENABLED = false;
 
 /** Рюкзак (оценка лута): страница /loot, плитка на главной и строка на рынке. */
 export const LOOT_ENABLED = false;
+
+/** Карта ПДА: страница /map и плитка на главной (готова, ждёт точек и названий локаций). */
+export const MAP_ENABLED = false;
