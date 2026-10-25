@@ -345,8 +345,9 @@
 
 .prices {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 4px 8px;
   font-size: 13px;
   font-weight: 700;
 }
@@ -400,40 +401,30 @@
 }
 
 /* за сколько уйдёт и прибыль в час */
-.speed {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-2);
-}
-
-/* пакет: скупить несколько выгодных лотов одной позиции */
+/* пакет в нижней строке вместо «ещё N лотов»: сколько скупить, чтобы всё ушло за сутки */
 .batch {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 10px;
-  border-radius: 12px;
-  background: rgb(var(--acc-rgb) / 0.08);
-  border: 1px solid rgb(var(--acc-rgb) / 0.2);
-  font-size: 12px;
+  gap: 4px;
+  color: var(--acc);
+}
+
+/* за сколько уйдёт и прибыль в час — справа в строке цен */
+.eta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  font-size: 11px;
   font-weight: 600;
-  color: var(--text-2);
+  color: var(--text-3);
+  white-space: nowrap;
 }
 
-.batch strong {
-  margin-left: auto;
+.eta b {
+  margin-left: 4px;
   color: var(--green);
-  font-size: 12px;
-  flex: none;
-}
-
-.speed strong {
-  margin-left: auto;
-  color: var(--green);
-  font-size: 12px;
+  font-weight: 700;
 }
 
 .meta {

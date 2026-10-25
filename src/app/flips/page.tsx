@@ -343,6 +343,7 @@ function OfferCard({ offer, item }: { offer: Offer; item?: Item }) {
   const revenue = f.sellUnit * f.amount * 0.95;
   const buyShare = Math.min(100, Math.max(0, (f.buyout / revenue) * 100));
   const others = offer.lots.length - 1;
+  const sellTime = (h: number) => (h < 1 ? t.sellUnderHour : t.sellIn(Math.round(h)));
 
   return (
     <Link
@@ -389,33 +390,40 @@ function OfferCard({ offer, item }: { offer: Offer; item?: Item }) {
           <small>{t.sale}</small> ~{formatShort(f.sellUnit)}
           {f.amount > 1 && <small> {t.perPcs}</small>}
         </span>
-      </div>
-
-      {f.sellHours != null && f.profitPerHour != null && (
-        <div className={styles.speed}>
-          <Icon name="clock" size={14} />
-          <span>{f.sellHours < 1 ? t.sellUnderHour : t.sellIn(Math.round(f.sellHours))}</span>
-          <strong className="mono">{t.perHour(formatShort(f.profitPerHour))}</strong>
-        </div>
-      )}
-
-      {f.batch && others > 0 && (
-        <div className={styles.batch}>
-          <Icon name="bag" size={14} />
-          <span>
-            {t.batch(f.batch.lots, f.batch.total)} · {t.buyout} {formatShort(f.batch.buyout)} ·{" "}
-            {f.batch.sellHours < 1 ? t.sellUnderHour : t.sellIn(Math.round(f.batch.sellHours))}
+        {/* за сколько уйдёт и прибыль в час — в той же строке, справа: высота карточек одинаковая */}
+        {f.sellHours != null && f.profitPerHour != null && (
+          <span className={styles.eta} title={`${sellTime(f.sellHours)} · ${t.perHour(formatShort(f.profitPerHour))}`}>
+            <Icon name="clock" size={12} />
+            {f.sellHours < 1 ? "<1" : `~${Math.round(f.sellHours)}`} {t.hoursShort}
+            <b>{t.perHour(formatShort(f.profitPerHour))}</b>
           </span>
-          <strong className="mono">+{formatShort(f.batch.profit)}</strong>
-        </div>
-      )}
+        )}
+        {/* null — по медиане за 2 суток не уйдёт (очередь дешевле); undefined — старый бэкенд */}
+        {f.sellHours === null && (
+          <span className={styles.eta} title={t.sellOver48}>
+            <Icon name="clock" size={12} />
+            &gt;48 {t.hoursShort}
+          </span>
+        )}
+      </div>
 
       <div className={styles.meta}>
         <span>
           {t.deals(f.deals)}
           {f.basis === "tier" && tier ? ` (${tier.label})` : ""} · {t.perDay(f.perDay)}
         </span>
-        {others > 0 && <span className={styles.more}>{t.moreLots(others)}</span>}
+        {/* пакет вместо «ещё N лотов»: сколько скупить, чтобы всё ушло за сутки */}
+        {f.batch && others > 0 ? (
+          <span
+            className={styles.batch}
+            title={`${t.batch(f.batch.lots, f.batch.total)} · ${t.buyout} ${formatShort(f.batch.buyout)} · ${sellTime(f.batch.sellHours)} · +${formatShort(f.batch.profit)}`}
+          >
+            <Icon name="bag" size={11} />
+            {t.batchShort(f.batch.lots, f.batch.total)} +{formatShort(f.batch.profit)}
+          </span>
+        ) : (
+          others > 0 && <span className={styles.more}>{t.moreLots(others)}</span>
+        )}
         <span>{t.seen(formatRelative(f.seenAt))}</span>
       </div>
     </Link>
