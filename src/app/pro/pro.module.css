@@ -141,3 +141,14 @@
   font-weight: 600;
   line-height: 1.5;
 }
+
+/* отзывы на странице Pro: средняя оценка над карточками */
+.reviewsHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+}

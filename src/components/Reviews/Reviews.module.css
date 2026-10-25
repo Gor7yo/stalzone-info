@@ -1,0 +1,140 @@
+.stars {
+  flex: none;
+  display: inline-flex;
+  gap: 1px;
+  line-height: 1;
+  color: var(--surface-3);
+  letter-spacing: 0;
+}
+
+.stars [data-on] {
+  color: #ffc94a;
+}
+
+.card {
+  display: grid;
+  /* колонка не шире карточки, иначе длинный ник растягивает её за край */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 14px;
+}
+
+/* длинный ник сжимается с многоточием, звёзды остаются на месте */
+.cardHead strong {
+  min-width: 0;
+}
+
+.text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+  /* абзацы, которые написал человек */
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.date {
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.form {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: var(--radius);
+}
+
+.formTitle {
+  font-size: 15px;
+}
+
+.pick {
+  display: flex;
+  gap: 4px;
+}
+
+.pick button {
+  font-size: 30px;
+  line-height: 1;
+  color: var(--surface-3);
+  transition:
+    color 120ms,
+    transform 160ms var(--spring);
+}
+
+.pick button[data-on] {
+  color: #ffc94a;
+}
+
+.pick button:active {
+  transform: scale(0.85);
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.field > span {
+  display: flex;
+  justify-content: space-between;
+}
+
+.field small {
+  font-weight: 500;
+  color: var(--text-3);
+}
+
+.input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--radius-xs);
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  resize: vertical;
+}
+
+.input:focus {
+  outline: none;
+  border-color: rgb(var(--acc-rgb) / 0.6);
+}
+
+.error {
+  font-size: 13px;
+  color: var(--red);
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.done {
+  display: grid;
+  gap: 4px;
+  padding: 16px;
+  border-radius: var(--radius);
+  font-size: 14px;
+}
+
+.done span {
+  color: var(--text-2);
+}

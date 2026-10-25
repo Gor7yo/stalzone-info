@@ -90,6 +90,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         </div>
         <nav className={styles.footerLinks} aria-label={t.shell.docsNav}>
           <Link href="/guide">{t.shell.guide}</Link>
+          <Link href="/reviews">{t.shell.reviews}</Link>
           <Link href="/rules">{t.shell.rules}</Link>
           <Link href="/privacy">{t.shell.privacy}</Link>
         </nav>

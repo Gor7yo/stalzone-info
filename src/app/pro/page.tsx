@@ -1,14 +1,45 @@
 "use client";
 
+import Link from "next/link";
 import { LoginCard, TelegramLinkCard } from "@/components/Account/AccountGate";
 import { Icon } from "@/components/Icon";
 import { ProBadge } from "@/components/Pro/Pro";
+import { ReviewCard, Stars } from "@/components/Reviews/Reviews";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { PRO_BUY_URL, PRO_FEATURES, usePro, useReferral, useStartTrial } from "@/features/pro";
+import { useReviews } from "@/features/reviews";
 import { useFormat, useT } from "@/i18n/client";
 import { haptic } from "@/lib/telegram";
 import { useState } from "react";
 import styles from "./pro.module.css";
+
+/** Три свежих отзыва и средняя оценка; пока отзывов нет — блока нет. */
+function ProReviews() {
+  const t = useT().reviews;
+  const { formatNumber } = useFormat();
+  const { data } = useReviews();
+  const first = data?.pages[0];
+  if (!first?.count) return null;
+  return (
+    <section className="section">
+      <h2 className="section-title">
+        {t.proTitle}
+        <Link href="/reviews">{t.proAll}</Link>
+      </h2>
+      <div className={styles.reviewsHead}>
+        <Stars rating={first.average ?? 0} size={18} />
+        <span>
+          {first.average?.toLocaleString("ru-RU")} · {t.count(first.count, formatNumber(first.count))}
+        </span>
+      </div>
+      <div className="stack desk-grid" style={{ gap: 8 }}>
+        {first.items.slice(0, 3).map((r) => (
+          <ReviewCard key={r.id} review={r} />
+        ))}
+      </div>
+    </section>
+  );
+}
 
 /** Реферальная ссылка: друг получает пробный, вы — день Pro за каждого. */
 function ReferralCard() {
@@ -126,6 +157,8 @@ export default function ProPage() {
           </div>
         )}
       </section>
+
+      <ProReviews />
 
       {pro.available && <ReferralCard />}
 
