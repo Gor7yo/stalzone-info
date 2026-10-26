@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: PageProps<"/clans/[region]/[i
   const clan = isRegion(region) ? await serverClan(region, decodeURIComponent(id)) : null;
   if (!clan) return { title: "Клан" };
   return {
-    title: `[${stripMc(clan.tag)}] ${stripMc(clan.name)}`,
+    title: `[${stripMc(clan.tag)}] ${stripMc(clan.name)} - клан STALZONE`,
     description: `Клан STALZONE: уровень ${clanLevel(clan.level)}, бойцов ${clan.memberCount}, лидер ${stripMc(clan.leader)}.`,
   };
 }

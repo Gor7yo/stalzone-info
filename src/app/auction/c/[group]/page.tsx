@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: PageProps<"/auction/c/[group]
   const g = await marketGroup(group);
   if (!g) return {};
   return {
-    title: `${g.label} - цены на аукционе`,
+    title: `${g.label} - цены на аукционе STALZONE`,
     description: `${g.label} STALZONE: ${g.items.length} предметов с ценами на аукционе, лотами и историей продаж по регионам RU, EU, NA и SEA.`,
     alternates: { canonical: `/auction/c/${g.id}` },
   };

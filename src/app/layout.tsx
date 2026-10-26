@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   // главная: в заголовке — то, что ищут («цены аукциона»), а не только название
   title: { default: "STALZONE INFO - аукцион STALZONE: цены, флиппер, выбросы", template: "%s · STALZONE INFO" },
   description:
-    "Аукцион STALZONE: цены на все предметы сейчас, история продаж, флиппер выгодных лотов, алерты в Telegram, кланы и таймер выброса.",
+    "Аукцион STALZONE (сталзон): цены на все предметы сейчас, история продаж, флиппер выгодных лотов, алерты в Telegram, кланы и таймер выброса.",
   keywords: [
     "аукцион stalzone",
     "stalzone аукцион",
@@ -30,6 +30,10 @@ export const metadata: Metadata = {
     "stalzone info",
     "флиппер stalzone",
     "выброс stalzone",
+    "сталзон цены",
+    "когда выброс stalzone",
+    "stalzone market",
+    "stalzone auction prices",
   ],
   applicationName: "STALZONE INFO",
   appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "STALZONE INFO" },

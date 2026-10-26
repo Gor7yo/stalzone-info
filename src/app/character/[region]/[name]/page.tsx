@@ -4,8 +4,12 @@ import { isRegion } from "@/lib/regions";
 import { CharacterView } from "./CharacterView";
 
 export async function generateMetadata({ params }: PageProps<"/character/[region]/[name]">): Promise<Metadata> {
-  const { name } = await params;
-  return { title: decodeURIComponent(name) };
+  const { name: raw } = await params;
+  const name = decodeURIComponent(raw);
+  return {
+    title: `${name} - статистика игрока STALZONE`,
+    description: `${name}: статистика игрока STALZONE - K/D, убийства, часы в игре, клан, рейтинг и прогресс за неделю.`,
+  };
 }
 
 export default async function CharacterPage({ params }: PageProps<"/character/[region]/[name]">) {

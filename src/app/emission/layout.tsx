@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Выброс - таймер",
+  title: "Когда выброс STALZONE - таймер выброса",
   description:
     "Выброс в STALZONE: когда был последний и когда ждать следующий, таймер по регионам RU, EU, NA и SEA, уведомления в Telegram.",
 };

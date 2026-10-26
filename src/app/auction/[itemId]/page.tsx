@@ -21,10 +21,12 @@ export async function generateMetadata({ params }: PageProps<"/auction/[itemId]"
     best?.price && best.total
       ? `сейчас от ${formatPrice(best.price)} на аукционе RU, ${formatNumber(best.total)} ${plural(best.total, ["лот", "лота", "лотов"])}. `
       : "";
-  const title = `${item.name} - цена на аукционе`;
+  // английское название - чтобы находили и по «Comet», и по «Комета»
+  const title = `${item.name} - цена на аукционе STALZONE`;
+  const en = item.nameEn !== item.name ? ` (${item.nameEn})` : "";
   return {
     title,
-    description: `${item.name}: ${now}${now ? "Цены" : "цены"} на аукционе STALZONE, лоты, история продаж и график по регионам RU, EU, NA и SEA.`,
+    description: `${item.name}${en}: ${now}${now ? "Цены" : "цены"} на аукционе STALZONE, сколько стоит, лоты, история продаж и график по регионам RU, EU, NA и SEA.`,
     alternates: { canonical: `/auction/${id}` },
     openGraph: { title, url: `/auction/${id}` },
   };
