@@ -1,15 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { RegionSwitch } from "@/components/ui/RegionSwitch";
 import { Segmented } from "@/components/ui/Segmented";
 import { EmptyState, ErrorState, RowSkeleton } from "@/components/ui/States";
-import { CONFIDENCE, useFlips, type Flip } from "@/features/flips";
+import { CONFIDENCE, isRefreshing, useFlips, type Flip } from "@/features/flips";
 import { GROUPS, groupLabel, useItems } from "@/features/items";
 import { useFormat, useLang, useT } from "@/i18n/client";
-import { actions, REGIONS, useApp, type FlipSettings } from "@/lib/store";
+import { actions, REGIONS, useApp, type FlipSettings, type Region } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
 import { ProTeaser } from "@/components/Pro/Pro";
 import { usePro } from "@/features/pro";
@@ -32,6 +32,27 @@ const DEFAULTS: FlipSettings = { sort: "profit", minConfidence: "medium", minPro
 /** Кратно 2 и 3: на широком экране карточки — сеткой в 2–3 колонки. */
 const STEP = 24;
 const MODULES = "weapon_modules";
+
+/**
+ * «Новые»: лоты, которые сборщик увидел после прошлого взгляда на ленту этого региона.
+ * Момент взгляда хранится в браузере и обновляется с каждой загрузкой ленты; на время открытой
+ * страницы точка отсчёта замирает - то, что появилось при вас, тоже помечается «новым».
+ */
+const SEEN_KEY = (region: Region) => `stalzone:flipsSeen:${region}`;
+const baselines = new Map<Region, number>();
+function newSince(region: Region, fallback: number) {
+  let at = baselines.get(region);
+  if (at === undefined) {
+    let prev = 0;
+    try {
+      prev = Number(localStorage.getItem(SEEN_KEY(region))) || 0;
+    } catch {}
+    // первый заход: новым считается то, что появится после первой загрузки ленты
+    at = prev || fallback;
+    baselines.set(region, at);
+  }
+  return at;
+}
 
 function groupOffers(flips: Flip[]): Offer[] {
   const map = new Map<string, Offer>();
@@ -93,6 +114,17 @@ function FlipsFeed() {
   const settings = useApp((s) => s.flips);
   const { data: index } = useItems();
   const { data, isLoading, isError, refetch } = useFlips(region);
+  // точка отсчёта «новых» - только по ленте своего региона (при смене региона виден прошлый, пока грузится)
+  const since = data?.region === region ? newSince(region, Date.parse(data.updatedAt)) : null;
+  const isNew = (o: Offer) => since !== null && o.lots.some((f) => f.firstSeenAt && Date.parse(f.firstSeenAt) > since);
+  // ушли со страницы или сменили регион - в следующий раз считаем от нового взгляда
+  useEffect(() => () => void baselines.delete(region), [region]);
+  useEffect(() => {
+    if (data?.region !== region) return;
+    try {
+      localStorage.setItem(SEEN_KEY(region), String(Date.parse(data.updatedAt)));
+    } catch {}
+  }, [data, region]);
   const [open, setOpen] = useState(false);
   const [limit, setLimit] = useState(STEP);
   const [modLimit, setModLimit] = useState(STEP);
@@ -122,6 +154,7 @@ function FlipsFeed() {
   // в чипах только категории, в которых сейчас есть флипы
   const groups = GROUPS.filter((g) => all.some((f) => groupOf(f) === g.id));
   const lotsCount = offers.reduce((n, o) => n + o.lots.length, 0);
+  const newCount = offers.filter(isNew).length;
   const top = (main.length ? main : modules).reduce<Flip | null>((best, o) => (!best || o.best.profit > best.profit ? o.best : best), null);
 
   const active = [
@@ -152,9 +185,20 @@ function FlipsFeed() {
           <span>
             <strong className="mono">{lotsCount}</strong> {t.lotsWord(lotsCount)}
           </span>
-          {data && <span className="dim">{formatRelative(data.updatedAt)}</span>}
+          {newCount > 0 && (
+            <span className={styles.newCount}>
+              <strong className="mono">{newCount}</strong> {t.newWord(newCount)}
+            </span>
+          )}
+          {data && (
+            <span className={isRefreshing(data) ? styles.refreshing : "dim"}>
+              {isRefreshing(data) ? t.refreshing : formatRelative(data.updatedAt)}
+            </span>
+          )}
         </div>
       </section>
+      {/* фоновая быстрая проверка - только RU; в остальных регионах рынок освежается, пока лента открыта */}
+      {region !== "ru" && <p className={`dim ${styles.regionNote}`}>{t.regionNote}</p>}
 
       <div className={styles.toolbar}>
         <Segmented
@@ -261,13 +305,13 @@ function FlipsFeed() {
           <RowSkeleton />
         ) : offers.length ? (
           <>
-            <OfferList offers={main} limit={limit} onMore={() => setLimit((l) => l + STEP)} />
+            <OfferList offers={main} limit={limit} isNew={isNew} onMore={() => setLimit((l) => l + STEP)} />
             {modules.length > 0 && (
               <>
                 <h2 className="section-title" style={{ marginTop: main.length ? 24 : 0 }}>
                   {t.modulesTitle} <small>{t.modulesHint}</small>
                 </h2>
-                <OfferList offers={modules} limit={modLimit} onMore={() => setModLimit((l) => l + STEP)} />
+                <OfferList offers={modules} limit={modLimit} isNew={isNew} onMore={() => setModLimit((l) => l + STEP)} />
               </>
             )}
           </>
@@ -281,14 +325,14 @@ function FlipsFeed() {
   );
 }
 
-function OfferList({ offers, limit, onMore }: { offers: Offer[]; limit: number; onMore: () => void }) {
+function OfferList({ offers, limit, isNew, onMore }: { offers: Offer[]; limit: number; isNew: (o: Offer) => boolean; onMore: () => void }) {
   const t = useT().flips;
   const { data: index } = useItems();
   return (
     <>
       <div className="stack stagger desk-grid" style={{ gap: 10 }}>
         {offers.slice(0, limit).map((o) => (
-          <OfferCard key={o.key} offer={o} item={index?.byId.get(o.best.itemId)} />
+          <OfferCard key={o.key} offer={o} item={index?.byId.get(o.best.itemId)} isNew={isNew(o)} />
         ))}
       </div>
       {offers.length > limit && (

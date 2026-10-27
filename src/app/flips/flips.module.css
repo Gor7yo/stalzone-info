@@ -81,6 +81,20 @@
   color: var(--text);
 }
 
+.heroStats .newCount,
+.heroStats .newCount strong,
+.refreshing {
+  color: var(--acc);
+}
+
+/* регион без фоновой быстрой проверки: рынок освежается, пока лента открыта */
+.regionNote {
+  margin: 10px 4px 0;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
 /* ---------- сортировка и фильтры ---------- */
 
 .toolbar {
@@ -246,6 +260,22 @@
 
 .card:active {
   transform: scale(0.985);
+}
+
+/* лот появился после прошлого взгляда на ленту */
+.card[data-new] {
+  border-color: color-mix(in srgb, var(--acc) 45%, var(--line));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--acc) 18%, transparent);
+}
+
+.newTag {
+  padding: 2px 7px;
+  border-radius: 7px;
+  background: var(--acc);
+  color: #0b0d05;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 @media (hover: hover) {

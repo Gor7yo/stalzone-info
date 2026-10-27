@@ -427,6 +427,11 @@ export const ru = {
     perDay: (n: number) => `${n}/сут`,
     moreLots: (n: number) => `ещё ${n} ${plural(n, ["лот", "лота", "лотов"])}`,
     seen: (when: string) => `видели ${when}`,
+    newTag: "новый",
+    newWord: (n: number) => plural(n, ["новый", "новых", "новых"]),
+    refreshing: "обновляем рынок…",
+    regionNote:
+      "В этом регионе рынок освежается, пока открыт флиппер: раз в минуту. Без открытой ленты данные отстают на несколько минут - флип-алерты по региону приходят с задержкой.",
   },
   flipAlert: {
     radarTitle: (region: string) => `Радар рынка · ${region}`,

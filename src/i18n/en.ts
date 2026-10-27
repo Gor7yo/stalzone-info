@@ -413,6 +413,11 @@ export const en: Dict = {
     perDay: (n: number) => `${n}/day`,
     moreLots: (n: number) => `${n} more ${pluralEn(n, "lot", "lots")}`,
     seen: (when: string) => `seen ${when}`,
+    newTag: "new",
+    newWord: () => "new",
+    refreshing: "refreshing market…",
+    regionNote:
+      "In this region the market refreshes while the flipper is open: once a minute. Without an open feed the data lags a few minutes behind - flip alerts for the region arrive with a delay.",
   },
   flipAlert: {
     radarTitle: (region: string) => `Market radar · ${region}`,

@@ -32,7 +32,8 @@ function itemHref(f: Flip, item?: Item) {
   return `/auction/${f.itemId}${query ? `?${query}` : ""}`;
 }
 
-export function OfferCard({ offer, item }: { offer: Offer; item?: Item }) {
+/** isNew - лот появился после прошлого взгляда на ленту (метка «новый» и подсветка рамки). */
+export function OfferCard({ offer, item, isNew = false }: { offer: Offer; item?: Item; isNew?: boolean }) {
   const t = useT().flips;
   const lang = useLang();
   const { formatRelative, formatShort, locale } = useFormat();
@@ -50,6 +51,7 @@ export function OfferCard({ offer, item }: { offer: Offer; item?: Item }) {
     <Link
       href={itemHref(f, item)}
       className={styles.card}
+      data-new={isNew || undefined}
       style={{ "--q": quality?.color ?? "var(--text-3)" } as React.CSSProperties}
       onClick={() => {
         haptic.tap();
@@ -64,6 +66,7 @@ export function OfferCard({ offer, item }: { offer: Offer; item?: Item }) {
             {!f.variant && (f.upgrade > 0 || quality) && <span className={styles.upgrade}>+{f.upgrade}</span>}
           </span>
           <span className={styles.tags}>
+            {isNew && <span className={styles.newTag}>{t.newTag}</span>}
             {f.variant && <ModuleStatBadge id={f.variant} quality={quality ? f.quality : null} />}
             {quality && <span className={styles.qualityTag}>{quality.label}</span>}
             {f.amount > 1 && <span className={styles.tag}>×{f.amount}</span>}
