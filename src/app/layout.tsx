@@ -21,8 +21,10 @@ export const metadata: Metadata = {
   // главная: в заголовке — то, что ищут («цены аукциона»), а не только название
   title: { default: "STALZONE INFO - аукцион STALZONE: цены, флиппер, выбросы", template: "%s · STALZONE INFO" },
   description:
-    "Аукцион STALZONE (сталзон): цены на все предметы сейчас, история продаж, флиппер выгодных лотов, алерты в Telegram, кланы и таймер выброса.",
+    "Сталзон Инфо - аукцион STALZONE (сталзон): цены на все предметы сейчас, история продаж, флиппер выгодных лотов, алерты в Telegram, кланы и таймер выброса.",
   keywords: [
+    "сталзон инфо",
+    "stalzone инфо",
     "аукцион stalzone",
     "stalzone аукцион",
     "сталзон аукцион",
@@ -61,12 +63,14 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         {process.env.NEXT_PUBLIC_API_URL && <link rel="preconnect" href={process.env.NEXT_PUBLIC_API_URL} crossOrigin="" />}
       </head>
       <body>
-        {/* сайт с поиском по рынку: Google может показать поле поиска прямо в выдаче */}
+        {/* сайт с поиском по рынку: Google может показать поле поиска прямо в выдаче;
+            alternateName - другие написания названия, по ним Google связывает запросы с сайтом */}
         <JsonLd
           data={{
             "@context": "https://schema.org",
             "@type": "WebSite",
             name: "STALZONE INFO",
+            alternateName: ["Сталзон Инфо", "Stalzone Info", "stalzone-info.ru"],
             url: SITE_URL,
             inLanguage: "ru",
             potentialAction: {
