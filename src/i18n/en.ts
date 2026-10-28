@@ -51,6 +51,16 @@ export const en: Dict = {
     theme: "Theme",
     themeDark: "Dark theme",
     themeLight: "Light theme",
+    prices: "Prices",
+    flipper: "Flipper",
+    groupMarket: "Market",
+    groupCommunity: "Community",
+    emissionLive: "live",
+    emissionSince: "Since the last emission",
+    proUntil: (date: string) => `Pro until ${date}`,
+    noPro: "No Pro",
+    signInHint: "Sign in with EXBO",
+    toggleSide: "Collapse or expand menu",
   },
   home: {
     tiles: {

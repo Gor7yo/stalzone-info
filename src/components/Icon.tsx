@@ -5,8 +5,11 @@ const PATHS = {
   market: "M3 3v18h18M7 15l4-4 3 3 5-6",
   user: "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm-7 9a7 7 0 0 1 14 0",
   shield: "M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6z",
+  // классический знак радиации: три лопасти по 60° и точка в центре (рисуется заливкой, см. FILLED)
   radiation:
-    "M12 12m-1.6 0a1.6 1.6 0 1 0 3.2 0 1.6 1.6 0 1 0-3.2 0M12 3a9 9 0 0 1 7.8 4.5l-5 2.9A3.2 3.2 0 0 0 12 8.8zM4.2 7.5A9 9 0 0 1 12 3v5.8a3.2 3.2 0 0 0-2.8 1.6zM7.5 19.8A9 9 0 0 1 3 12h5.8a3.2 3.2 0 0 0 1.4 2.7zM21 12a9 9 0 0 1-4.5 7.8l-2.7-5.1a3.2 3.2 0 0 0 1.4-2.7z",
+    "M7.25 3.77A9.5 9.5 0 0 1 16.75 3.77L13.6 9.23A3.2 3.2 0 0 0 10.4 9.23ZM21.5 12A9.5 9.5 0 0 1 16.75 20.23L13.6 14.77A3.2 3.2 0 0 0 15.2 12ZM7.25 20.23A9.5 9.5 0 0 1 2.5 12L8.8 12A3.2 3.2 0 0 0 10.4 14.77ZM13.9 12a1.9 1.9 0 1 1-3.8 0 1.9 1.9 0 1 1 3.8 0Z",
+  flip: "M4 8h14l-4-4M20 16H6l4 4",
+  collapse: "m11 17-5-5 5-5M18 17l-5-5 5-5",
   search: "M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zm9 3-4.3-4.3",
   close: "M6 6l12 12M18 6 6 18",
   star: "m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z",
@@ -38,6 +41,9 @@ const PATHS = {
 
 export type IconName = keyof typeof PATHS;
 
+/** Эти иконки - сплошные фигуры: рисуем заливкой без обводки (контуром трилистник мелко превращается в кашу). */
+const FILLED = new Set<IconName>(["radiation"]);
+
 export function Icon({
   name,
   size = 20,
@@ -51,13 +57,14 @@ export function Icon({
   strokeWidth?: number;
   className?: string;
 }) {
+  const solid = FILLED.has(name);
   return (
     <svg
       width={size}
       height={size}
       viewBox="0 0 24 24"
-      fill={filled ? "currentColor" : "none"}
-      stroke="currentColor"
+      fill={filled || solid ? "currentColor" : "none"}
+      stroke={solid ? "none" : "currentColor"}
       strokeWidth={strokeWidth}
       strokeLinecap="round"
       strokeLinejoin="round"

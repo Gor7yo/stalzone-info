@@ -53,6 +53,17 @@ export const ru = {
     theme: "Тема",
     themeDark: "Тёмная тема",
     themeLight: "Светлая тема",
+    // боковое меню широкого экрана
+    prices: "Цены",
+    flipper: "Флиппер",
+    groupMarket: "Рынок",
+    groupCommunity: "Сообщество",
+    emissionLive: "идёт",
+    emissionSince: "С прошлого выброса",
+    proUntil: (date: string) => `Pro до ${date}`,
+    noPro: "Без Pro",
+    signInHint: "Вход через EXBO",
+    toggleSide: "Свернуть или развернуть меню",
   },
   home: {
     tiles: {

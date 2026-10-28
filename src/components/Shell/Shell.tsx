@@ -5,7 +5,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useMe } from "@/features/account";
 import { useT } from "@/i18n/client";
-import type { Dict } from "@/i18n/ru";
 import { emissionState, useEmission } from "@/features/emission";
 import { CREATOR, creatorHref, DONATE_URL } from "@/lib/creator";
 import { useApp } from "@/lib/store";
@@ -15,8 +14,9 @@ import { Icon, type IconName } from "../Icon";
 import { ThemeToggle } from "../Theme/ThemeToggle";
 import { LangSwitch } from "../ui/RegionSwitch";
 import styles from "./Shell.module.css";
+import { SideNav, type ShellLabel } from "./SideNav";
 
-const TABS: { href: string; label: keyof Dict["shell"]; icon: IconName }[] = [
+const TABS: { href: string; label: ShellLabel; icon: IconName }[] = [
   { href: "/", label: "home", icon: "home" },
   { href: "/auction", label: "market", icon: "market" },
   { href: "/character", label: "players", icon: "users" },
@@ -120,52 +120,30 @@ export function Shell({ children }: { children: React.ReactNode }) {
           }}
         >
           <Icon name="back" size={18} />
-          {t.common.back}
+          <span className={styles.backText}>{t.common.back}</span>
         </button>
       )}
 
+      {/* широкий экран - боковое меню группами; телефон - нижний док */}
+      <SideNav />
+
       <nav className={styles.dock} aria-label={t.shell.nav} style={{ "--index": active } as React.CSSProperties}>
-        {/* логотип — только в боковой панели широкого экрана */}
-        <Link href="/" className={styles.brand} aria-label={t.shell.brandAria}>
-          <span className={styles.brandMark} />
-          {/* одним элементом: иначе gap флекса добавляется к пробелу между словами */}
-          <span>
-            STALZONE <span style={{ color: "var(--acc)" }}>INFO</span>
-          </span>
-        </Link>
-        <div className={styles.tabs}>
-          <span className={styles.indicator} aria-hidden />
-          {TABS.map((tab, i) => (
-            <Link
-              key={tab.href}
-              href={tab.href}
-              className={styles.tab}
-              aria-current={i === active ? "page" : undefined}
-              onClick={() => i !== active && haptic.select()}
-            >
-              <span className={styles.tabIcon}>
-                <Icon name={tab.icon} size={21} strokeWidth={i === active ? 2.2 : 1.8} />
-                {tab.href === "/emission" && emissionActive && <span className={styles.alert} />}
-              </span>
-              <span className={styles.tabLabel}>{tab.href === "/account" ? accountLabel : t.shell[tab.label]}</span>
-            </Link>
-          ))}
-        </div>
-        {/* только в боковой панели широкого экрана; на телефоне — кнопка в подвале */}
-        <div className={styles.sideExtra}>
-          <Link href="/guide" className={styles.sideDonate} data-guide>
-            <Icon name="help" size={18} />
-            {t.shell.guide}
+        <span className={styles.indicator} aria-hidden />
+        {TABS.map((tab, i) => (
+          <Link
+            key={tab.href}
+            href={tab.href}
+            className={styles.tab}
+            aria-current={i === active ? "page" : undefined}
+            onClick={() => i !== active && haptic.select()}
+          >
+            <span className={styles.tabIcon}>
+              <Icon name={tab.icon} size={21} strokeWidth={i === active ? 2.2 : 1.8} />
+              {tab.href === "/emission" && emissionActive && <span className={styles.alert} />}
+            </span>
+            <span className={styles.tabLabel}>{tab.href === "/account" ? accountLabel : t.shell[tab.label]}</span>
           </Link>
-          <div className={styles.sideToggles}>
-            <ThemeToggle />
-            <LangSwitch />
-          </div>
-          <a className={styles.sideDonate} href={DONATE_URL} target="_blank" rel="noopener">
-            <Icon name="heart" size={18} />
-            {t.shell.donate}
-          </a>
-        </div>
+        ))}
       </nav>
     </>
   );

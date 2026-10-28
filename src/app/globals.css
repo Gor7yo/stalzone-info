@@ -579,8 +579,14 @@ img {
     --side-w: 232px;
   }
 
+  /* боковое меню свёрнуто в рельсу с иконками (SideNav) */
+  :root[data-side="rail"] {
+    --side-w: 76px;
+  }
+
   body {
     padding-left: var(--side-w);
+    transition: padding-left 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
   .page {

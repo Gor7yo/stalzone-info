@@ -1,0 +1,367 @@
+/* Боковое меню широкого экрана. На телефоне его нет - там нижний док (Shell). */
+.side {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .side {
+    position: fixed;
+    z-index: 50;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: var(--side-w);
+    display: flex;
+    flex-direction: column;
+    /* снизу место под кнопку «Назад» (Shell .back) */
+    padding: 22px 12px 72px;
+    border-right: 1px solid var(--line);
+    background: rgb(var(--panel-rgb) / 0.6);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    transition: width 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    animation: side-in 600ms var(--ease) both;
+  }
+
+  /* ---------- логотип ---------- */
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 34px;
+    padding: 0 10px;
+    margin-bottom: 8px;
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .brandMark {
+    width: 22px;
+    height: 22px;
+    border-radius: 7px;
+    flex: none;
+    background: radial-gradient(circle at 35% 30%, #fff8, transparent 40%), conic-gradient(from 200deg, var(--acc), #1ec8a0, var(--acc));
+    box-shadow: 0 0 18px rgb(var(--acc-rgb) / 0.5);
+  }
+
+  /* ---------- разделы ---------- */
+
+  .group {
+    display: grid;
+    gap: 2px;
+    margin-top: 14px;
+  }
+
+  .groupTitle {
+    height: 22px;
+    padding: 0 12px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 42px;
+    padding: 0 12px;
+    border-radius: 12px;
+    color: var(--text-2);
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+    transition:
+      color 180ms,
+      background 180ms;
+  }
+
+  .item svg {
+    flex: none;
+  }
+
+  .item:hover:not([aria-current="page"]) {
+    color: var(--text);
+    background: var(--surface-2);
+  }
+
+  .item[aria-current="page"] {
+    color: var(--acc);
+    background: rgb(var(--acc-rgb) / 0.12);
+    box-shadow: inset 0 0 0 1px rgb(var(--acc-rgb) / 0.22);
+  }
+
+  .label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .pro {
+    padding: 1px 6px;
+    border-radius: 6px;
+    border: 1px solid rgb(var(--acc-rgb) / 0.4);
+    color: var(--acc);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+  }
+
+  .since {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-3);
+  }
+
+  .live {
+    padding: 1px 7px;
+    border-radius: 6px;
+    background: rgb(var(--red-rgb) / 0.16);
+    color: var(--red);
+    font-size: 11px;
+    font-weight: 800;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+
+  /* выброс идёт: иконка красная - видно и в свёрнутой рельсе */
+  .item[data-alert] svg {
+    color: var(--red);
+  }
+
+  /* ---------- низ: аккаунт, тема и язык, гайд, донат, свернуть ---------- */
+
+  .bottom {
+    display: grid;
+    gap: 10px;
+    margin-top: auto;
+  }
+
+  .account {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    padding: 8px 10px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    transition:
+      background 180ms,
+      border-color 180ms;
+  }
+
+  .account:hover {
+    background: var(--surface-2);
+  }
+
+  .account[aria-current="page"] {
+    border-color: rgb(var(--acc-rgb) / 0.35);
+  }
+
+  .avatarEmpty {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    flex: none;
+    border-radius: 10px;
+    background: var(--surface-2);
+    color: var(--text-2);
+  }
+
+  .accountText {
+    display: grid;
+    min-width: 0;
+    line-height: 1.25;
+    white-space: nowrap;
+  }
+
+  .accountText b {
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .accountText small {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-3);
+  }
+
+  .accountText small[data-pro] {
+    color: var(--acc);
+  }
+
+  .toggles {
+    display: flex;
+    gap: 8px;
+    padding: 0 2px;
+  }
+
+  .tools {
+    display: flex;
+    gap: 4px;
+  }
+
+  .tool {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    color: var(--text-3);
+    transition:
+      color 180ms,
+      background 180ms;
+  }
+
+  .tool:hover {
+    color: var(--text);
+    background: var(--surface-2);
+  }
+
+  .tool[data-donate] {
+    color: var(--red);
+  }
+
+  .tool[data-collapse] {
+    margin-left: auto;
+  }
+
+  .tool[data-collapse] svg {
+    transition: transform 260ms;
+  }
+
+  /* подписи-подсказки справа от иконки: у кнопок внизу - всегда, у разделов - в рельсе */
+  .tool::after,
+  .item::after,
+  .account::after {
+    content: attr(data-label);
+    position: absolute;
+    z-index: 2;
+    left: calc(100% + 10px);
+    top: 50%;
+    padding: 6px 10px;
+    border-radius: 9px;
+    border: 1px solid var(--line-2);
+    background: var(--bg-2);
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+    box-shadow: 0 10px 30px -8px rgb(var(--shadow-rgb) / 0.7);
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-4px, -50%);
+    transition:
+      opacity 150ms,
+      transform 150ms;
+  }
+
+  .item::after,
+  .account::after {
+    display: none;
+  }
+
+  .tool:hover::after,
+  .item:hover::after,
+  .account:hover::after {
+    opacity: 1;
+    transform: translate(0, -50%);
+  }
+
+  /* ---------- свёрнуто в рельсу: только иконки ---------- */
+
+  :global([data-side="rail"]) .side {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  :global([data-side="rail"]) .brand {
+    padding: 0 0 0 11px;
+  }
+
+  :global([data-side="rail"]) .brandText,
+  :global([data-side="rail"]) .label,
+  :global([data-side="rail"]) .pro,
+  :global([data-side="rail"]) .since,
+  :global([data-side="rail"]) .accountText,
+  :global([data-side="rail"]) .toggles {
+    display: none;
+  }
+
+  /* заголовок группы - тонкая черта-разделитель */
+  :global([data-side="rail"]) .groupTitle {
+    height: 1px;
+    margin: 6px 10px 8px;
+    padding: 0;
+    background: var(--line-2);
+    color: transparent;
+  }
+
+  :global([data-side="rail"]) .item {
+    justify-content: center;
+    padding: 0;
+  }
+
+  /* «идёт» не помещается - остаётся красная точка */
+  :global([data-side="rail"]) .live {
+    position: absolute;
+    top: 7px;
+    right: 9px;
+    width: 8px;
+    height: 8px;
+    padding: 0;
+    border-radius: 50%;
+    background: var(--red);
+    font-size: 0;
+  }
+
+  :global([data-side="rail"]) .item::after,
+  :global([data-side="rail"]) .account::after {
+    display: block;
+  }
+
+  :global([data-side="rail"]) .account {
+    justify-content: center;
+    padding: 6px 0;
+  }
+
+  :global([data-side="rail"]) .tools {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  :global([data-side="rail"]) .tool[data-collapse] {
+    margin-left: 0;
+  }
+
+  :global([data-side="rail"]) .tool[data-collapse] svg {
+    transform: rotate(180deg);
+  }
+}
+
+@keyframes side-in {
+  from {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
