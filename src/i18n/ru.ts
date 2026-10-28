@@ -64,6 +64,7 @@ export const ru = {
     noPro: "Без Pro",
     signInHint: "Вход через EXBO",
     toggleSide: "Свернуть или развернуть меню",
+    settings: "Настройки",
   },
   home: {
     tiles: {

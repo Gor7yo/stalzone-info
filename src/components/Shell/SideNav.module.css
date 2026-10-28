@@ -13,8 +13,7 @@
     width: var(--side-w);
     display: flex;
     flex-direction: column;
-    /* снизу место под кнопку «Назад» (Shell .back) */
-    padding: 22px 12px 72px;
+    padding: 22px 12px 16px;
     border-right: 1px solid var(--line);
     background: rgb(var(--panel-rgb) / 0.6);
     backdrop-filter: blur(18px) saturate(140%);
@@ -139,7 +138,7 @@
     color: var(--red);
   }
 
-  /* ---------- низ: аккаунт, тема и язык, гайд, донат, свернуть ---------- */
+  /* ---------- низ: аккаунт, гайд, донат, настройки (тема и язык), свернуть ---------- */
 
   .bottom {
     display: grid;
@@ -203,13 +202,9 @@
     color: var(--acc);
   }
 
-  .toggles {
-    display: flex;
-    gap: 8px;
-    padding: 0 2px;
-  }
-
   .tools {
+    /* окошко настроек открывается над всем рядом */
+    position: relative;
     display: flex;
     gap: 4px;
   }
@@ -242,6 +237,42 @@
 
   .tool[data-collapse] svg {
     transition: transform 260ms;
+  }
+
+  .settings {
+    display: flex;
+  }
+
+  .tool[aria-expanded="true"] {
+    color: var(--text);
+    background: var(--surface-2);
+  }
+
+  .popover {
+    position: absolute;
+    z-index: 3;
+    left: 0;
+    right: 0;
+    bottom: calc(100% + 8px);
+    display: grid;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 14px;
+    border: 1px solid var(--line-2);
+    background: var(--bg-2);
+    box-shadow: 0 16px 40px -12px rgb(var(--shadow-rgb) / 0.8);
+    animation: pop-in 160ms var(--ease) both;
+  }
+
+  .popRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-2);
+    white-space: nowrap;
   }
 
   /* подписи-подсказки справа от иконки: у кнопок внизу - всегда, у разделов - в рельсе */
@@ -282,6 +313,11 @@
     transform: translate(0, -50%);
   }
 
+  /* окошко открыто - подсказка «Настройки» не нужна */
+  .tool[aria-expanded="true"]::after {
+    display: none;
+  }
+
   /* ---------- свёрнуто в рельсу: только иконки ---------- */
 
   :global([data-side="rail"]) .side {
@@ -297,8 +333,7 @@
   :global([data-side="rail"]) .label,
   :global([data-side="rail"]) .pro,
   :global([data-side="rail"]) .since,
-  :global([data-side="rail"]) .accountText,
-  :global([data-side="rail"]) .toggles {
+  :global([data-side="rail"]) .accountText {
     display: none;
   }
 
@@ -350,6 +385,25 @@
 
   :global([data-side="rail"]) .tool[data-collapse] svg {
     transform: rotate(180deg);
+  }
+
+  /* в рельсе места нет - окошко справа от шестерёнки, низом вровень с ней */
+  :global([data-side="rail"]) .settings {
+    position: relative;
+  }
+
+  :global([data-side="rail"]) .popover {
+    left: calc(100% + 28px);
+    right: auto;
+    bottom: 0;
+    width: 208px;
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
   }
 }
 

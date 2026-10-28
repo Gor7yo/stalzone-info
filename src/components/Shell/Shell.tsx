@@ -120,7 +120,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           }}
         >
           <Icon name="back" size={18} />
-          <span className={styles.backText}>{t.common.back}</span>
+          <span>{t.common.back}</span>
         </button>
       )}
 

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { useMe } from "@/features/account";
 import { emissionState, useEmission, type EmissionState } from "@/features/emission";
 import { useFormat, useT } from "@/i18n/client";
@@ -114,10 +115,6 @@ export function SideNav() {
 
       <div className={styles.bottom}>
         <AccountCard active={isAccountPath(path)} />
-        <div className={styles.toggles}>
-          <ThemeToggle />
-          <LangSwitch />
-        </div>
         <div className={styles.tools}>
           <Link href="/guide" className={styles.tool} aria-label={t.guide} data-label={t.guide}>
             <Icon name="help" size={18} />
@@ -133,6 +130,7 @@ export function SideNav() {
           >
             <Icon name="heart" size={18} />
           </a>
+          <Settings />
           <button
             type="button"
             className={styles.tool}
@@ -149,6 +147,60 @@ export function SideNav() {
         </div>
       </div>
     </nav>
+  );
+}
+
+/** Шестерёнка: тема и язык во всплывающем окошке. Закрывается кликом мимо и Esc. */
+function Settings() {
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: PointerEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={ref} className={styles.settings}>
+      <button
+        type="button"
+        className={styles.tool}
+        aria-label={t.shell.settings}
+        data-label={t.shell.settings}
+        aria-expanded={open}
+        aria-controls="side-settings"
+        onClick={() => {
+          haptic.tap();
+          setOpen(!open);
+        }}
+      >
+        <Icon name="settings" size={18} />
+      </button>
+      {open && (
+        <div id="side-settings" role="dialog" aria-label={t.shell.settings} className={styles.popover}>
+          <div className={styles.popRow}>
+            <span>{t.shell.theme}</span>
+            <ThemeToggle />
+          </div>
+          <div className={styles.popRow}>
+            <span>{t.common.language}</span>
+            <LangSwitch />
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 

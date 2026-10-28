@@ -61,6 +61,7 @@ export const en: Dict = {
     noPro: "No Pro",
     signInHint: "Sign in with EXBO",
     toggleSide: "Collapse or expand menu",
+    settings: "Settings",
   },
   home: {
     tiles: {
