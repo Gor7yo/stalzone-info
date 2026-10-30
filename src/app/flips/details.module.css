@@ -138,7 +138,8 @@
   min-width: 0;
 }
 
-.title > span {
+/* свой класс, не «.title > span»: иконка предмета (ItemIcon) - тоже span, её бы растянуло */
+.titleText {
   flex: 1;
   display: grid;
   gap: 3px;

@@ -169,7 +169,7 @@ export function FlipDetails({
 
       <div className={d.title} style={{ "--q": quality?.color ?? "var(--text-3)" } as React.CSSProperties}>
         <ItemIcon item={item} size={42} />
-        <span>
+        <span className={d.titleText}>
           <strong>
             {name}
             {upgrade && <em className="mono"> {upgrade}</em>}
