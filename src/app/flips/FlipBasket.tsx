@@ -151,12 +151,8 @@ export function FlipCalc({ picks, flips, ready, onRemove, onClear }: BasketProps
 
   return (
     <section className={b.side} aria-label={t.calcTitle}>
-      <span className={b.frame} aria-hidden />
       <header className={b.sideHead}>
-        <span className={b.kicker}>
-          <i aria-hidden />
-          {t.calcTitle}
-        </span>
+        <b className={b.sideTitle}>{t.calcTitle}</b>
         {s.present.length > 0 && <span className={b.countNum}>{s.present.length}</span>}
         {s.keys.length > 0 && (
           <button

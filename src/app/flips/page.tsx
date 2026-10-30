@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { RegionSwitch } from "@/components/ui/RegionSwitch";
 import { EmptyState, ErrorState, RowSkeleton } from "@/components/ui/States";
-import { CONFIDENCE, isRefreshing, useFlips, type Confidence, type Flip } from "@/features/flips";
+import { CONFIDENCE, isRefreshing, useFlips, type Flip } from "@/features/flips";
 import { GROUPS, groupLabel, itemMatcher, useItems } from "@/features/items";
 import { useFormat, useLang, useT } from "@/i18n/client";
 import { actions, REGIONS, useApp, type FlipSettings, type Region } from "@/lib/store";
@@ -14,7 +14,7 @@ import { usePro } from "@/features/pro";
 import { FlipAlertCard, RadarToggle } from "./FlipAlertCard";
 import { FlipBasket, FlipCalc, usePicks } from "./FlipBasket";
 import { FlipPeek, FlipSheet } from "./FlipDetails";
-import { BUDGET_STOPS, budgetBucket, FlipFilters, PROFIT_STOPS, profitBucket } from "./FlipFilters";
+import { FlipFilters, PRESETS, type PresetId } from "./FlipFilters";
 import { OfferCard, type Offer } from "./OfferCard";
 import styles from "./flips.module.css";
 
@@ -27,7 +27,8 @@ const SORTS: Record<FlipSettings["sort"], (a: Offer, b: Offer) => number> = {
   fast: (a, b) => b.best.perDay - a.best.perDay || b.best.profit - a.best.profit,
 };
 
-const DEFAULTS: FlipSettings = { sort: "profit", minConfidence: "medium", minProfit: 20_000, budget: 0, group: null, fastOnly: false };
+/** По умолчанию - режим «Лучшие». */
+const DEFAULTS: FlipSettings = { ...PRESETS.best, group: null };
 /** Кратно 2 и 3: на широком экране карточки — сеткой в 2–3 колонки. */
 const STEP = 24;
 const MODULES = "weapon_modules";
@@ -147,46 +148,30 @@ function FlipsFeed() {
   const all = data?.flips ?? [];
   const groupOf = (f: Flip) => index?.byId.get(f.itemId)?.group;
   const match = itemMatcher(query);
-  /** skip - фильтр, который не применяем: гистограмма прицела показывает, что он отсекает */
-  const passes = (f: Flip, skip?: "profit" | "budget" | "conf") => {
-    if (skip !== "profit" && f.profit < settings.minProfit) return false;
-    if (skip !== "budget" && settings.budget && f.buyout > settings.budget) return false;
-    if (skip !== "conf" && CONFIDENCE[f.confidence].rank < CONFIDENCE[settings.minConfidence].rank) return false;
-    if (settings.fastOnly && (f.sellHours == null || f.sellHours > 24)) return false;
+  /** Лот проходит фильтры s (свои настройки или режима) и поиск. */
+  const passes = (f: Flip, s: Omit<FlipSettings, "group">) => {
+    if (f.profit < s.minProfit) return false;
+    if (s.budget && f.buyout > s.budget) return false;
+    if (CONFIDENCE[f.confidence].rank < CONFIDENCE[s.minConfidence].rank) return false;
+    if (s.fastOnly && (f.sellHours == null || f.sellHours > 24)) return false;
     if (match) {
       const item = index?.byId.get(f.itemId);
       if (!item || !match(item)) return false;
     }
     return true;
   };
-  const pool = groupOffers(all.filter((f) => passes(f)));
+  const inGroup = (o: Offer) => !settings.group || groupOf(o.best) === settings.group;
+  const pool = groupOffers(all.filter((f) => passes(f, settings)));
   // всё, кроме категории: из этого считаются числа на чипах категорий
   const visible = onlyNew ? pool.filter(isNew) : pool;
-  const inGroup = (o: Offer) => !settings.group || groupOf(o.best) === settings.group;
   const offers = visible.filter(inGroup).sort(SORTS[settings.sort]);
-  // для пульта: позиции при всех фильтрах, кроме одного
-  const without = (skip: "profit" | "budget" | "conf") =>
-    groupOffers(all.filter((f) => passes(f, skip))).filter((o) => (!onlyNew || isNew(o)) && inGroup(o));
-  const histogram = (values: number[], bucket: (v: number) => number, size: number) => {
-    const out = Array<number>(size).fill(0);
-    for (const v of values) {
-      const i = bucket(v);
-      if (i >= 0) out[i]++;
-    }
-    return out;
-  };
-  const profitHist = histogram(
-    without("profit").map((o) => o.best.profit),
-    profitBucket,
-    PROFIT_STOPS.length,
-  );
-  const budgetHist = histogram(
-    without("budget").map((o) => o.best.buyout),
-    budgetBucket,
-    BUDGET_STOPS.length,
-  );
-  const confCounts: Record<Confidence, number> = { low: 0, medium: 0, high: 0 };
-  for (const o of without("conf")) confCounts[o.best.confidence]++;
+  // сколько флипов покажет каждый режим - число на его карточке
+  const presetCounts = Object.fromEntries(
+    (Object.keys(PRESETS) as PresetId[]).map((id) => [
+      id,
+      groupOffers(all.filter((f) => passes(f, PRESETS[id]))).filter((o) => inGroup(o) && (!onlyNew || isNew(o))).length,
+    ]),
+  ) as Record<PresetId, number>;
   // в общем списке модули — отдельным блоком ниже: их много, а перепродаются они хуже обычных предметов
   const isModule = (o: Offer) => groupOf(o.best) === MODULES;
   const main = settings.group ? offers : offers.filter((o) => !isModule(o));
@@ -267,7 +252,6 @@ function FlipsFeed() {
           <FlipFilters
             settings={settings}
             set={set}
-            defaults={DEFAULTS}
             query={query}
             onQuery={(q) => {
               resetPaging();
@@ -281,14 +265,10 @@ function FlipsFeed() {
             newCount={newCount}
             groups={groups}
             total={visible.length}
-            shown={offers.length}
-            overall={groupOffers(all).length}
-            profitHist={profitHist}
-            budgetHist={budgetHist}
-            confCounts={confCounts}
+            presetCounts={presetCounts}
             showFast={all.some((f) => f.sellHours !== undefined)}
             onReset={() => {
-              set({ ...DEFAULTS, sort: settings.sort });
+              set(DEFAULTS);
               setQuery("");
               setOnlyNew(false);
             }}

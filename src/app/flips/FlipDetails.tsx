@@ -6,14 +6,14 @@ import { createPortal } from "react-dom";
 import { Icon } from "@/components/Icon";
 import { ModuleStatBadge } from "@/components/ModuleStat/ModuleStat";
 import { ItemIcon } from "@/components/ui/ItemIcon";
-import { TIERS } from "@/features/auction";
-import { CONFIDENCE, flipMoney, type Flip } from "@/features/flips";
+import type { Flip } from "@/features/flips";
 import type { Item } from "@/features/items";
 import { useFormat, useT } from "@/i18n/client";
 import { actions } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
 import { useNow } from "@/lib/useNow";
-import { CopyName, itemHref, Signal, useOfferName, type Offer } from "./OfferCard";
+import { ConfDot } from "./FlipFilters";
+import { CopyName, itemHref, useOfferName, type Offer } from "./OfferCard";
 import { peek, usePeek } from "./peek";
 import d from "./details.module.css";
 
@@ -21,12 +21,12 @@ const GAP = 14;
 const EDGE = 12;
 const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), Math.max(min, max));
 
-/** Окошко разбора у карточки: справа, если влезает, иначе слева или под ней. Мышь сквозь него проходит. */
+/** Карточка-подсказка у флипа: справа, если влезает, иначе слева или под ним. Мышь сквозь неё проходит. */
 export function FlipPeek({ days }: { days: number }) {
   const s = usePeek();
   const ref = useRef<HTMLDivElement>(null);
 
-  // размер окошка известен только после отрисовки - ставим на место до того, как его увидят
+  // размер известен только после отрисовки - ставим на место до того, как её увидят
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el || !s) return;
@@ -50,7 +50,7 @@ export function FlipPeek({ days }: { days: number }) {
     el.style.left = `${left}px`;
     el.style.top = `${top}px`;
     el.dataset.side = side;
-    // «носик» смотрит на середину карточки
+    // «носик» смотрит на середину карточки флипа
     el.style.setProperty("--notch", `${clamp(r.top + r.height / 2 - top, 22, h - 22)}px`);
   }, [s]);
 
@@ -66,65 +66,29 @@ export function FlipPeek({ days }: { days: number }) {
 
   if (!s) return null;
   return createPortal(
-    // key: новая карточка - заново проходит «сканер»
     <div key={s.offer.best.key} ref={ref} role="tooltip" className={d.peek}>
-      <span className={d.frame} aria-hidden />
-      <span className={d.scan} aria-hidden />
       <FlipDetails offer={s.offer} item={s.item} isNew={s.isNew} days={days} mode="peek" />
     </div>,
     document.body,
   );
 }
 
-// ---------- содержимое разбора ----------
-
-function Row({
-  k,
-  label,
-  hint,
-  value,
-  sub,
-  warn,
-}: {
-  k: "buy" | "sale" | "fee" | "profit" | "worst";
-  label: string;
-  hint?: string;
-  value: string;
-  sub?: string;
-  warn?: boolean;
-}) {
+/** Одна строка-факт: значок и короткая фраза простыми словами. */
+function Fact({ icon, tone, children }: { icon: React.ReactNode; tone?: "warn"; children: React.ReactNode }) {
   return (
-    <div className={d.row} data-k={k} data-warn={warn || undefined}>
-      <dt>
-        <i aria-hidden />
-        {label}
-      </dt>
-      <span className={d.leader} aria-hidden />
-      <dd className="mono">
-        {value}
-        {sub && <small>{sub}</small>}
-      </dd>
-      {hint && <small className={d.hint}>{hint}</small>}
-    </div>
-  );
-}
-
-function Tile({ label, value, sub, tone, title }: { label: string; value: string; sub?: string; tone?: "good" | "dim"; title?: string }) {
-  return (
-    <div className={d.tile} data-tone={tone} title={title}>
-      <span>{label}</span>
-      <b className="mono">
-        {value}
-        {sub && <small> {sub}</small>}
-      </b>
-    </div>
+    <li className={d.fact} data-tone={tone}>
+      <span className={d.factIcon} aria-hidden>
+        {icon}
+      </span>
+      <span>{children}</span>
+    </li>
   );
 }
 
 /**
- * Разбор лота «чеком»: выкуп → продажа по медиане → комиссия → прибыль и худший случай,
- * под ним - как быстро продастся, сделки, когда лот снимут и пачка.
- * peek - окошко при наведении (подсказки про клик), sheet - шторка на телефоне.
+ * Что за флип - так, чтобы понял любой: «купить за → продать за → прибыль» крупно,
+ * под этим 2-4 строки: за сколько продастся, насколько надёжно, когда можно уйти в минус, пачка.
+ * peek - подсказка при наведении, sheet - шторка на телефоне (с копированием названия).
  */
 export function FlipDetails({
   offer,
@@ -140,127 +104,76 @@ export function FlipDetails({
   mode: "peek" | "sheet";
 }) {
   const t = useT().flips;
-  const { formatNumber, formatShort, formatRelative, formatDuration, locale } = useFormat();
+  const { formatNumber, formatShort, formatDuration, locale } = useFormat();
   const f = offer.best;
   const { name, upgrade, quality, variant } = useOfferName(f, item);
-  const money = flipMoney(f);
-  const conf = CONFIDENCE[f.confidence];
-  const tier = TIERS.find((x) => f.upgrade >= x.min && f.upgrade <= x.max);
-  const others = offer.lots.length - 1;
   // до снятия лота - с точностью до минуты
   const now = useNow(30_000);
   const endsIn = now ? Date.parse(f.endTime) - now : null;
-  const share = (v: number) => `${Math.max(0, (v / money.gross) * 100)}%`;
-  const signed = (v: number) => (v < 0 ? `−${formatNumber(-v)}` : `+${formatNumber(v)}`);
-  const hours = (h: number) => Math.max(1, Math.round(h));
+  const sell =
+    f.sellHours === undefined
+      ? null
+      : f.sellHours === null
+        ? t.factSlow
+        : f.sellHours < 1
+          ? t.factSellHour
+          : t.factSell(Math.round(f.sellHours));
 
   return (
     <div className={d.details}>
-      <header className={d.head}>
-        <span className={d.kicker}>
-          <i aria-hidden />
-          {t.scanTitle}
-        </span>
-        <span className={d.conf} style={{ color: conf.color }}>
-          <Signal level={f.confidence} />
-          {t.conf[f.confidence]}
-        </span>
-      </header>
-
-      <div className={d.title} style={{ "--q": quality?.color ?? "var(--text-3)" } as React.CSSProperties}>
-        <ItemIcon item={item} size={42} />
+      <div className={d.title}>
+        <ItemIcon item={item} size={44} />
         <span className={d.titleText}>
           <strong>
             {name}
             {upgrade && <em className="mono"> {upgrade}</em>}
           </strong>
           <small>
-            {[quality?.label, variant, f.amount > 1 ? `×${f.amount}` : null].filter(Boolean).join(" · ")}
+            {quality && <span style={{ color: quality.color }}>{quality.label}</span>}
+            {variant && <span>{variant}</span>}
+            {f.amount > 1 && <span className="mono">×{f.amount}</span>}
             {isNew && <b className={d.newTag}>{t.newTag}</b>}
           </small>
         </span>
-        {/* в окошке при наведении мышь проходит насквозь - кнопка только в шторке */}
+        {/* в подсказке мышь проходит насквозь - кнопка только в шторке */}
         {mode === "sheet" && <CopyName name={name} />}
       </div>
       {mode === "sheet" && f.variant && <ModuleStatBadge id={f.variant} quality={quality ? f.quality : null} size="md" />}
 
-      {/* вся продажа одной полосой: сколько уходит на выкуп, сколько на комиссию, остальное - прибыль */}
-      <div className={d.stack} aria-hidden>
-        <span data-k="buy" style={{ width: share(f.buyout) }} />
-        <span data-k="fee" style={{ width: share(money.fee) }} />
-        <span data-k="profit" />
-      </div>
-
-      <dl className={d.receipt}>
-        <Row
-          k="buy"
-          label={t.rowBuyout}
-          value={formatNumber(f.buyout)}
-          sub={f.amount > 1 ? `${formatNumber(f.unitPrice)}${t.perPcs}` : undefined}
-        />
-        <Row
-          k="sale"
-          label={t.rowSale}
-          value={formatNumber(money.gross)}
-          sub={f.amount > 1 ? `~${formatNumber(f.sellUnit)}${t.perPcs}` : undefined}
-        />
-        <Row k="fee" label={t.rowFee} value={`−${formatNumber(money.fee)}`} />
-        <Row k="profit" label={t.rowProfit} value={`+${formatNumber(f.profit)}`} sub={`${f.pct.toLocaleString(locale)} %`} />
-        <Row
-          k="worst"
-          label={t.rowWorst}
-          hint={f.profitLow < 0 ? t.worstLoss : t.worstHint}
-          value={signed(f.profitLow)}
-          warn={f.profitLow < 0}
-        />
-      </dl>
-
-      <div className={d.tiles}>
-        <Tile
-          label={t.tileSell}
-          value={
-            f.sellHours == null
-              ? f.sellHours === null
-                ? t.overTwoDays
-                : "—"
-              : f.sellHours < 1
-                ? t.sellUnderHour
-                : `~${Math.round(f.sellHours)} ${t.hoursShort}`
-          }
-          tone={f.sellHours === null ? "dim" : undefined}
-          title={f.sellHours === null ? t.sellOver48 : undefined}
-        />
-        <Tile label={t.tileHour} value={f.profitPerHour != null ? t.perHour(formatShort(f.profitPerHour)) : "—"} tone="good" />
-        <Tile label={t.tileDeals(days)} value={String(f.deals)} sub={t.perDay(f.perDay)} />
-        <Tile
-          label={t.tileEnds}
-          value={endsIn === null ? "—" : endsIn > 0 ? t.endsIn(formatDuration(endsIn)) : t.ended}
-          tone={endsIn !== null && endsIn <= 0 ? "dim" : undefined}
-        />
-      </div>
-      <p className={d.basis}>{f.basis === "tier" && tier ? t.basisTier(tier.label) : t.basisExact}</p>
-
-      {f.batch && others > 0 ? (
-        <div className={d.batch}>
-          <Icon name="bag" size={15} />
-          <span>
-            <b>{t.batchTitle}</b>
-            {t.batch(f.batch.lots, f.batch.total)} {t.batchFor(formatShort(f.batch.buyout), formatShort(f.batch.profit))} ·{" "}
-            {t.sellIn(hours(f.batch.sellHours))}
-          </span>
+      <div className={d.money}>
+        <div className={d.line}>
+          <span>{t.buyFor}</span>
+          <b className="mono">{formatNumber(f.buyout)}</b>
         </div>
-      ) : (
-        others > 0 && <p className={d.more}>{t.moreLots(others)}</p>
-      )}
+        {f.amount > 1 && <small className={d.lineSub}>{t.perPiece(f.amount, formatShort(f.unitPrice))}</small>}
+        <div className={d.line}>
+          <span>{t.sellFor}</span>
+          <b className="mono">~{formatNumber(f.sellUnit * f.amount)}</b>
+        </div>
+        <div className={d.total}>
+          <span>{t.profitWord}</span>
+          <b className="mono">+{formatNumber(f.profit)}</b>
+          <small className="mono">{f.pct.toLocaleString(locale)} %</small>
+        </div>
+        <small className={d.fee}>{t.feeIncluded}</small>
+      </div>
 
-      <footer className={d.foot}>
-        <span>{t.seen(formatRelative(f.seenAt))}</span>
-        {mode === "peek" && (
-          <span>
-            {t.clickHint} · {t.pickHint}
-          </span>
+      <ul className={d.facts}>
+        {sell && <Fact icon={<Icon name="clock" size={15} />}>{sell}</Fact>}
+        <Fact icon={<ConfDot level={f.confidence} />}>
+          {t.factConf[f.confidence]} <span className={d.dim}>· {t.factDeals(f.deals, days)}</span>
+        </Fact>
+        {f.profitLow < 0 && (
+          <Fact icon={<Icon name="alert" size={15} />} tone="warn">
+            {t.factRisk(formatShort(-f.profitLow))}
+          </Fact>
         )}
-      </footer>
+        {f.batch && offer.lots.length > 1 && (
+          <Fact icon={<Icon name="bag" size={15} />}>{t.factBatch(f.batch.lots, f.batch.total, formatShort(f.batch.profit))}</Fact>
+        )}
+      </ul>
+
+      {endsIn !== null && <p className={d.foot}>{endsIn > 0 ? t.factEnds(formatDuration(endsIn)) : t.ended}</p>}
     </div>
   );
 }
@@ -309,8 +222,8 @@ export function FlipSheet({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div role="dialog" aria-modal="true" aria-label={t.scanTitle} className={d.sheet}>
-        <span className={d.frame} aria-hidden />
+      <div role="dialog" aria-modal="true" aria-label={t.aboutFlip} className={d.sheet}>
+        <span className={d.grab} aria-hidden />
         <button type="button" className={d.sheetClose} aria-label={t.close} onClick={onClose}>
           <Icon name="close" size={18} />
         </button>

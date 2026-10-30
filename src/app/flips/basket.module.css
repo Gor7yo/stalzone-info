@@ -292,27 +292,8 @@
   min-height: 0;
   padding: 14px 14px 12px;
   border-radius: 18px;
-  border: 1px solid var(--line-2);
-  background:
-    linear-gradient(rgb(var(--acc-rgb) / 0.03) 1px, transparent 1px) 0 0 / 100% 20px,
-    var(--bg-2);
-}
-
-/* уголки видоискателя - как у пульта фильтров */
-.frame {
-  --c: rgb(var(--acc-rgb) / 0.55);
-  position: absolute;
-  inset: 5px;
-  pointer-events: none;
-  background:
-    linear-gradient(var(--c), var(--c)) left top / 10px 1.5px no-repeat,
-    linear-gradient(var(--c), var(--c)) left top / 1.5px 10px no-repeat,
-    linear-gradient(var(--c), var(--c)) right top / 10px 1.5px no-repeat,
-    linear-gradient(var(--c), var(--c)) right top / 1.5px 10px no-repeat,
-    linear-gradient(var(--c), var(--c)) left bottom / 10px 1.5px no-repeat,
-    linear-gradient(var(--c), var(--c)) left bottom / 1.5px 10px no-repeat,
-    linear-gradient(var(--c), var(--c)) right bottom / 10px 1.5px no-repeat,
-    linear-gradient(var(--c), var(--c)) right bottom / 1.5px 10px no-repeat;
+  border: 1px solid var(--line);
+  background: var(--surface);
 }
 
 .sideHead {
@@ -322,24 +303,9 @@
   padding: 0 2px;
 }
 
-.kicker {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--acc);
-}
-
-.kicker i {
-  width: 6px;
-  height: 6px;
-  border-radius: 1px;
-  background: var(--acc);
-  animation: blink 1s steps(2, jump-none) infinite;
+.sideTitle {
+  font-size: 15px;
+  font-weight: 800;
 }
 
 .sideHead .countNum {
@@ -350,11 +316,10 @@
 
 .clearText {
   margin-left: auto;
-  font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--text-3);
-  text-decoration: underline dashed;
+  text-decoration: underline;
   text-underline-offset: 3px;
 }
 
@@ -461,12 +426,6 @@
   margin: 0 -4px;
   overflow-y: auto;
   overscroll-behavior: contain;
-}
-
-@keyframes blink {
-  50% {
-    opacity: 0;
-  }
 }
 
 @keyframes breathe {
