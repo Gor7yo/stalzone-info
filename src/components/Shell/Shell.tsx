@@ -107,7 +107,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
         <button
           type="button"
           className={styles.back}
+          data-back
           aria-label={t.shell.backAria}
+          title={t.common.back}
           onClick={() => {
             haptic.tap();
             const from = window.location.pathname;
@@ -119,8 +121,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             }, 400);
           }}
         >
-          <Icon name="back" size={18} />
-          <span>{t.common.back}</span>
+          <Icon name="back" size={20} strokeWidth={2.2} />
         </button>
       )}
 

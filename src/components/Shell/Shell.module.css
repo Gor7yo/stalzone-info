@@ -161,31 +161,47 @@
   }
 }
 
-/* «Назад» на прошлый экран/вкладку (в Telegram вместо неё нативная кнопка) */
+/*
+ * «Назад» на прошлый экран (в Telegram вместо неё нативная кнопка): на телефоне - стрелка
+ * сверху слева в своём ряду. Не висит поверх ленты: уезжает вместе со страницей, а не плавает
+ * над доком (там она налезала на расчёт флипов и карточки).
+ */
 .back {
-  position: fixed;
+  position: absolute;
   z-index: 45;
-  left: max(16px, calc(50% - 230px));
-  bottom: calc(var(--dock-h) + var(--safe-bottom) + 20px);
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  height: 36px;
-  padding: 0 14px 0 10px;
-  border-radius: 999px;
-  background: rgb(var(--panel-rgb) / 0.78);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--line-2);
-  font-size: 13px;
-  font-weight: 800;
-  box-shadow: 0 12px 30px -10px rgb(var(--shadow-rgb) / 0.8);
-  animation: rise 260ms var(--ease);
-  transition: transform 160ms var(--ease);
+  top: calc(var(--safe-top) + 12px);
+  /* вровень с левым краем контента (.page: до 640 px по центру) */
+  left: max(16px, calc(50% - 320px));
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--text);
+  animation: fade-in 260ms ease both;
+  transition:
+    transform 160ms var(--ease),
+    background 180ms;
 }
 
 .back:active {
-  transform: scale(0.94);
+  transform: scale(0.92);
+  background: var(--surface-2);
+}
+
+/* страница опускается под ряд со стрелкой - ничего не перекрыто */
+@media (max-width: 1023px) {
+  :global(body:has([data-back]) main.page) {
+    padding-top: calc(var(--safe-top) + 60px);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
 }
 
 /* подпись автора внизу каждой страницы: заходит в нижний отступ .page, над доком */
