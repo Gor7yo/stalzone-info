@@ -21,6 +21,59 @@
   font-size: 18px;
 }
 
+/* ---------- раскладка: лента + колонка итогов справа (от 1200 px) ---------- */
+
+.feed {
+  min-width: 0;
+}
+
+.aside {
+  display: none;
+}
+
+@media (min-width: 1200px) {
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 24px;
+    align-items: start;
+  }
+
+  /* итоги видны всё время, пока листаете ленту; снизу - место под кнопку «Связаться» */
+  .aside {
+    position: sticky;
+    top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 0;
+    max-height: calc(100vh - 100px);
+  }
+
+  /* сводка переехала в колонку */
+  .hero:not([data-side]) {
+    display: none;
+  }
+
+  /* лента уже - карточки поуже, чтобы влезали две в ряд */
+  .feed :global(.desk-grid) {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+
+  .hero[data-side] {
+    flex: none;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px;
+  }
+
+  .hero[data-side] .heroStats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 12px;
+  }
+}
+
 /* ---------- сводка ---------- */
 
 .hero {

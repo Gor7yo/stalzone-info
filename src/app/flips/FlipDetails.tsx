@@ -303,7 +303,9 @@ export function FlipSheet({
   return createPortal(
     <div
       className={d.sheetWrap}
-      onPointerDown={(e) => {
+      // по клику, а не по нажатию: иначе шторка пропадает, пока палец ещё на экране,
+      // и отпущенный тап «проваливается» в карточку под ней - открывается другой флип
+      onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >

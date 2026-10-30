@@ -179,7 +179,7 @@
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto auto auto;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   padding: 6px 4px;
   border-radius: 10px;
 }
@@ -202,15 +202,12 @@
 }
 
 .pickName small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 11px;
   font-weight: 600;
   color: var(--text-3);
-}
-
-.pickBuy {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-2);
 }
 
 .pickProfit {
@@ -275,6 +272,206 @@
     bottom: 18px;
     max-width: 820px;
     margin-inline: auto;
+  }
+}
+
+/* от 1200 px расчёт - в колонке справа (FlipCalc), полоса снизу не нужна */
+@media (min-width: 1200px) {
+  .basket {
+    display: none;
+  }
+}
+
+/* ---------- колонка справа: «Расчёт» ---------- */
+
+.side {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  padding: 14px 14px 12px;
+  border-radius: 18px;
+  border: 1px solid var(--line-2);
+  background:
+    linear-gradient(rgb(var(--acc-rgb) / 0.03) 1px, transparent 1px) 0 0 / 100% 20px,
+    var(--bg-2);
+}
+
+/* уголки видоискателя - как у пульта фильтров */
+.frame {
+  --c: rgb(var(--acc-rgb) / 0.55);
+  position: absolute;
+  inset: 5px;
+  pointer-events: none;
+  background:
+    linear-gradient(var(--c), var(--c)) left top / 10px 1.5px no-repeat,
+    linear-gradient(var(--c), var(--c)) left top / 1.5px 10px no-repeat,
+    linear-gradient(var(--c), var(--c)) right top / 10px 1.5px no-repeat,
+    linear-gradient(var(--c), var(--c)) right top / 1.5px 10px no-repeat,
+    linear-gradient(var(--c), var(--c)) left bottom / 10px 1.5px no-repeat,
+    linear-gradient(var(--c), var(--c)) left bottom / 1.5px 10px no-repeat,
+    linear-gradient(var(--c), var(--c)) right bottom / 10px 1.5px no-repeat,
+    linear-gradient(var(--c), var(--c)) right bottom / 1.5px 10px no-repeat;
+}
+
+.sideHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 2px;
+}
+
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--acc);
+}
+
+.kicker i {
+  width: 6px;
+  height: 6px;
+  border-radius: 1px;
+  background: var(--acc);
+  animation: blink 1s steps(2, jump-none) infinite;
+}
+
+.sideHead .countNum {
+  min-width: 22px;
+  height: 22px;
+  font-size: 12px;
+}
+
+.clearText {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-3);
+  text-decoration: underline dashed;
+  text-underline-offset: 3px;
+}
+
+.clearText:hover {
+  color: var(--text);
+}
+
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 18px 10px 14px;
+  text-align: center;
+}
+
+/* пустой слот под лот: пунктирная рамка с «+», как значок на иконке карточки */
+.emptyIcon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 4px;
+  border-radius: 13px;
+  border: 1.5px dashed rgb(var(--acc-rgb) / 0.5);
+  color: var(--acc);
+  animation: breathe 2.4s ease-in-out infinite;
+}
+
+.empty b {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.empty p {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--text-3);
+}
+
+/* доля выкупа (серым) в выручке, остальное - прибыль */
+.sideFlow {
+  flex: none;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--text-3) 45%, transparent) var(--buy), var(--green) var(--buy));
+}
+
+.totals {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+}
+
+.totals div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.totals dt {
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.totals dd {
+  margin: 0;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.totals dd i {
+  margin-left: 6px;
+  font-style: normal;
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+.totals [data-tone="good"] {
+  padding: 8px 0;
+  border-block: 1px dashed var(--line-2);
+  font-size: 15px;
+}
+
+.totals [data-tone="good"] dt {
+  font-weight: 800;
+  color: var(--text);
+}
+
+.totals [data-tone="good"] dd {
+  color: var(--green);
+}
+
+.totals [data-tone="bad"] dd {
+  color: var(--red);
+}
+
+/* список листается внутри колонки, итоги остаются на месте */
+.sideList {
+  min-height: 0;
+  margin: 0 -4px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes breathe {
+  50% {
+    box-shadow: 0 0 0 6px rgb(var(--acc-rgb) / 0.08);
   }
 }
 

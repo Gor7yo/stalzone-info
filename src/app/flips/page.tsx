@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { RegionSwitch } from "@/components/ui/RegionSwitch";
 import { EmptyState, ErrorState, RowSkeleton } from "@/components/ui/States";
-import { CONFIDENCE, isRefreshing, useFlips, type Flip } from "@/features/flips";
+import { CONFIDENCE, isRefreshing, useFlips, type Confidence, type Flip } from "@/features/flips";
 import { GROUPS, groupLabel, itemMatcher, useItems } from "@/features/items";
 import { useFormat, useLang, useT } from "@/i18n/client";
 import { actions, REGIONS, useApp, type FlipSettings, type Region } from "@/lib/store";
@@ -12,9 +12,9 @@ import { haptic } from "@/lib/telegram";
 import { ProTeaser } from "@/components/Pro/Pro";
 import { usePro } from "@/features/pro";
 import { FlipAlertCard, RadarToggle } from "./FlipAlertCard";
-import { FlipBasket, usePicks } from "./FlipBasket";
+import { FlipBasket, FlipCalc, usePicks } from "./FlipBasket";
 import { FlipPeek, FlipSheet } from "./FlipDetails";
-import { FlipFilters } from "./FlipFilters";
+import { BUDGET_STOPS, budgetBucket, FlipFilters, PROFIT_STOPS, profitBucket } from "./FlipFilters";
 import { OfferCard, type Offer } from "./OfferCard";
 import styles from "./flips.module.css";
 
@@ -147,23 +147,46 @@ function FlipsFeed() {
   const all = data?.flips ?? [];
   const groupOf = (f: Flip) => index?.byId.get(f.itemId)?.group;
   const match = itemMatcher(query);
-  const pool = groupOffers(
-    all.filter((f) => {
-      if (f.profit < settings.minProfit) return false;
-      if (settings.budget && f.buyout > settings.budget) return false;
-      if (CONFIDENCE[f.confidence].rank < CONFIDENCE[settings.minConfidence].rank) return false;
-      if (settings.fastOnly && (f.sellHours == null || f.sellHours > 24)) return false;
-      if (match) {
-        const item = index?.byId.get(f.itemId);
-        if (!item || !match(item)) return false;
-      }
-      return true;
-    }),
-  );
+  /** skip - фильтр, который не применяем: гистограмма прицела показывает, что он отсекает */
+  const passes = (f: Flip, skip?: "profit" | "budget" | "conf") => {
+    if (skip !== "profit" && f.profit < settings.minProfit) return false;
+    if (skip !== "budget" && settings.budget && f.buyout > settings.budget) return false;
+    if (skip !== "conf" && CONFIDENCE[f.confidence].rank < CONFIDENCE[settings.minConfidence].rank) return false;
+    if (settings.fastOnly && (f.sellHours == null || f.sellHours > 24)) return false;
+    if (match) {
+      const item = index?.byId.get(f.itemId);
+      if (!item || !match(item)) return false;
+    }
+    return true;
+  };
+  const pool = groupOffers(all.filter((f) => passes(f)));
   // всё, кроме категории: из этого считаются числа на чипах категорий
   const visible = onlyNew ? pool.filter(isNew) : pool;
   const inGroup = (o: Offer) => !settings.group || groupOf(o.best) === settings.group;
   const offers = visible.filter(inGroup).sort(SORTS[settings.sort]);
+  // для пульта: позиции при всех фильтрах, кроме одного
+  const without = (skip: "profit" | "budget" | "conf") =>
+    groupOffers(all.filter((f) => passes(f, skip))).filter((o) => (!onlyNew || isNew(o)) && inGroup(o));
+  const histogram = (values: number[], bucket: (v: number) => number, size: number) => {
+    const out = Array<number>(size).fill(0);
+    for (const v of values) {
+      const i = bucket(v);
+      if (i >= 0) out[i]++;
+    }
+    return out;
+  };
+  const profitHist = histogram(
+    without("profit").map((o) => o.best.profit),
+    profitBucket,
+    PROFIT_STOPS.length,
+  );
+  const budgetHist = histogram(
+    without("budget").map((o) => o.best.buyout),
+    budgetBucket,
+    BUDGET_STOPS.length,
+  );
+  const confCounts: Record<Confidence, number> = { low: 0, medium: 0, high: 0 };
+  for (const o of without("conf")) confCounts[o.best.confidence]++;
   // в общем списке модули — отдельным блоком ниже: их много, а перепродаются они хуже обычных предметов
   const isModule = (o: Offer) => groupOf(o.best) === MODULES;
   const main = settings.group ? offers : offers.filter((o) => !isModule(o));
@@ -197,95 +220,115 @@ function FlipsFeed() {
     />
   );
 
+  const hero = (side: boolean) => (
+    <section className={`glass ${styles.hero}`} data-side={side || undefined}>
+      <div className={styles.heroMain}>
+        <span className={styles.heroLabel}>{t.bestFlip}</span>
+        <strong className={`mono ${styles.heroValue}`}>{top ? `+${formatShort(top.profit)}` : isLoading ? "…" : "—"}</strong>
+        <span className="dim" style={{ fontSize: 12, fontWeight: 600 }}>
+          {top ? `${index?.byId.get(top.itemId)?.name ?? top.itemId} · ${top.pct.toLocaleString(locale)} %` : t.byFilters}
+        </span>
+      </div>
+      <div className={styles.heroStats} style={{ visibility: data ? undefined : "hidden" }}>
+        <span>
+          <strong className="mono">{offers.length}</strong> {t.itemsWord(offers.length)}
+        </span>
+        <span>
+          <strong className="mono">{lotsCount}</strong> {t.lotsWord(lotsCount)}
+        </span>
+        {newCount > 0 && (
+          <span className={styles.newCount}>
+            <strong className="mono">{newCount}</strong> {t.newWord(newCount)}
+          </span>
+        )}
+        {data && (
+          <span className={isRefreshing(data) ? styles.refreshing : "dim"}>
+            {isRefreshing(data) ? t.refreshing : formatRelative(data.updatedAt)}
+          </span>
+        )}
+      </div>
+    </section>
+  );
+  const basket = { picks: picks.picks, flips: all, ready: data?.region === region, onRemove: picks.remove, onClear: picks.clear };
+
   return (
     <main className="page">
       <PageHeader eyebrow={t.eyebrow} title={t.title} aside={<RegionSwitch />}>
         {t.lead(data?.windowDays ?? 3)}
       </PageHeader>
 
-      <section className={`glass ${styles.hero}`}>
-        <div className={styles.heroMain}>
-          <span className={styles.heroLabel}>{t.bestFlip}</span>
-          <strong className={`mono ${styles.heroValue}`}>{top ? `+${formatShort(top.profit)}` : isLoading ? "…" : "—"}</strong>
-          <span className="dim" style={{ fontSize: 12, fontWeight: 600 }}>
-            {top ? `${index?.byId.get(top.itemId)?.name ?? top.itemId} · ${top.pct.toLocaleString(locale)} %` : t.byFilters}
-          </span>
-        </div>
-        <div className={styles.heroStats} style={{ visibility: data ? undefined : "hidden" }}>
-          <span>
-            <strong className="mono">{offers.length}</strong> {t.itemsWord(offers.length)}
-          </span>
-          <span>
-            <strong className="mono">{lotsCount}</strong> {t.lotsWord(lotsCount)}
-          </span>
-          {newCount > 0 && (
-            <span className={styles.newCount}>
-              <strong className="mono">{newCount}</strong> {t.newWord(newCount)}
-            </span>
-          )}
-          {data && (
-            <span className={isRefreshing(data) ? styles.refreshing : "dim"}>
-              {isRefreshing(data) ? t.refreshing : formatRelative(data.updatedAt)}
-            </span>
-          )}
-        </div>
-      </section>
-      {/* фоновая быстрая проверка - только RU; в остальных регионах рынок освежается, пока лента открыта */}
-      {region !== "ru" && <p className={`dim ${styles.regionNote}`}>{t.regionNote}</p>}
+      {/* широкий экран: лента слева, итоги (сводка и расчёт) - колонкой справа */}
+      <div className={styles.layout}>
+        <div className={styles.feed}>
+          {hero(false)}
+          {/* фоновая быстрая проверка - только RU; в остальных регионах рынок освежается, пока лента открыта */}
+          {region !== "ru" && <p className={`dim ${styles.regionNote}`}>{t.regionNote}</p>}
 
-      <FlipFilters
-        settings={settings}
-        set={set}
-        defaults={DEFAULTS}
-        query={query}
-        onQuery={(q) => {
-          resetPaging();
-          setQuery(q);
-        }}
-        onlyNew={onlyNew}
-        onOnlyNew={(v) => {
-          resetPaging();
-          setOnlyNew(v);
-        }}
-        newCount={newCount}
-        groups={groups}
-        total={visible.length}
-        showFast={all.some((f) => f.sellHours !== undefined)}
-        onReset={() => {
-          set({ ...DEFAULTS, sort: settings.sort });
-          setQuery("");
-          setOnlyNew(false);
-        }}
-      />
+          <FlipFilters
+            settings={settings}
+            set={set}
+            defaults={DEFAULTS}
+            query={query}
+            onQuery={(q) => {
+              resetPaging();
+              setQuery(q);
+            }}
+            onlyNew={onlyNew}
+            onOnlyNew={(v) => {
+              resetPaging();
+              setOnlyNew(v);
+            }}
+            newCount={newCount}
+            groups={groups}
+            total={visible.length}
+            shown={offers.length}
+            overall={groupOffers(all).length}
+            profitHist={profitHist}
+            budgetHist={budgetHist}
+            confCounts={confCounts}
+            showFast={all.some((f) => f.sellHours !== undefined)}
+            onReset={() => {
+              set({ ...DEFAULTS, sort: settings.sort });
+              setQuery("");
+              setOnlyNew(false);
+            }}
+          />
 
-      <FlipAlertCard region={region} settings={settings} />
-      <RadarToggle region={region} regionLabel={REGIONS.find((r) => r.value === region)?.label ?? region.toUpperCase()} />
+          <FlipAlertCard region={region} settings={settings} />
+          <RadarToggle region={region} regionLabel={REGIONS.find((r) => r.value === region)?.label ?? region.toUpperCase()} />
 
-      <section className="section">
-        {isError ? (
-          <ErrorState onRetry={() => refetch()} text={t.loadError} />
-        ) : isLoading || !data ? (
-          <RowSkeleton />
-        ) : offers.length ? (
-          <>
-            {list(main, limit, () => setLimit((l) => l + STEP))}
-            {modules.length > 0 && (
+          <section className="section">
+            {isError ? (
+              <ErrorState onRetry={() => refetch()} text={t.loadError} />
+            ) : isLoading || !data ? (
+              <RowSkeleton />
+            ) : offers.length ? (
               <>
-                <h2 className="section-title" style={{ marginTop: main.length ? 24 : 0 }}>
-                  {t.modulesTitle} <small>{t.modulesHint}</small>
-                </h2>
-                {list(modules, modLimit, () => setModLimit((l) => l + STEP))}
+                {list(main, limit, () => setLimit((l) => l + STEP))}
+                {modules.length > 0 && (
+                  <>
+                    <h2 className="section-title" style={{ marginTop: main.length ? 24 : 0 }}>
+                      {t.modulesTitle} <small>{t.modulesHint}</small>
+                    </h2>
+                    {list(modules, modLimit, () => setModLimit((l) => l + STEP))}
+                  </>
+                )}
               </>
+            ) : (
+              <EmptyState icon="sparkle" title={t.emptyTitle} text={all.length ? t.emptyFiltered : t.emptyMarket} />
             )}
-          </>
-        ) : (
-          <EmptyState icon="sparkle" title={t.emptyTitle} text={all.length ? t.emptyFiltered : t.emptyMarket} />
-        )}
-      </section>
+          </section>
 
-      <FlipBasket picks={picks.picks} flips={all} ready={data?.region === region} onRemove={picks.remove} onClear={picks.clear} />
+          <FlipBasket {...basket} />
 
-      <p className={`dim ${styles.note}`}>{t.note}</p>
+          <p className={`dim ${styles.note}`}>{t.note}</p>
+        </div>
+
+        <aside className={styles.aside}>
+          {hero(true)}
+          <FlipCalc {...basket} />
+        </aside>
+      </div>
 
       <FlipPeek days={days} />
       {sheet && (

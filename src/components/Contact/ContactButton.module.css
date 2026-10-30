@@ -50,8 +50,10 @@
   .button:active {
     transform: scale(0.96);
   }
+}
 
-  /* внизу экрана расчёт выбранных флипов - угол нужен ему */
+/* внизу экрана расчёт выбранных флипов - угол нужен ему (от 1200 px расчёт в колонке справа и не мешает) */
+@media (min-width: 1024px) and (max-width: 1199px) {
   :global(body:has([data-flip-basket])) .button {
     display: none;
   }
