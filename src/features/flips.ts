@@ -8,6 +8,8 @@ export type Confidence = "high" | "medium" | "low";
 
 /** Лот, который выгодно выкупить и перепродать (считает сервер по своей базе сделок). */
 export interface Flip {
+  /** ключ лота (у EXBO нет id): предмет, цена, время окончания - по нему запоминаем выбранные лоты */
+  key: string;
   itemId: string;
   /** -1 — у предмета нет качества */
   quality: number;
@@ -59,6 +61,21 @@ export const CONFIDENCE: Record<Confidence, { label: string; color: string; rank
   medium: { label: "средне", color: "#ffc94a", rank: 1 },
   low: { label: "рискованно", color: "#ff5b79", rank: 0 },
 };
+
+/** Комиссия аукциона с продажи. */
+export const FEE = 0.05;
+
+/** Расклад денег по лоту: продажа по медиане целиком, комиссия, выручка на руки и цена «худшего случая» за штуку. */
+export function flipMoney(f: Flip) {
+  const gross = f.sellUnit * f.amount;
+  return {
+    gross,
+    fee: gross * FEE,
+    revenue: gross * (1 - FEE),
+    // profitLow считается по нижней четверти сделок: p25 × шт × 0,95 − выкуп
+    lowUnit: (f.profitLow + f.buyout) / (f.amount * (1 - FEE)),
+  };
+}
 
 /**
  * Лента — только для Pro (сервер проверяет подписку по Telegram).

@@ -1,19 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Icon } from "@/components/Icon";
+import { useCallback, useEffect, useState } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { RegionSwitch } from "@/components/ui/RegionSwitch";
-import { Segmented } from "@/components/ui/Segmented";
 import { EmptyState, ErrorState, RowSkeleton } from "@/components/ui/States";
 import { CONFIDENCE, isRefreshing, useFlips, type Flip } from "@/features/flips";
-import { GROUPS, groupLabel, useItems } from "@/features/items";
+import { GROUPS, groupLabel, itemMatcher, useItems } from "@/features/items";
 import { useFormat, useLang, useT } from "@/i18n/client";
 import { actions, REGIONS, useApp, type FlipSettings, type Region } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
 import { ProTeaser } from "@/components/Pro/Pro";
 import { usePro } from "@/features/pro";
 import { FlipAlertCard, RadarToggle } from "./FlipAlertCard";
+import { FlipBasket, usePicks } from "./FlipBasket";
+import { FlipPeek, FlipSheet } from "./FlipDetails";
+import { FlipFilters } from "./FlipFilters";
 import { OfferCard, type Offer } from "./OfferCard";
 import styles from "./flips.module.css";
 
@@ -26,9 +27,7 @@ const SORTS: Record<FlipSettings["sort"], (a: Offer, b: Offer) => number> = {
   fast: (a, b) => b.best.perDay - a.best.perDay || b.best.profit - a.best.profit,
 };
 
-const MIN_PROFIT = [20_000, 50_000, 100_000, 250_000, 500_000, 1_000_000];
-const BUDGET = [0, 500_000, 1_000_000, 5_000_000, 10_000_000];
-const DEFAULTS: FlipSettings = { sort: "profit", minConfidence: "medium", minProfit: 20_000, budget: 0, group: null };
+const DEFAULTS: FlipSettings = { sort: "profit", minConfidence: "medium", minProfit: 20_000, budget: 0, group: null, fastOnly: false };
 /** Кратно 2 и 3: на широком экране карточки — сеткой в 2–3 колонки. */
 const STEP = 24;
 const MODULES = "weapon_modules";
@@ -125,44 +124,78 @@ function FlipsFeed() {
       localStorage.setItem(SEEN_KEY(region), String(Date.parse(data.updatedAt)));
     } catch {}
   }, [data, region]);
-  const [open, setOpen] = useState(false);
   const [limit, setLimit] = useState(STEP);
   const [modLimit, setModLimit] = useState(STEP);
+  // поиск и «только новые» - на этот заход, в настройки (и в флип-алерт) не попадают
+  const [query, setQuery] = useState("");
+  const [onlyNew, setOnlyNew] = useState(false);
+  // телефон: разбор лота шторкой
+  const [sheet, setSheet] = useState<Offer | null>(null);
+  const closeSheet = useCallback(() => setSheet(null), []);
+  const picks = usePicks(region);
 
-  const set = (patch: Partial<FlipSettings>) => {
-    haptic.select();
+  const resetPaging = () => {
     setLimit(STEP);
     setModLimit(STEP);
+  };
+  const set = (patch: Partial<FlipSettings>) => {
+    haptic.select();
+    resetPaging();
     actions.setFlips(patch);
   };
 
   const all = data?.flips ?? [];
   const groupOf = (f: Flip) => index?.byId.get(f.itemId)?.group;
-  const offers = groupOffers(
-    all.filter(
-      (f) =>
-        f.profit >= settings.minProfit &&
-        (!settings.budget || f.buyout <= settings.budget) &&
-        CONFIDENCE[f.confidence].rank >= CONFIDENCE[settings.minConfidence].rank &&
-        (!settings.group || groupOf(f) === settings.group),
-    ),
-  ).sort(SORTS[settings.sort]);
+  const match = itemMatcher(query);
+  const pool = groupOffers(
+    all.filter((f) => {
+      if (f.profit < settings.minProfit) return false;
+      if (settings.budget && f.buyout > settings.budget) return false;
+      if (CONFIDENCE[f.confidence].rank < CONFIDENCE[settings.minConfidence].rank) return false;
+      if (settings.fastOnly && (f.sellHours == null || f.sellHours > 24)) return false;
+      if (match) {
+        const item = index?.byId.get(f.itemId);
+        if (!item || !match(item)) return false;
+      }
+      return true;
+    }),
+  );
+  // всё, кроме категории: из этого считаются числа на чипах категорий
+  const visible = onlyNew ? pool.filter(isNew) : pool;
+  const inGroup = (o: Offer) => !settings.group || groupOf(o.best) === settings.group;
+  const offers = visible.filter(inGroup).sort(SORTS[settings.sort]);
   // в общем списке модули — отдельным блоком ниже: их много, а перепродаются они хуже обычных предметов
   const isModule = (o: Offer) => groupOf(o.best) === MODULES;
   const main = settings.group ? offers : offers.filter((o) => !isModule(o));
   const modules = settings.group ? [] : offers.filter(isModule);
-  // в чипах только категории, в которых сейчас есть флипы
-  const groups = GROUPS.filter((g) => all.some((f) => groupOf(f) === g.id));
+  // в чипах только категории, в которых сейчас есть флипы, с числом позиций при остальных фильтрах
+  const counts = new Map<string, number>();
+  for (const o of visible) {
+    const g = groupOf(o.best);
+    if (g) counts.set(g, (counts.get(g) ?? 0) + 1);
+  }
+  const groups = GROUPS.filter((g) => all.some((f) => groupOf(f) === g.id)).map((g) => ({
+    id: g.id,
+    icon: g.icon,
+    label: groupLabel(g, lang),
+    count: counts.get(g.id) ?? 0,
+  }));
   const lotsCount = offers.reduce((n, o) => n + o.lots.length, 0);
-  const newCount = offers.filter(isNew).length;
+  const newCount = pool.filter((o) => inGroup(o) && isNew(o)).length;
   const top = (main.length ? main : modules).reduce<Flip | null>((best, o) => (!best || o.best.profit > best.profit ? o.best : best), null);
+  const days = data?.windowDays ?? 3;
 
-  const active = [
-    settings.minConfidence !== DEFAULTS.minConfidence,
-    settings.minProfit !== DEFAULTS.minProfit,
-    settings.budget !== DEFAULTS.budget,
-    settings.group !== DEFAULTS.group,
-  ].filter(Boolean).length;
+  const list = (items: Offer[], max: number, more: () => void) => (
+    <OfferList
+      offers={items}
+      limit={max}
+      isNew={isNew}
+      picked={(o) => !!picks.picks[o.best.key]}
+      onPick={picks.toggle}
+      onOpen={setSheet}
+      onMore={more}
+    />
+  );
 
   return (
     <main className="page">
@@ -200,100 +233,30 @@ function FlipsFeed() {
       {/* фоновая быстрая проверка - только RU; в остальных регионах рынок освежается, пока лента открыта */}
       {region !== "ru" && <p className={`dim ${styles.regionNote}`}>{t.regionNote}</p>}
 
-      <div className={styles.toolbar}>
-        <Segmented
-          size="sm"
-          label={t.sortAria}
-          value={settings.sort}
-          onChange={(sort) => set({ sort })}
-          options={[
-            { value: "profit", label: t.sortProfit },
-            { value: "pct", label: t.sortPct },
-            { value: "hour", label: t.sortHour },
-            { value: "fast", label: t.sortFast },
-          ]}
-        />
-        <button
-          type="button"
-          className={styles.filterBtn}
-          aria-expanded={open}
-          onClick={() => {
-            haptic.tap();
-            setOpen((v) => !v);
-          }}
-        >
-          <Icon name="sort" size={16} />
-          {t.filters}
-          {active > 0 && <span className={styles.badge}>{active}</span>}
-        </button>
-      </div>
-
-      {open && (
-        <section className={`glass ${styles.panel}`}>
-          <Filter label={t.confidence}>
-            <Segmented
-              size="sm"
-              label={t.confidence}
-              value={settings.minConfidence}
-              onChange={(minConfidence) => set({ minConfidence })}
-              options={[
-                { value: "low", label: t.confAll },
-                { value: "medium", label: t.confMedium },
-                { value: "high", label: t.confHigh },
-              ]}
-            />
-          </Filter>
-          <Filter label={t.profitFrom}>
-            <div className="chips">
-              {MIN_PROFIT.map((v) => (
-                <button
-                  key={v}
-                  type="button"
-                  className="chip"
-                  aria-pressed={settings.minProfit === v}
-                  onClick={() => set({ minProfit: v })}
-                >
-                  {formatShort(v)}
-                </button>
-              ))}
-            </div>
-          </Filter>
-          <Filter label={t.budget}>
-            <div className="chips">
-              {BUDGET.map((v) => (
-                <button key={v} type="button" className="chip" aria-pressed={settings.budget === v} onClick={() => set({ budget: v })}>
-                  {v ? t.upTo(formatShort(v)) : t.anyBudget}
-                </button>
-              ))}
-            </div>
-          </Filter>
-          {groups.length > 0 && (
-            <Filter label={t.category}>
-              <div className="chips">
-                <button type="button" className="chip" aria-pressed={!settings.group} onClick={() => set({ group: null })}>
-                  {t.all}
-                </button>
-                {groups.map((g) => (
-                  <button
-                    key={g.id}
-                    type="button"
-                    className="chip"
-                    aria-pressed={settings.group === g.id}
-                    onClick={() => set({ group: g.id })}
-                  >
-                    <span aria-hidden>{g.icon}</span> {groupLabel(g, lang)}
-                  </button>
-                ))}
-              </div>
-            </Filter>
-          )}
-          {active > 0 && (
-            <button type="button" className={styles.resetBtn} onClick={() => set({ ...DEFAULTS, sort: settings.sort })}>
-              {t.reset}
-            </button>
-          )}
-        </section>
-      )}
+      <FlipFilters
+        settings={settings}
+        set={set}
+        defaults={DEFAULTS}
+        query={query}
+        onQuery={(q) => {
+          resetPaging();
+          setQuery(q);
+        }}
+        onlyNew={onlyNew}
+        onOnlyNew={(v) => {
+          resetPaging();
+          setOnlyNew(v);
+        }}
+        newCount={newCount}
+        groups={groups}
+        total={visible.length}
+        showFast={all.some((f) => f.sellHours !== undefined)}
+        onReset={() => {
+          set({ ...DEFAULTS, sort: settings.sort });
+          setQuery("");
+          setOnlyNew(false);
+        }}
+      />
 
       <FlipAlertCard region={region} settings={settings} />
       <RadarToggle region={region} regionLabel={REGIONS.find((r) => r.value === region)?.label ?? region.toUpperCase()} />
@@ -305,13 +268,13 @@ function FlipsFeed() {
           <RowSkeleton />
         ) : offers.length ? (
           <>
-            <OfferList offers={main} limit={limit} isNew={isNew} onMore={() => setLimit((l) => l + STEP)} />
+            {list(main, limit, () => setLimit((l) => l + STEP))}
             {modules.length > 0 && (
               <>
                 <h2 className="section-title" style={{ marginTop: main.length ? 24 : 0 }}>
                   {t.modulesTitle} <small>{t.modulesHint}</small>
                 </h2>
-                <OfferList offers={modules} limit={modLimit} isNew={isNew} onMore={() => setModLimit((l) => l + STEP)} />
+                {list(modules, modLimit, () => setModLimit((l) => l + STEP))}
               </>
             )}
           </>
@@ -320,19 +283,58 @@ function FlipsFeed() {
         )}
       </section>
 
+      <FlipBasket picks={picks.picks} flips={all} ready={data?.region === region} onRemove={picks.remove} onClear={picks.clear} />
+
       <p className={`dim ${styles.note}`}>{t.note}</p>
+
+      <FlipPeek days={days} />
+      {sheet && (
+        <FlipSheet
+          offer={sheet}
+          item={index?.byId.get(sheet.best.itemId)}
+          isNew={isNew(sheet)}
+          days={days}
+          picked={!!picks.picks[sheet.best.key]}
+          onPick={picks.toggle}
+          onClose={closeSheet}
+        />
+      )}
     </main>
   );
 }
 
-function OfferList({ offers, limit, isNew, onMore }: { offers: Offer[]; limit: number; isNew: (o: Offer) => boolean; onMore: () => void }) {
+function OfferList({
+  offers,
+  limit,
+  isNew,
+  picked,
+  onPick,
+  onOpen,
+  onMore,
+}: {
+  offers: Offer[];
+  limit: number;
+  isNew: (o: Offer) => boolean;
+  picked: (o: Offer) => boolean;
+  onPick: (f: Flip) => void;
+  onOpen: (o: Offer) => void;
+  onMore: () => void;
+}) {
   const t = useT().flips;
   const { data: index } = useItems();
   return (
     <>
-      <div className="stack stagger desk-grid" style={{ gap: 10 }}>
+      <div className="stack stagger desk-grid" style={{ gap: 8 }}>
         {offers.slice(0, limit).map((o) => (
-          <OfferCard key={o.key} offer={o} item={index?.byId.get(o.best.itemId)} isNew={isNew(o)} />
+          <OfferCard
+            key={o.key}
+            offer={o}
+            item={index?.byId.get(o.best.itemId)}
+            isNew={isNew(o)}
+            picked={picked(o)}
+            onPick={onPick}
+            onOpen={onOpen}
+          />
         ))}
       </div>
       {offers.length > limit && (
@@ -341,14 +343,5 @@ function OfferList({ offers, limit, isNew, onMore }: { offers: Offer[]; limit: n
         </button>
       )}
     </>
-  );
-}
-
-function Filter({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className={styles.filter}>
-      <span className={styles.filterLabel}>{label}</span>
-      {children}
-    </div>
   );
 }

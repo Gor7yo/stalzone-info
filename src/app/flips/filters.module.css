@@ -1,0 +1,310 @@
+/* ---------- фильтры ленты: поиск, кнопки со значением, панель вариантов, категории ---------- */
+
+.filters {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.top {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* .top - перебить размеры общего поля поиска независимо от порядка стилей */
+.top .search {
+  height: 46px;
+  border-radius: 14px;
+}
+
+.top .search input {
+  font-size: 15px;
+}
+
+/* на телефоне ряд кнопок листается вбок */
+.pills {
+  display: flex;
+  gap: 6px;
+  margin: 0 -16px;
+  padding: 2px 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.pills::-webkit-scrollbar {
+  display: none;
+}
+
+.pill,
+.quick,
+.reset {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--text-2);
+  transition:
+    background 180ms,
+    border-color 180ms,
+    color 180ms;
+}
+
+.pill b {
+  font-weight: 800;
+  color: var(--text);
+}
+
+.pill svg:first-child {
+  color: var(--text-3);
+}
+
+.caret {
+  color: var(--text-3);
+  transition: transform 200ms;
+}
+
+.pill[aria-expanded="true"] {
+  border-color: var(--line-2);
+  background: var(--surface-2);
+}
+
+.pill[aria-expanded="true"] .caret {
+  transform: rotate(180deg);
+}
+
+/* значение отличается от обычного - видно сразу, без счётчика «фильтров: 2» */
+.pill[data-changed] {
+  border-color: rgb(var(--acc-rgb) / 0.45);
+  background: rgb(var(--acc-rgb) / 0.08);
+}
+
+.pill[data-changed] b {
+  color: var(--acc);
+}
+
+@media (hover: hover) {
+  .pill:hover,
+  .quick:hover,
+  .reset:hover {
+    border-color: var(--line-2);
+    color: var(--text);
+  }
+}
+
+.quick b {
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 7px;
+  background: var(--acc);
+  color: var(--acc-ink);
+  font-size: 11px;
+}
+
+.quick[aria-pressed="true"] {
+  border-color: transparent;
+  background: var(--acc);
+  color: var(--acc-ink);
+}
+
+.quick[aria-pressed="true"] b {
+  background: var(--acc-ink);
+  color: var(--acc);
+}
+
+.reset {
+  border-style: dashed;
+  background: transparent;
+  color: var(--text-3);
+}
+
+/* ---------- панель вариантов под рядом кнопок ---------- */
+
+.panel {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  animation: rise 240ms var(--ease) backwards;
+}
+
+.panelHead {
+  display: grid;
+  gap: 2px;
+}
+
+.panelHead b {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--acc);
+}
+
+.panelHead span {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.options {
+  display: grid;
+  gap: 6px;
+}
+
+.option {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  text-align: left;
+  transition:
+    border-color 180ms,
+    background 180ms;
+}
+
+.option[aria-pressed="true"] {
+  border-color: rgb(var(--acc-rgb) / 0.5);
+  background: rgb(var(--acc-rgb) / 0.08);
+}
+
+.radio {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  border-radius: 50%;
+  border: 1.5px solid var(--line-2);
+  transition:
+    border 180ms,
+    background 180ms;
+}
+
+.option[aria-pressed="true"] .radio {
+  border: 5px solid var(--acc);
+}
+
+.optionText {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.optionText b {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.optionText small {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text-3);
+}
+
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.custom {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.custom label {
+  flex: 1;
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.custom label span {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-3);
+}
+
+.custom input {
+  height: 42px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  font-family: var(--font-mono);
+  font-size: 16px; /* без автозума на iOS */
+  font-weight: 700;
+}
+
+.custom input:focus-visible {
+  outline: none;
+  border-color: rgb(var(--acc-rgb) / 0.5);
+}
+
+.custom[data-bad] input {
+  border-color: var(--red);
+}
+
+.custom :global(.btn) {
+  height: 42px;
+}
+
+/* число флипов в категории */
+.chipCount {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0.6;
+}
+
+.filters :global(.chip[data-empty]) {
+  opacity: 0.45;
+}
+
+/* ---------- широкий экран: поиск и кнопки одной строкой ---------- */
+
+@media (min-width: 1024px) {
+  .top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .top .search {
+    flex: 1 1 260px;
+    max-width: 360px;
+    height: 40px;
+    border-radius: 12px;
+  }
+
+  .pills {
+    flex-wrap: wrap;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+  }
+
+  .options {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+}

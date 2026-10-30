@@ -50,6 +50,11 @@
   .button:active {
     transform: scale(0.96);
   }
+
+  /* внизу экрана расчёт выбранных флипов - угол нужен ему */
+  :global(body:has([data-flip-basket])) .button {
+    display: none;
+  }
 }
 
 .logo {

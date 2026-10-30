@@ -95,86 +95,6 @@
   line-height: 1.5;
 }
 
-/* ---------- сортировка и фильтры ---------- */
-
-.toolbar {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin-top: 14px;
-}
-
-.toolbar > :first-child {
-  flex: 1;
-  min-width: 0;
-}
-
-.filterBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 38px;
-  padding: 0 12px;
-  border-radius: 12px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 700;
-  white-space: nowrap;
-  transition: background 200ms;
-}
-
-.filterBtn[aria-expanded="true"] {
-  background: var(--surface-2);
-  border-color: var(--line-2);
-}
-
-.badge {
-  display: grid;
-  place-items: center;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  border-radius: 9px;
-  background: var(--acc);
-  color: var(--acc-ink);
-  font-size: 11px;
-  font-weight: 800;
-}
-
-.panel {
-  display: grid;
-  gap: 14px;
-  margin-top: 8px;
-  padding: 14px;
-  animation: rise 260ms var(--ease) backwards;
-}
-
-.filter {
-  display: grid;
-  gap: 6px;
-  min-width: 0;
-}
-
-.filterLabel {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-3);
-}
-
-.resetBtn {
-  justify-self: start;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-2);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
 /* ---------- флип-алерт ---------- */
 
 .alert {
@@ -229,165 +149,6 @@
   margin-left: auto;
 }
 
-/* ---------- карточка флипа ---------- */
-
-.card {
-  position: relative;
-  display: grid;
-  gap: 10px;
-  padding: 12px 14px 12px 16px;
-  border-radius: 18px;
-  background: linear-gradient(100deg, color-mix(in srgb, var(--q) 9%, transparent), transparent 55%), var(--surface);
-  border: 1px solid var(--line);
-  overflow: hidden;
-  /* появление - волной от .stagger у списка; своё animation с both держало бы transform и глушило :active */
-  transition:
-    transform 160ms var(--ease),
-    border-color 200ms;
-}
-
-/* полоска цвета качества слева */
-.card::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 14px;
-  bottom: 14px;
-  width: 3px;
-  border-radius: 0 3px 3px 0;
-  background: var(--q);
-}
-
-.card:active {
-  transform: scale(0.985);
-}
-
-/* лот появился после прошлого взгляда на ленту */
-.card[data-new] {
-  border-color: color-mix(in srgb, var(--acc) 45%, var(--line));
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--acc) 18%, transparent);
-}
-
-.newTag {
-  padding: 2px 7px;
-  border-radius: 7px;
-  background: var(--acc);
-  color: #0b0d05;
-  font-size: 10px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-@media (hover: hover) {
-  .card:hover {
-    border-color: var(--line-2);
-  }
-}
-
-.cardHead {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.cardTitle {
-  flex: 1;
-  min-width: 0;
-  display: grid;
-  gap: 4px;
-  font-size: 15px;
-}
-
-/* название + заточка рядом, как в игре: «Опал +7» */
-.nameRow {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  min-width: 0;
-}
-
-.upgrade {
-  flex: none;
-  font-family: var(--font-mono);
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--acc);
-}
-
-.tags {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 6px;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.tag,
-.qualityTag {
-  padding: 2px 7px;
-  border-radius: 7px;
-  background: var(--surface-2);
-  color: var(--text-2);
-}
-
-.qualityTag {
-  background: color-mix(in srgb, var(--q) 16%, transparent);
-  color: var(--q);
-}
-
-.conf {
-  font-size: 11px;
-}
-
-.profit {
-  display: grid;
-  justify-items: end;
-  gap: 2px;
-  white-space: nowrap;
-}
-
-.profit strong {
-  font-size: 18px;
-  color: var(--green);
-}
-
-.profit span {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-3);
-}
-
-/* выкуп (серым) против выручки (зелёным): чем больше зелёного — тем жирнее флип */
-.bar {
-  height: 5px;
-  border-radius: 3px;
-  background: linear-gradient(90deg, rgb(78 224 138 / 0.5), var(--green));
-  overflow: hidden;
-}
-
-.bar span {
-  display: block;
-  height: 100%;
-  background: #3a3d39;
-  border-right: 2px solid var(--bg);
-}
-
-.prices {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.prices small {
-  font-family: var(--font-body);
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-3);
-}
-
 /* переключатель радара рынка (как у уведомлений о выбросе) */
 .switch {
   position: relative;
@@ -429,54 +190,303 @@
   opacity: 0.5;
 }
 
-/* за сколько уйдёт и прибыль в час */
-/* пакет в нижней строке вместо «ещё N лотов»: сколько скупить, чтобы всё ушло за сутки */
-.batch {
-  display: inline-flex;
+/* ---------- компактная карточка флипа (подробности - в разборе при наведении) ---------- */
+
+.card {
+  position: relative;
+  display: flex;
   align-items: center;
+  gap: 12px;
+  min-height: 72px;
+  padding: 12px 14px 13px;
+  border-radius: 16px;
+  background: linear-gradient(100deg, color-mix(in srgb, var(--q) 9%, transparent), transparent 55%), var(--surface);
+  border: 1px solid var(--line);
+  overflow: hidden;
+  /* появление - волной от .stagger у списка; своё animation с both держало бы transform и глушило :active */
+  transition:
+    transform 160ms var(--ease),
+    border-color 200ms,
+    box-shadow 200ms;
+}
+
+/* полоска цвета качества слева */
+.card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 14px;
+  bottom: 14px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--q);
+}
+
+/* кромка снизу: доля выкупа (серым) и прибыли (зелёным) в выручке - чем больше зелёного, тем жирнее флип */
+.card::after {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--text-3) 40%, transparent) var(--buy), var(--green) var(--buy));
+  opacity: 0.6;
+  transition: opacity 200ms;
+}
+
+.card:has(.cardLink:active) {
+  transform: scale(0.985);
+}
+
+@media (hover: hover) {
+  .card:hover {
+    border-color: var(--line-2);
+  }
+
+  .card:hover::after {
+    opacity: 1;
+  }
+}
+
+/* лот появился после прошлого взгляда на ленту */
+.card[data-new] {
+  border-color: color-mix(in srgb, var(--acc) 45%, var(--line));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--acc) 18%, transparent);
+}
+
+/* выбран в расчёт */
+.card[data-picked] {
+  border-color: rgb(var(--acc-rgb) / 0.6);
+  background: linear-gradient(100deg, rgb(var(--acc-rgb) / 0.12), transparent 60%), var(--surface);
+  box-shadow: inset 0 0 0 1px rgb(var(--acc-rgb) / 0.25);
+}
+
+.card:has(.cardLink:focus-visible) {
+  outline: 2px solid var(--acc);
+  outline-offset: 2px;
+}
+
+/* иконка - кнопка «в расчёт»: значок «+» в углу, выбран - галочка */
+.pick {
+  position: relative;
+  z-index: 2;
+  flex: none;
+  border-radius: 13px;
+  transition: transform 160ms var(--ease);
+}
+
+.pick:active {
+  transform: scale(0.92);
+}
+
+.pickMark {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  display: grid;
+  place-items: center;
+  width: 19px;
+  height: 19px;
+  border-radius: 7px;
+  border: 1px solid var(--line-2);
+  background: var(--bg-2);
+  color: var(--text-3);
+  transition:
+    background 180ms,
+    color 180ms,
+    transform 220ms var(--spring);
+}
+
+.pick[aria-pressed="true"] .pickMark {
+  border-color: transparent;
+  background: var(--acc);
+  color: var(--acc-ink);
+  transform: scale(1.08);
+}
+
+@media (hover: hover) {
+  .pick:hover .pickMark {
+    border-color: transparent;
+    background: var(--acc);
+    color: var(--acc-ink);
+    transform: scale(1.15);
+  }
+}
+
+/* ссылка растянута на всю карточку (::after), кнопка «в расчёт» - поверх неё */
+.cardLink {
+  flex: 1;
+  display: grid;
   gap: 4px;
+  min-width: 0;
+}
+
+.cardLink::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+}
+
+.cardLink:focus-visible {
+  outline: none;
+}
+
+/* название + заточка рядом, как в игре: «Опал +7» */
+.nameRow {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  font-size: 15px;
+}
+
+.nameRow strong {
+  font-weight: 800;
+}
+
+.upgrade {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 800;
   color: var(--acc);
 }
 
-/* за сколько уйдёт и прибыль в час — справа в строке цен */
-.eta {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: -2px;
+.amount {
+  flex: none;
+  font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 700;
+  color: var(--text-2);
+}
+
+.newTag {
+  flex: none;
+  align-self: center;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--acc);
+  color: var(--acc-ink);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.sub {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-3);
   white-space: nowrap;
 }
 
-.eta small {
-  font-family: var(--font-body);
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-3);
+.subPrice {
+  flex: none;
 }
 
-/* дольше 2 суток - приглушённо, как предупреждение, а не цифра */
-.eta[data-slow] {
-  color: var(--text-3);
+.subPrice b {
+  font-weight: 700;
+  color: var(--text-2);
 }
 
-.eta b {
+/* «Скопировать название» - поверх растянутой ссылки, как и кнопка «в расчёт» */
+.copy {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  color: var(--text-3);
+  transition:
+    color 180ms,
+    background 180ms,
+    transform 160ms var(--ease);
+}
+
+.copy:active {
+  transform: scale(0.9);
+}
+
+.copy[data-copied] {
   color: var(--green);
 }
 
-.meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 10px;
+/* подсказка слева от кнопки (над ней карточка обрезала бы): «Скопировать название», после нажатия - «Скопировано» */
+.copy::after {
+  content: attr(data-label);
+  position: absolute;
+  top: 50%;
+  right: calc(100% + 4px);
+  padding: 4px 8px;
+  border-radius: 7px;
+  border: 1px solid var(--line-2);
+  background: var(--bg-2);
+  color: var(--text);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(4px, -50%);
+  transition:
+    opacity 150ms,
+    transform 150ms;
+}
+
+.copy[data-copied]::after {
+  color: var(--green);
+  opacity: 1;
+  transform: translate(0, -50%);
+}
+
+@media (hover: hover) {
+  .copy:hover {
+    color: var(--text);
+    background: var(--surface-2);
+  }
+
+  .copy:hover::after {
+    opacity: 1;
+    transform: translate(0, -50%);
+  }
+}
+
+.profit {
+  display: grid;
+  flex: none;
+  justify-items: end;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+.profit strong {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--green);
+}
+
+.profit > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
   color: var(--text-3);
 }
 
-.more {
-  color: var(--acc);
+.signal {
+  display: block;
+  flex: none;
 }
 
 .note {

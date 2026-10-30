@@ -1,15 +1,17 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { Icon } from "@/components/Icon";
-import { ModuleStatBadge } from "@/components/ModuleStat/ModuleStat";
 import { ItemIcon } from "@/components/ui/ItemIcon";
-import { qualities, TIERS } from "@/features/auction";
-import { CONFIDENCE, type Flip } from "@/features/flips";
+import { qualities } from "@/features/auction";
+import { CONFIDENCE, type Confidence, type Flip } from "@/features/flips";
 import type { Item } from "@/features/items";
+import { variantName } from "@/features/modules";
 import { useFormat, useLang, useT } from "@/i18n/client";
 import { actions } from "@/lib/store";
 import { haptic } from "@/lib/telegram";
+import { peek } from "./peek";
 import styles from "./flips.module.css";
 
 /** У этих групп есть заточка — в ссылку на предмет передаём и её. */
@@ -23,7 +25,7 @@ export interface Offer {
 }
 
 /** Ссылка на предмет сразу с фильтром по качеству и заточке лота. */
-function itemHref(f: Flip, item?: Item) {
+export function itemHref(f: Flip, item?: Item) {
   const params = new URLSearchParams();
   if (f.quality >= 0) params.set("q", String(f.quality));
   if (f.variant) params.set("v", f.variant);
@@ -32,105 +34,155 @@ function itemHref(f: Flip, item?: Item) {
   return `/auction/${f.itemId}${query ? `?${query}` : ""}`;
 }
 
-/** isNew - лот появился после прошлого взгляда на ленту (метка «новый» и подсветка рамки). */
-export function OfferCard({ offer, item, isNew = false }: { offer: Offer; item?: Item; isNew?: boolean }) {
-  const t = useT().flips;
-  const lang = useLang();
-  const { formatRelative, formatShort, locale } = useFormat();
-  const f = offer.best;
-  const quality = qualities(lang)[f.quality];
-  const conf = CONFIDENCE[f.confidence];
-  const tier = TIERS.find((x) => f.upgrade >= x.min && f.upgrade <= x.max);
-  // полоска: какая доля ожидаемой выручки уходит на выкуп, какая — прибыль
-  const revenue = f.sellUnit * f.amount * 0.95;
-  const buyShare = Math.min(100, Math.max(0, (f.buyout / revenue) * 100));
-  const others = offer.lots.length - 1;
-  const sellTime = (h: number) => (h < 1 ? t.sellUnderHour : t.sellIn(Math.round(h)));
-
+/** Надёжность оценки «сигналом»: 3 палочки - надёжно, 1 - рискованно. */
+export function Signal({ level }: { level: Confidence }) {
+  const on = CONFIDENCE[level].rank + 1;
   return (
-    <Link
-      href={itemHref(f, item)}
-      className={styles.card}
-      data-new={isNew || undefined}
-      style={{ "--q": quality?.color ?? "var(--text-3)" } as React.CSSProperties}
+    <svg className={styles.signal} width="13" height="11" viewBox="0 0 13 11" style={{ color: CONFIDENCE[level].color }} aria-hidden>
+      {[4, 7, 10].map((h, i) => (
+        <rect key={h} x={i * 4.5} y={11 - h} width="3" height={h} rx="1" fill="currentColor" opacity={i < on ? 1 : 0.22} />
+      ))}
+    </svg>
+  );
+}
+
+/** «Скопировать»: только название предмета - вставить в поиск аукциона в игре. */
+export function CopyName({ name }: { name: string }) {
+  const t = useT().flips;
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      className={styles.copy}
+      data-copied={copied || undefined}
+      data-label={copied ? t.copied : t.copyName}
+      aria-label={`${t.copyName}: ${name}`}
       onClick={() => {
         haptic.tap();
-        actions.pushRecentItem(f.itemId);
+        navigator.clipboard
+          ?.writeText(name)
+          .then(() => {
+            haptic.notify("success");
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+          })
+          .catch(() => {});
       }}
     >
-      <div className={styles.cardHead}>
-        <ItemIcon item={item} size={46} />
-        <span className={styles.cardTitle}>
-          <span className={styles.nameRow}>
-            <strong className="truncate">{item?.name ?? f.itemId}</strong>
-            {!f.variant && (f.upgrade > 0 || quality) && <span className={styles.upgrade}>+{f.upgrade}</span>}
-          </span>
-          <span className={styles.tags}>
-            {isNew && <span className={styles.newTag}>{t.newTag}</span>}
-            {f.variant && <ModuleStatBadge id={f.variant} quality={quality ? f.quality : null} />}
-            {quality && <span className={styles.qualityTag}>{quality.label}</span>}
-            {f.amount > 1 && <span className={styles.tag}>×{f.amount}</span>}
-            <span className={styles.conf} style={{ color: conf.color }}>
-              ● {t.conf[f.confidence]}
-            </span>
+      <Icon name={copied ? "check" : "copy"} size={15} strokeWidth={copied ? 2.6 : 1.9} />
+    </button>
+  );
+}
+
+/** Название позиции как в игре: «Опал +7», у модулей - ключевая характеристика. */
+export function useOfferName(f: Flip, item?: Item) {
+  const lang = useLang();
+  const quality = qualities(lang)[f.quality];
+  return {
+    name: item?.name ?? f.itemId,
+    upgrade: !f.variant && (f.upgrade > 0 || quality) ? `+${f.upgrade}` : null,
+    quality,
+    variant: f.variant ? variantName(f.variant, lang) : null,
+  };
+}
+
+/**
+ * Компактная карточка: что, за сколько выкупить и сколько заработать. Остальное - в разборе лота:
+ * мышью по наведению (FlipPeek), на телефоне - шторкой по тапу (onOpen). Иконка - выбрать в расчёт.
+ */
+export function OfferCard({
+  offer,
+  item,
+  isNew = false,
+  picked,
+  onPick,
+  onOpen,
+}: {
+  offer: Offer;
+  item?: Item;
+  /** лот появился после прошлого взгляда на ленту (метка «новый» и подсветка рамки) */
+  isNew?: boolean;
+  picked: boolean;
+  onPick: (f: Flip) => void;
+  onOpen: (offer: Offer) => void;
+}) {
+  const t = useT().flips;
+  const { formatShort, locale } = useFormat();
+  const f = offer.best;
+  const { name, upgrade, quality, variant } = useOfferName(f, item);
+  // полоска снизу: какая доля выручки уходит на выкуп, остальное - прибыль
+  const revenue = f.sellUnit * f.amount * 0.95;
+  const buyShare = Math.min(100, Math.max(0, (f.buyout / revenue) * 100));
+
+  return (
+    <div
+      className={styles.card}
+      data-new={isNew || undefined}
+      data-picked={picked || undefined}
+      style={{ "--q": quality?.color ?? "var(--text-3)", "--buy": `${buyShare}%` } as React.CSSProperties}
+      onPointerEnter={(e) => e.pointerType === "mouse" && peek.show(offer, item, e.currentTarget, isNew)}
+      onPointerLeave={(e) => e.pointerType === "mouse" && peek.hide()}
+    >
+      <button
+        type="button"
+        className={styles.pick}
+        aria-pressed={picked}
+        aria-label={`${picked ? t.unpick : t.pick}: ${name}`}
+        title={picked ? t.unpick : t.pick}
+        onClick={() => {
+          haptic.select();
+          onPick(f);
+        }}
+      >
+        <ItemIcon item={item} size={44} />
+        <span className={styles.pickMark}>
+          <Icon name={picked ? "check" : "plus"} size={12} strokeWidth={3} />
+        </span>
+      </button>
+
+      <Link
+        href={itemHref(f, item)}
+        className={styles.cardLink}
+        onFocus={(e) =>
+          e.currentTarget.matches(":focus-visible") && peek.show(offer, item, e.currentTarget.parentElement ?? e.currentTarget, isNew)
+        }
+        onBlur={() => peek.hide()}
+        onClick={(e) => {
+          haptic.tap();
+          // на сенсорном экране наведения нет: тап открывает разбор, а оттуда - на предмет
+          if (window.matchMedia("(hover: none)").matches) {
+            e.preventDefault();
+            onOpen(offer);
+            return;
+          }
+          peek.hide();
+          actions.pushRecentItem(f.itemId);
+        }}
+      >
+        <span className={styles.nameRow}>
+          <strong className="truncate">{name}</strong>
+          {upgrade && <span className={styles.upgrade}>{upgrade}</span>}
+          {f.amount > 1 && <span className={styles.amount}>×{f.amount}</span>}
+          {isNew && <span className={styles.newTag}>{t.newTag}</span>}
+        </span>
+        <span className={styles.sub}>
+          {quality && <span style={{ color: quality.color }}>{quality.label}</span>}
+          {variant && <span className="truncate">{variant}</span>}
+          <span className={styles.subPrice}>
+            {t.buyout} <b className="mono">{formatShort(f.buyout)}</b>
           </span>
         </span>
-        <span className={styles.profit}>
-          <strong className="mono">+{formatShort(f.profit)}</strong>
+      </Link>
+
+      <CopyName name={name} />
+
+      <span className={styles.profit}>
+        <strong className="mono">+{formatShort(f.profit)}</strong>
+        <span>
+          <Signal level={f.confidence} />
           <span className="mono">{f.pct.toLocaleString(locale)} %</span>
         </span>
-      </div>
-
-      <div className={styles.bar} aria-hidden>
-        <span style={{ width: `${buyShare}%` }} />
-      </div>
-
-      <div className={`mono ${styles.prices}`}>
-        <span>
-          <small>{t.buyout}</small> {formatShort(f.unitPrice)}
-        </span>
-        <Icon name="chevron" size={14} className="dim" />
-        <span>
-          <small>{t.sale}</small> ~{formatShort(f.sellUnit)}
-          {f.amount > 1 && <small> {t.perPcs}</small>}
-        </span>
-      </div>
-
-      {/* за сколько уйдёт и прибыль в час — своя строка у каждой карточки (высота одинаковая);
-          null — по медиане за 2 суток не уйдёт (очередь дешевле); undefined — старый бэкенд */}
-      {f.sellHours !== undefined && (
-        <div
-          className={`mono ${styles.eta}`}
-          data-slow={f.sellHours === null || undefined}
-          title={f.sellHours === null ? t.sellOver48 : sellTime(f.sellHours)}
-        >
-          <span>
-            <small>{t.sellsIn}</small>{" "}
-            {f.sellHours === null ? t.overTwoDays : `${f.sellHours < 1 ? "<1" : `~${Math.round(f.sellHours)}`} ${t.hoursShort}`}
-          </span>
-          {f.profitPerHour != null && <b>{t.perHour(formatShort(f.profitPerHour))}</b>}
-        </div>
-      )}
-
-      <div className={styles.meta}>
-        <span>
-          {t.deals(f.deals)}
-          {f.basis === "tier" && tier ? ` (${tier.label})` : ""} · {t.perDay(f.perDay)}
-        </span>
-        {/* пакет вместо «ещё N лотов»: сколько скупить, чтобы всё ушло за сутки */}
-        {f.batch && others > 0 ? (
-          <span
-            className={styles.batch}
-            title={`${t.batch(f.batch.lots, f.batch.total)} · ${t.buyout} ${formatShort(f.batch.buyout)} · ${sellTime(f.batch.sellHours)} · +${formatShort(f.batch.profit)}`}
-          >
-            <Icon name="bag" size={11} />
-            {t.batchShort(f.batch.lots, f.batch.total)} +{formatShort(f.batch.profit)}
-          </span>
-        ) : (
-          others > 0 && <span className={styles.more}>{t.moreLots(others)}</span>
-        )}
-        <span>{t.seen(formatRelative(f.seenAt))}</span>
-      </div>
-    </Link>
+      </span>
+    </div>
   );
 }

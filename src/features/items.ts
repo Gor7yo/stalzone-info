@@ -173,6 +173,18 @@ function score(item: Item, q: string): number {
   return 0;
 }
 
+/**
+ * Подходит ли предмет под запрос - для фильтра списков (лента флипов): совпадение в названии,
+ * в том числе в неправильной раскладке, без нечёткого «по буквам» (score подпоследовательности < 50).
+ * Пустой запрос - null, фильтр не нужен.
+ */
+export function itemMatcher(query: string): ((item: Item) => boolean) | null {
+  const q = normalize(query);
+  if (!q) return null;
+  const alt = normalize(fixLayout(query));
+  return (item) => score(item, q) > 60 || (alt !== q && score(item, alt) > 60);
+}
+
 export function searchItems(index: ItemIndex, query: string, group?: string, limit = 40): Item[] {
   const q = normalize(query);
   const pool = group ? index.list.filter((i) => i.group === group) : index.list;

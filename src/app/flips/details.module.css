@@ -1,0 +1,539 @@
+/* ---------- разбор лота при наведении: окошко-«скан» ПДА ---------- */
+
+.peek {
+  position: fixed;
+  z-index: 70;
+  top: 0;
+  left: 0;
+  width: 344px;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid var(--line-2);
+  /* тонкие строки развёртки, как на экране ПДА */
+  background:
+    linear-gradient(rgb(var(--acc-rgb) / 0.035) 1px, transparent 1px) 0 0 / 100% 22px,
+    var(--bg-2);
+  box-shadow:
+    0 24px 60px -18px rgb(var(--shadow-rgb) / 0.85),
+    0 0 0 1px rgb(var(--acc-rgb) / 0.06);
+  pointer-events: none;
+  animation: peek-in 200ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* «носик» к карточке: середина по высоте карточки (--notch ставит FlipPeek) */
+.peek::before {
+  content: "";
+  position: absolute;
+  top: calc(var(--notch, 40px) - 6px);
+  width: 12px;
+  height: 12px;
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  transform: rotate(45deg);
+}
+
+.peek[data-side="right"]::before {
+  left: -7px;
+  border-top-color: transparent;
+  border-right-color: transparent;
+}
+
+.peek[data-side="left"]::before {
+  right: -7px;
+  border-bottom-color: transparent;
+  border-left-color: transparent;
+}
+
+.peek[data-side="below"]::before {
+  display: none;
+}
+
+/* уголки видоискателя */
+.frame {
+  --c: rgb(var(--acc-rgb) / 0.7);
+  position: absolute;
+  inset: 6px;
+  pointer-events: none;
+  background:
+    linear-gradient(var(--c), var(--c)) left top / 12px 1.5px no-repeat,
+    linear-gradient(var(--c), var(--c)) left top / 1.5px 12px no-repeat,
+    linear-gradient(var(--c), var(--c)) right top / 12px 1.5px no-repeat,
+    linear-gradient(var(--c), var(--c)) right top / 1.5px 12px no-repeat,
+    linear-gradient(var(--c), var(--c)) left bottom / 12px 1.5px no-repeat,
+    linear-gradient(var(--c), var(--c)) left bottom / 1.5px 12px no-repeat,
+    linear-gradient(var(--c), var(--c)) right bottom / 12px 1.5px no-repeat,
+    linear-gradient(var(--c), var(--c)) right bottom / 1.5px 12px no-repeat;
+}
+
+/* один проход «сканера» сверху вниз при появлении */
+.scan {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.scan::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 46px;
+  background: linear-gradient(180deg, transparent, rgb(var(--acc-rgb) / 0.13));
+  border-bottom: 1px solid rgb(var(--acc-rgb) / 0.55);
+  animation: scan 700ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* ---------- содержимое ---------- */
+
+.details {
+  position: relative;
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--acc);
+}
+
+/* мигающий курсор записи */
+.kicker i {
+  width: 6px;
+  height: 6px;
+  border-radius: 1px;
+  background: var(--acc);
+  animation: blink 1s steps(2, jump-none) infinite;
+}
+
+.conf {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+
+.title > span {
+  flex: 1;
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.title strong {
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.title em {
+  font-style: normal;
+  font-weight: 800;
+  color: var(--acc);
+}
+
+.title small {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--q);
+}
+
+.newTag {
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--acc);
+  color: var(--acc-ink);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* вся продажа одной полосой: выкуп | комиссия | прибыль */
+.stack {
+  display: flex;
+  gap: 2px;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.stack span {
+  flex: none;
+  min-width: 2px;
+  transform-origin: left;
+  animation: grow 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.stack [data-k="buy"] {
+  background: color-mix(in srgb, var(--text-3) 50%, transparent);
+}
+
+.stack [data-k="fee"] {
+  background: rgb(var(--red-rgb) / 0.65);
+  animation-delay: 80ms;
+}
+
+.stack [data-k="profit"] {
+  flex: 1;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--green) 60%, transparent), var(--green));
+  animation-delay: 140ms;
+}
+
+/* чек: подпись ...... сумма */
+.receipt {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  font-size: 12.5px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: auto minmax(12px, 1fr) auto;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.row dt {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 600;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+/* метка цвета - как сегмент в полосе выше */
+.row dt i {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex: none;
+}
+
+.row[data-k="buy"] dt i {
+  background: color-mix(in srgb, var(--text-3) 50%, transparent);
+}
+
+.row[data-k="sale"] dt i {
+  border: 1.5px solid var(--text-3);
+}
+
+.row[data-k="fee"] dt i {
+  background: rgb(var(--red-rgb) / 0.65);
+}
+
+.row[data-k="profit"] dt i {
+  background: var(--green);
+}
+
+.row[data-k="worst"] dt i {
+  border: 1.5px dashed #ffc94a;
+}
+
+.leader {
+  align-self: end;
+  margin-bottom: 4px;
+  border-bottom: 1px dotted var(--line-2);
+}
+
+.row dd {
+  margin: 0;
+  font-weight: 700;
+  color: var(--text);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.row dd small {
+  margin-left: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3);
+}
+
+.row[data-k="fee"] dd {
+  color: color-mix(in srgb, var(--red) 75%, var(--text-2));
+}
+
+/* итог - под чертой, крупнее */
+.row[data-k="profit"] {
+  margin-top: 2px;
+  padding-top: 9px;
+  border-top: 1px dashed var(--line-2);
+  font-size: 15px;
+}
+
+.row[data-k="profit"] dt {
+  font-weight: 800;
+  color: var(--text);
+}
+
+.row[data-k="profit"] dd {
+  color: var(--green);
+}
+
+.row[data-k="worst"] dd {
+  color: var(--text-2);
+}
+
+.row[data-warn] dd {
+  color: var(--red);
+}
+
+.hint {
+  grid-column: 1 / -1;
+  margin: -4px 0 0 15px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-3);
+}
+
+.row[data-warn] .hint {
+  color: var(--red);
+}
+
+/* скорость: 4 плитки */
+.tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.tile {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.tile span {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tile b {
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tile b small {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3);
+}
+
+.tile[data-tone="good"] b {
+  color: var(--green);
+}
+
+.tile[data-tone="dim"] b {
+  color: var(--text-3);
+}
+
+.basis {
+  margin: -4px 0 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3);
+}
+
+.batch {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 9px 11px;
+  border-radius: 11px;
+  border: 1px dashed rgb(var(--acc-rgb) / 0.45);
+  background: rgb(var(--acc-rgb) / 0.06);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--text-2);
+}
+
+.batch svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--acc);
+}
+
+.batch b {
+  display: block;
+  font-weight: 800;
+  color: var(--acc);
+}
+
+.more {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-3);
+}
+
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 10px;
+  padding-top: 9px;
+  border-top: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-3);
+}
+
+/* ---------- телефон: шторка снизу ---------- */
+
+.sheetWrap {
+  position: fixed;
+  z-index: 90;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  background: rgb(0 0 0 / 0.5);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  animation: fade 200ms ease both;
+}
+
+.sheet {
+  position: relative;
+  width: 100%;
+  max-height: 88dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 20px 18px calc(18px + var(--safe-bottom));
+  border-radius: 22px 22px 0 0;
+  border-top: 1px solid var(--line-2);
+  background:
+    linear-gradient(rgb(var(--acc-rgb) / 0.035) 1px, transparent 1px) 0 0 / 100% 22px,
+    var(--bg-2);
+  animation: sheet-up 280ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* место под крестик */
+.sheet .head {
+  padding-right: 42px;
+}
+
+.sheetClose {
+  position: absolute;
+  z-index: 1;
+  top: 14px;
+  right: 14px;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+
+.sheetActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* широкий сенсорный экран: шторка - окошком по центру */
+@media (min-width: 720px) {
+  .sheetWrap {
+    align-items: center;
+    justify-content: center;
+  }
+
+  .sheet {
+    width: 400px;
+    border-radius: 20px;
+    border: 1px solid var(--line-2);
+    padding-bottom: 18px;
+  }
+}
+
+@keyframes peek-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+@keyframes scan {
+  from {
+    top: -46px;
+  }
+  to {
+    top: 100%;
+    opacity: 0.2;
+  }
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+}

@@ -54,6 +54,8 @@ export interface FlipSettings {
   budget: number;
   /** категория предметов; null — все */
   group: string | null;
+  /** только то, что продастся за сутки (в старых сохранённых настройках поля нет) */
+  fastOnly?: boolean;
 }
 
 export interface PlanEntry {
