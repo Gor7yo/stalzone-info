@@ -421,8 +421,8 @@
   align-self: center;
   padding: 1px 6px;
   border-radius: 6px;
-  background: var(--acc);
-  color: var(--acc-ink);
+  background: rgb(var(--acc-rgb) / 0.14);
+  color: var(--acc);
   font-size: 9.5px;
   font-weight: 800;
   letter-spacing: 0.06em;

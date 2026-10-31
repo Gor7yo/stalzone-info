@@ -90,13 +90,14 @@ export function FlipAlertCard({ region, settings }: { region: Region; settings: 
       </div>
       <div className={styles.alertActions}>
         {!alert ? (
-          <button type="button" className="btn primary" disabled={busy || alerts.isLoading} onClick={enable}>
+          // на странице флиппера главное - лента: кнопка алерта мягкая, не перетягивает внимание
+          <button type="button" className="btn soft" disabled={busy || alerts.isLoading} onClick={enable}>
             {t.enable}
           </button>
         ) : (
           <>
             {changed && (
-              <button type="button" className="btn primary" disabled={busy} onClick={enable}>
+              <button type="button" className="btn soft" disabled={busy} onClick={enable}>
                 {t.update}
               </button>
             )}

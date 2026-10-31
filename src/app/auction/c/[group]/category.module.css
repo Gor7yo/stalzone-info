@@ -19,10 +19,11 @@
   margin: 14px 0;
 }
 
+/* как выбранный чип (globals .chip[aria-pressed]) */
 .groups a[aria-current="page"] {
-  background: var(--acc);
-  color: var(--acc-ink);
-  border-color: transparent;
+  background: rgb(var(--acc-rgb) / 0.12);
+  color: var(--text);
+  border-color: rgb(var(--acc-rgb) / 0.5);
 }
 
 .list {

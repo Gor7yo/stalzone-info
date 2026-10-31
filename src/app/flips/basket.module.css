@@ -53,8 +53,8 @@
   height: 26px;
   padding: 0 7px;
   border-radius: 9px;
-  background: var(--acc);
-  color: var(--acc-ink);
+  background: rgb(var(--acc-rgb) / 0.14);
+  color: var(--acc);
   font-family: var(--font-mono);
   font-size: 13px;
 }
