@@ -2,6 +2,7 @@
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { authed } from "./account";
+import { api } from "@/lib/api";
 import type { Region } from "@/lib/store";
 
 export type Confidence = "high" | "medium" | "low";
@@ -76,6 +77,41 @@ export function flipMoney(f: Flip) {
     lowUnit: (f.profitLow + f.buyout) / (f.amount * (1 - FEE)),
   };
 }
+
+/** Флип на витрине бесплатной версии - уже ушедший с рынка. */
+export interface ShowcaseFlip {
+  itemId: string;
+  quality: number;
+  upgrade: number;
+  variant?: string;
+  amount: number;
+  buyout: number;
+  sellUnit: number;
+  profit: number;
+  pct: number;
+  confidence: Confidence;
+  deals: number;
+  seenAt: string;
+  /** через сколько минут после появления лот выкупили; null - время вышло или неизвестно */
+  boughtInMin: number | null;
+}
+
+/** Витрина флиппера: что он нашёл за сутки и что уже забрали - показываем без Pro. */
+export interface Showcase {
+  region: Region;
+  count: number;
+  profit: number;
+  best: ShowcaseFlip | null;
+  examples: ShowcaseFlip[];
+}
+
+export const useShowcase = (region: Region, enabled = true) =>
+  useQuery({
+    enabled,
+    queryKey: ["flips-showcase", region],
+    queryFn: () => api<Showcase>("/api/flips/showcase", { region }),
+    staleTime: 5 * 60_000,
+  });
 
 /**
  * Лента — только для Pro (сервер проверяет подписку по Telegram).

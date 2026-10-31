@@ -75,7 +75,7 @@ export function CopyName({ name }: { name: string }) {
 }
 
 /** Название позиции как в игре: «Опал +7», у модулей - ключевая характеристика. */
-export function useOfferName(f: Flip, item?: Item) {
+export function useOfferName(f: Pick<Flip, "itemId" | "quality" | "upgrade" | "variant">, item?: Item) {
   const lang = useLang();
   const quality = qualities(lang)[f.quality];
   return {

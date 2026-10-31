@@ -1,0 +1,107 @@
+/* ---------- витрина флиппера для бесплатной версии ---------- */
+
+.showcase {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.stats {
+  position: relative;
+  display: grid;
+  gap: 4px;
+  padding: 18px 20px;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* мягкое зелёное свечение, как у сводки ленты */
+.stats::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(70% 140% at 0% 0%, rgb(78 224 138 / 0.14), transparent 70%);
+}
+
+.kicker {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-2);
+}
+
+.big {
+  font-size: clamp(30px, 9vw, 40px);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--text);
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.tile {
+  display: grid;
+  align-content: start;
+  gap: 3px;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.tile span {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-3);
+}
+
+.tile b {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.tile b[data-tone="good"] {
+  color: var(--green);
+}
+
+.tile small {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-2);
+}
+
+/* ушедший флип: карточка ленты и под ней строка «выкупили через …» */
+.gone {
+  display: grid;
+  gap: 6px;
+}
+
+/* карточка без ссылки: текст сам занимает середину */
+.cardText {
+  flex: 1;
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.goneLine {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-3);
+}
+
+/* выкупили быстро - это и продаёт Pro: видно, что ждать нельзя */
+.goneLine[data-sold] {
+  color: var(--ember);
+}

@@ -376,6 +376,15 @@ export const en: Dict = {
     teaserTitle: "Flipper - in Pro",
     teaserText:
       "Every minute we look for lots you can resell at a profit and rate how reliable the estimate is. Plus the bot sends you a good lot before someone else buys it.",
+    showcase: {
+      title: "In the last day the flipper found",
+      couldEarn: "You could have earned",
+      best: "The best one",
+      goneTitle: "Already taken",
+      goneHint: "gone within minutes",
+      boughtIn: (min: number) => (min < 60 ? `Bought ${min} min after it appeared` : `Bought ${Math.round(min / 60)} h after it appeared`),
+      expired: "The lot has expired",
+    },
     lead: (days: number) =>
       `Lots below market: buy out and resell. The sell price is the median of ${days} ${pluralEn(days, "day", "days")} of deals with the same quality and upgrade, the 5 % fee is already deducted.`,
     bestFlip: "Best flip",

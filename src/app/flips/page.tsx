@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { RegionSwitch } from "@/components/ui/RegionSwitch";
 import { EmptyState, ErrorState, RowSkeleton } from "@/components/ui/States";
-import { CONFIDENCE, isRefreshing, useFlips, type Flip } from "@/features/flips";
+import { CONFIDENCE, isRefreshing, useFlips, useShowcase, type Flip } from "@/features/flips";
 import { GROUPS, groupLabel, itemMatcher, useItems } from "@/features/items";
 import { useFormat, useLang, useT } from "@/i18n/client";
 import { actions, REGIONS, useApp, type FlipSettings, type Region } from "@/lib/store";
@@ -16,6 +16,7 @@ import { FlipBasket, FlipCalc, usePicks } from "./FlipBasket";
 import { FlipPeek, FlipSheet } from "./FlipDetails";
 import { FlipFilters, PRESETS, type PresetId } from "./FlipFilters";
 import { OfferCard, type Offer } from "./OfferCard";
+import { FlipShowcase } from "./Showcase";
 import styles from "./flips.module.css";
 
 const SORTS: Record<FlipSettings["sort"], (a: Offer, b: Offer) => number> = {
@@ -68,11 +69,16 @@ function groupOffers(flips: Flip[]): Offer[] {
   return [...map.values()];
 }
 
-/** Флиппер — функция Pro: без подписки показываем, что он умеет, и ведём на экран Pro. */
+/**
+ * Флиппер — функция Pro. Без подписки - витрина: сколько флипов нашли за сутки и какие уже
+ * забрали другие (чтобы было видно, что упускаешь), и путь на экран Pro.
+ */
 export default function FlipsPage() {
   const t = useT().flips;
   const { formatShort } = useFormat();
   const pro = usePro();
+  const region = useApp((s) => s.region);
+  const showcase = useShowcase(region, !pro.pending && !pro.isPro);
   if (pro.pending) {
     return (
       <main className="page">
@@ -84,24 +90,28 @@ export default function FlipsPage() {
 
   return (
     <main className="page">
-      <PageHeader eyebrow={t.eyebrowPro} title={t.title}>
+      <PageHeader eyebrow={t.eyebrowPro} title={t.title} aside={<RegionSwitch />}>
         {t.leadPro}
       </PageHeader>
+      {showcase.data && showcase.data.count > 0 && <FlipShowcase data={showcase.data} />}
       <ProTeaser title={t.teaserTitle} text={t.teaserText} />
-      <div className={styles.preview} aria-hidden>
-        {[0, 1, 2].map((i) => (
-          <div key={i} className={styles.previewCard}>
-            <span className="skeleton" style={{ width: 46, height: 46, borderRadius: 14 }} />
-            <span style={{ flex: 1, display: "grid", gap: 6 }}>
-              <span className="skeleton" style={{ width: "60%", height: 14 }} />
-              <span className="skeleton" style={{ width: "40%", height: 12 }} />
-            </span>
-            <strong className="mono" style={{ color: "var(--green)" }}>
-              +{formatShort([735_000, 244_000, 88_000][i])}
-            </strong>
-          </div>
-        ))}
-      </div>
+      {/* витрины ещё нет (данных за сутки мало) - размытые карточки-обещания */}
+      {!showcase.data?.count && (
+        <div className={styles.preview} aria-hidden>
+          {[0, 1, 2].map((i) => (
+            <div key={i} className={styles.previewCard}>
+              <span className="skeleton" style={{ width: 46, height: 46, borderRadius: 14 }} />
+              <span style={{ flex: 1, display: "grid", gap: 6 }}>
+                <span className="skeleton" style={{ width: "60%", height: 14 }} />
+                <span className="skeleton" style={{ width: "40%", height: 12 }} />
+              </span>
+              <strong className="mono" style={{ color: "var(--green)" }}>
+                +{formatShort([735_000, 244_000, 88_000][i])}
+              </strong>
+            </div>
+          ))}
+        </div>
+      )}
     </main>
   );
 }
