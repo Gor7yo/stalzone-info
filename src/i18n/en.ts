@@ -376,6 +376,8 @@ export const en: Dict = {
     teaserTitle: "Flipper - in Pro",
     teaserText:
       "Every minute we look for lots you can resell at a profit and rate how reliable the estimate is. Plus the bot sends you a good lot before someone else buys it.",
+    trialTitle: "3 days of Pro for free",
+    trialText: "The flipper, Telegram alerts and everything else in Pro - no payment. One tap to turn on, once per account.",
     showcase: {
       title: "In the last day the flipper found",
       couldEarn: "You could have earned",

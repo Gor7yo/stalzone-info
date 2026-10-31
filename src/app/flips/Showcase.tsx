@@ -1,6 +1,10 @@
 "use client";
 
+import Link from "next/link";
+import { TelegramLinkCard } from "@/components/Account/AccountGate";
 import { Icon } from "@/components/Icon";
+import { useStartTrial, usePro } from "@/features/pro";
+import { haptic } from "@/lib/telegram";
 import { ItemIcon } from "@/components/ui/ItemIcon";
 import type { Showcase, ShowcaseFlip } from "@/features/flips";
 import { useItems } from "@/features/items";
@@ -51,6 +55,45 @@ function GoneCard({ f }: { f: ShowcaseFlip }) {
         {f.boughtInMin !== null ? t.showcase.boughtIn(f.boughtInMin) : t.showcase.expired}
       </p>
     </article>
+  );
+}
+
+/**
+ * Пробный Pro прямо на заглушке флиппера: доступен - одна кнопка, и лента открывается сразу;
+ * без Telegram - сначала привязка (пробный - один на Telegram). null - пробного нет, показываем обычный тизер.
+ */
+export function TrialCard() {
+  const t = useT();
+  const pro = usePro();
+  const trial = useStartTrial();
+  if (!pro.data?.trialAvailable) return null;
+  if (!pro.data.telegram) return <TelegramLinkCard text={t.pro.linkTelegramTrial} />;
+
+  return (
+    <section className={`glass ${s.trial}`}>
+      <span className={s.trialIcon}>
+        <Icon name="star" size={22} />
+      </span>
+      <span className={s.trialBody}>
+        <strong>{t.flips.trialTitle}</strong>
+        <span>{t.flips.trialText}</span>
+      </span>
+      <button
+        type="button"
+        className={`btn primary ${s.trialBtn}`}
+        disabled={trial.isPending}
+        onClick={() => {
+          haptic.tap("medium");
+          trial.mutate(undefined, { onSuccess: () => haptic.notify("success") });
+        }}
+      >
+        {trial.isPending ? t.pro.trialPending : t.pro.trial}
+      </button>
+      {trial.error && <span className={s.trialError}>{trial.error.message}</span>}
+      <Link href="/pro" className={s.trialMore}>
+        {t.pro.whatPro}
+      </Link>
+    </section>
   );
 }
 

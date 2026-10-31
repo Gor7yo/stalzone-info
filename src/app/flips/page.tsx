@@ -16,7 +16,7 @@ import { FlipBasket, FlipCalc, usePicks } from "./FlipBasket";
 import { FlipPeek, FlipSheet } from "./FlipDetails";
 import { FlipFilters, PRESETS, type PresetId } from "./FlipFilters";
 import { OfferCard, type Offer } from "./OfferCard";
-import { FlipShowcase } from "./Showcase";
+import { FlipShowcase, TrialCard } from "./Showcase";
 import styles from "./flips.module.css";
 
 const SORTS: Record<FlipSettings["sort"], (a: Offer, b: Offer) => number> = {
@@ -94,7 +94,8 @@ export default function FlipsPage() {
         {t.leadPro}
       </PageHeader>
       {showcase.data && showcase.data.count > 0 && <FlipShowcase data={showcase.data} />}
-      <ProTeaser title={t.teaserTitle} text={t.teaserText} />
+      {/* пробный доступен - сразу «попробовать бесплатно», иначе обычный путь на экран Pro */}
+      {pro.data?.trialAvailable ? <TrialCard /> : <ProTeaser title={t.teaserTitle} text={t.teaserText} />}
       {/* витрины ещё нет (данных за сутки мало) - размытые карточки-обещания */}
       {!showcase.data?.count && (
         <div className={styles.preview} aria-hidden>

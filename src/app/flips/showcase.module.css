@@ -77,6 +77,67 @@
   color: var(--text-2);
 }
 
+/* пробный Pro: главное действие страницы - одна яркая кнопка */
+.trial {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 14px;
+  margin-bottom: 14px;
+  padding: 18px;
+  border-color: rgb(var(--acc-rgb) / 0.35);
+}
+
+.trialIcon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: rgb(var(--acc-rgb) / 0.12);
+  color: var(--acc);
+}
+
+.trialBody {
+  flex: 1;
+  display: grid;
+  gap: 3px;
+  min-width: 200px;
+}
+
+.trialBody strong {
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.trialBody span {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--text-2);
+}
+
+.trialBtn {
+  flex: 1 1 100%;
+}
+
+.trialError {
+  flex: 1 1 100%;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--red);
+}
+
+.trialMore {
+  margin: 0 auto;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-2);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 /* ушедший флип: карточка ленты и под ней строка «выкупили через …» */
 .gone {
   display: grid;
