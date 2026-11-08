@@ -214,6 +214,49 @@
   color: #fff;
 }
 
+/* ---------- вкладка «Сайт» ---------- */
+
+.siteStatus {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--green);
+}
+
+/* сайт закрыт - видно сразу */
+.siteStatus[data-on] {
+  color: var(--ember);
+}
+
+.siteHint {
+  margin: 0 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.siteField {
+  display: grid;
+  gap: 5px;
+  margin: 4px 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-2);
+}
+
+.date {
+  width: 220px;
+  max-width: 100%;
+}
+
+.sitePreview {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .error {
   margin: 10px 0;
   font-size: 13px;

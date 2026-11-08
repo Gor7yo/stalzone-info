@@ -22,9 +22,10 @@ import { useMe } from "@/features/account";
 import { useFormat, useT } from "@/i18n/client";
 import { isNotFound } from "@/lib/api";
 import { haptic } from "@/lib/telegram";
+import { SiteTab } from "./SiteTab";
 import styles from "./admin.module.css";
 
-type Tab = "dash" | "users" | "log";
+type Tab = "dash" | "users" | "site" | "log";
 
 export default function AdminPage() {
   const t = useT();
@@ -65,11 +66,12 @@ export default function AdminPage() {
           options={[
             { value: "dash", label: a.tabDash },
             { value: "users", label: a.tabUsers },
+            { value: "site", label: a.tabSite },
             { value: "log", label: a.tabLog },
           ]}
         />
       </div>
-      {tab === "dash" ? <DashboardTab /> : tab === "users" ? <UsersTab /> : <LogTab />}
+      {tab === "dash" ? <DashboardTab /> : tab === "users" ? <UsersTab /> : tab === "site" ? <SiteTab /> : <LogTab />}
     </main>
   );
 }
@@ -469,7 +471,10 @@ function LogLine({ entry, withTarget }: { entry: LogEntry; withTarget?: boolean 
   return (
     <li>
       <span className="mono dim">{formatDateTime(entry.createdAt)}</span> {a.actions[entry.action] ?? entry.action}
-      {withTarget && <span className="mono"> · {entry.targetLogin ?? (entry.targetId ? `tg ${entry.targetId}` : a.deleted)}</span>}
+      {/* у действий над сайтом (тех. работы, баннер) адресата нет */}
+      {withTarget && (entry.targetUserId || entry.targetId) && (
+        <span className="mono"> · {entry.targetLogin ?? (entry.targetId ? `tg ${entry.targetId}` : a.deleted)}</span>
+      )}
       {entry.details && <span className="dim"> · {entry.details}</span>}
     </li>
   );

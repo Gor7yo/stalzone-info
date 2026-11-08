@@ -1,0 +1,156 @@
+/* ---------- полоски сверху страницы: баннер, «сервер не отвечает», плашка админам ---------- */
+
+.bars {
+  flex: 1;
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.bar {
+  --c: var(--acc);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
+  padding: 8px 8px 8px 12px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--c) 40%, transparent);
+  background: color-mix(in srgb, var(--c) 10%, var(--bg-2));
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text);
+  animation: bar-in 260ms ease both;
+}
+
+.bar > svg {
+  flex: none;
+  color: var(--c);
+}
+
+.bar[data-tone="warn"] {
+  --c: var(--ember);
+}
+
+.bar[data-tone="admin"] {
+  --c: var(--cyan);
+}
+
+.barText {
+  flex: 1;
+  min-width: 0;
+}
+
+.barLink {
+  flex: none;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--c);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.barClose {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  color: var(--text-3);
+}
+
+.barClose:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+/* ---------- «Технические работы» вместо сайта ---------- */
+
+.screen {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: calc(var(--safe-top) + 24px) 16px calc(var(--safe-bottom) + 24px);
+}
+
+.card {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  width: min(100%, 460px);
+  padding: 32px 24px 28px;
+  text-align: center;
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 6px;
+  border-radius: 20px;
+  background: rgb(var(--acc-rgb) / 0.12);
+  color: var(--acc);
+  /* шестерёнка медленно крутится - работа идёт */
+  animation: spin 6s linear infinite;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(24px, 7vw, 30px);
+  line-height: 1.15;
+}
+
+.message {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+
+.until {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 6px 0 0;
+  padding: 7px 12px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.until svg {
+  color: var(--acc);
+}
+
+.note {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-3);
+}
+
+@keyframes bar-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .icon {
+    animation: none;
+  }
+}

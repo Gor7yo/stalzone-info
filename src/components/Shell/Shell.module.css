@@ -162,17 +162,29 @@
 }
 
 /*
- * «Назад» на прошлый экран (в Telegram вместо неё нативная кнопка): на телефоне - стрелка
- * сверху слева в своём ряду. Не висит поверх ленты: уезжает вместе со страницей, а не плавает
- * над доком (там она налезала на расчёт флипов и карточки).
+ * Верхний ряд в потоке страницы, шириной как .page: «Назад» (телефон) и полоски-объявления
+ * (баннер, «сервер не отвечает», плашка админам). Уезжает вместе со страницей и ни на что не налезает.
  */
+.top {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: min(100% - 32px, 640px);
+  margin: 0 auto;
+  padding-top: calc(var(--safe-top) + 12px);
+}
+
+/* страница сразу под рядом: отступ сверху (и safe-area) уже у ряда */
+:global(body:has([data-top]) main.page) {
+  padding-top: 14px;
+}
+
+/* «Назад» на прошлый экран (в Telegram вместо неё нативная кнопка) - стрелка слева */
 .back {
-  position: absolute;
-  z-index: 45;
-  top: calc(var(--safe-top) + 12px);
-  /* вровень с левым краем контента (.page: до 640 px по центру) */
-  left: max(16px, calc(50% - 320px));
   display: grid;
+  flex: none;
   place-items: center;
   width: 38px;
   height: 38px;
@@ -189,13 +201,6 @@
 .back:active {
   transform: scale(0.92);
   background: var(--surface-2);
-}
-
-/* страница опускается под ряд со стрелкой - ничего не перекрыто */
-@media (max-width: 1023px) {
-  :global(body:has([data-back]) main.page) {
-    padding-top: calc(var(--safe-top) + 60px);
-  }
 }
 
 @keyframes fade-in {
@@ -309,6 +314,24 @@
   /* на компьютере «Назад» не нужна: есть боковое меню и кнопка браузера */
   .back {
     display: none;
+  }
+
+  /* ряд нужен только под полоски-объявления */
+  .top {
+    width: min(100% - 64px, 1180px);
+    padding-top: 20px;
+  }
+
+  .top:not([data-top-bars]) {
+    display: none;
+  }
+
+  :global(body:has([data-top]) main.page) {
+    padding-top: 28px;
+  }
+
+  :global(body:has([data-top-bars]) main.page) {
+    padding-top: 16px;
   }
 
   .credit {

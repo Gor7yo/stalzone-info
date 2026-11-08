@@ -57,7 +57,8 @@ export interface LogEntry {
   targetUserId: string | null;
   /** логин цели (только в общем журнале) */
   targetLogin?: string | null;
-  action: "pro_grant" | "pro_revoke" | "ban" | "unban";
+  /** maintenance_* и banner_* - действия над сайтом, без пользователя */
+  action: "pro_grant" | "pro_revoke" | "ban" | "unban" | "maintenance_on" | "maintenance_off" | "banner_set" | "banner_clear";
   details: string | null;
   createdAt: string;
 }

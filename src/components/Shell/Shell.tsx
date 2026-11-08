@@ -11,6 +11,7 @@ import { useApp } from "@/lib/store";
 import { bindBackButton, haptic, useIsTelegram } from "@/lib/telegram";
 import { ContactButton } from "../Contact/ContactButton";
 import { Icon, type IconName } from "../Icon";
+import { MaintenanceScreen, SiteBars, useSiteGate } from "../Site/Site";
 import { ThemeToggle } from "../Theme/ThemeToggle";
 import { LangSwitch } from "../ui/RegionSwitch";
 import styles from "./Shell.module.css";
@@ -69,13 +70,57 @@ export function Shell({ children }: { children: React.ReactNode }) {
     if (emissionActive) haptic.notify("warning");
   }, [emissionActive]);
 
+  // тех. работы и баннер-объявление (настраивают админы)
+  const site = useSiteGate(pathname);
+
+  const backdrop = (
+    <div className={styles.backdrop} data-alert={emissionActive || undefined} aria-hidden>
+      <span className={styles.aurora} />
+      <span className={styles.grid} />
+      <span className={styles.noise} />
+    </div>
+  );
+
+  // тех. работы: вместо сайта - одна страница, без меню и подвала
+  if (site.closed && site.maintenance) {
+    return (
+      <>
+        {backdrop}
+        <MaintenanceScreen maintenance={site.maintenance} />
+      </>
+    );
+  }
+
   return (
     <>
-      <div className={styles.backdrop} data-alert={emissionActive || undefined} aria-hidden>
-        <span className={styles.aurora} />
-        <span className={styles.grid} />
-        <span className={styles.noise} />
-      </div>
+      {backdrop}
+
+      {/* верхний ряд в потоке страницы: «Назад» (телефон) и полоски-объявления - не наезжают друг на друга */}
+      {(canGoBack || site.bars.length > 0) && (
+        <div className={styles.top} data-top data-top-bars={site.bars.length > 0 || undefined}>
+          {canGoBack && (
+            <button
+              type="button"
+              className={styles.back}
+              aria-label={t.shell.backAria}
+              title={t.common.back}
+              onClick={() => {
+                haptic.tap();
+                const from = window.location.pathname;
+                const prev = trail[trail.length - 2];
+                router.back();
+                // браузер не вернулся (начало истории вкладки) — переходим на прошлый экран сами
+                setTimeout(() => {
+                  if (window.location.pathname === from) router.replace(prev);
+                }, 400);
+              }}
+            >
+              <Icon name="back" size={20} strokeWidth={2.2} />
+            </button>
+          )}
+          <SiteBars bars={site.bars} onClose={site.closeBanner} />
+        </div>
+      )}
 
       {children}
 
@@ -102,28 +147,6 @@ export function Shell({ children }: { children: React.ReactNode }) {
       </footer>
 
       <ContactButton label={t.shell.contact} />
-
-      {canGoBack && (
-        <button
-          type="button"
-          className={styles.back}
-          data-back
-          aria-label={t.shell.backAria}
-          title={t.common.back}
-          onClick={() => {
-            haptic.tap();
-            const from = window.location.pathname;
-            const prev = trail[trail.length - 2];
-            router.back();
-            // браузер не вернулся (начало истории вкладки) — переходим на прошлый экран сами
-            setTimeout(() => {
-              if (window.location.pathname === from) router.replace(prev);
-            }, 400);
-          }}
-        >
-          <Icon name="back" size={20} strokeWidth={2.2} />
-        </button>
-      )}
 
       {/* широкий экран - боковое меню группами; телефон - нижний док */}
       <SideNav />
