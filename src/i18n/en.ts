@@ -234,7 +234,7 @@ export const en: Dict = {
     trial: "Try 3 days for free",
     buy: "Get Pro - 199 ₽ / 30 days",
     payHint:
-      "Pay via Tribute by card or with Telegram Stars from the Telegram linked to your account. Pro turns on right after payment and the bot sends a confirmation.",
+      "Pay via Tribute by card, SBP or Telegram Stars from the Telegram linked to your account. Pro turns on right after payment and the bot sends a confirmation.",
     linkTelegram: "Pro is paid via Tribute in Telegram - link your Telegram so the payment reaches your account.",
     linkTelegramTrial:
       "Link Telegram and the 3-day trial turns on with one tap. Alerts arrive there too, and Pro is paid through it. One trial per Telegram.",

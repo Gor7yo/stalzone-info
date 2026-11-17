@@ -157,8 +157,8 @@ export const SECTIONS_EN: DocSection[] = [
       <>
         <ul className={styles.list}>
           <li>
-            Payment goes through <strong>Tribute</strong> in Telegram, by card or Telegram Stars. Pro turns on right after payment and the
-            bot sends a confirmation.
+            Payment goes through <strong>Tribute</strong> in Telegram, by card, SBP or Telegram Stars. Pro turns on right after payment and
+            the bot sends a confirmation.
           </li>
           <li>Pay from the Telegram linked to your account - otherwise Pro won&apos;t find your account.</li>
           <li>

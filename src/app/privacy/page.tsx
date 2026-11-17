@@ -175,7 +175,7 @@ const SECTIONS: DocSection[] = [
     body: (
       <>
         <p>
-          Pro оплачивается через сервис <strong>Tribute</strong> в Telegram - картой или Telegram Stars. Номер карты и платёжные данные
+          Pro оплачивается через сервис <strong>Tribute</strong> в Telegram - картой, СБП или Telegram Stars. Номер карты и платёжные данные
           вводятся у Tribute и <strong>к нам не попадают</strong>.
         </p>
         <p>От Tribute мы получаем только:</p>

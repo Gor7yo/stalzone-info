@@ -6,6 +6,7 @@ import { authed, ME_KEY, useMe } from "./account";
 /**
  * Страница оплаты Pro в Tribute. Pro выдаётся вебхуком на Telegram покупателя,
  * а с него - аккаунту, к которому этот Telegram привязан.
+ * Именно веб, не мини-приложение Tribute: оплата через приложения в РФ работает с перебоями.
  */
 export const PRO_BUY_URL = "https://web.tribute.tg/p/GO6";
 /** Пробный Pro на 3 дня (один раз на аккаунт и на Telegram). */

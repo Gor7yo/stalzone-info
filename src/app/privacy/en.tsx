@@ -170,8 +170,8 @@ export const SECTIONS_EN: DocSection[] = [
     body: (
       <>
         <p>
-          Pro is paid through <strong>Tribute</strong> in Telegram - by card or Telegram Stars. Card number and payment details are entered
-          at Tribute and <strong>never reach us</strong>.
+          Pro is paid through <strong>Tribute</strong> in Telegram - by card, SBP or Telegram Stars. Card number and payment details are
+          entered at Tribute and <strong>never reach us</strong>.
         </p>
         <p>From Tribute we receive only:</p>
         <ul className={styles.list}>

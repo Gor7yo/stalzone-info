@@ -169,8 +169,8 @@ const SECTIONS: DocSection[] = [
       <>
         <ul className={styles.list}>
           <li>
-            Оплата - через сервис <strong>Tribute</strong> в Telegram, картой или Telegram Stars. Pro включается сразу после оплаты, бот
-            присылает подтверждение.
+            Оплата - через сервис <strong>Tribute</strong> в Telegram, картой, СБП или Telegram Stars. Pro включается сразу после оплаты,
+            бот присылает подтверждение.
           </li>
           <li>Оплачивайте с Telegram, привязанного к аккаунту, - иначе Pro не найдёт ваш аккаунт.</li>
           <li>
